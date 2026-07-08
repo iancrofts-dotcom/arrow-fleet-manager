@@ -72,44 +72,69 @@ class _InspectionScreenState extends State<InspectionScreen> {
     item.notes = notes;
   }
 
-  void saveInspection() {
-    inspection.registration = registrationController.text;
-    inspection.driver = driverController.text;
-    inspection.inspector = inspectorController.text;
-    inspection.comments = commentsController.text;
+Future<void> saveInspection() async {
+  debugPrint("STEP 1");
 
-    inspection.mileage =
-        int.tryParse(mileageController.text.trim()) ?? 0;
+  inspection.registration = registrationController.text.trim();
+  inspection.driver = driverController.text.trim();
+  inspection.inspector = inspectorController.text.trim();
+  inspection.comments = commentsController.text.trim();
+  inspection.mileage = int.tryParse(mileageController.text.trim()) ?? 0;
 
-    final valid = _inspectionService.validateInspection(inspection);
+  debugPrint("STEP 2");
+
+  if (!_inspectionService.validateInspection(inspection)) {
+    debugPrint("Validation failed");
 
     if (!mounted) return;
 
-    if (!valid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Please complete Registration, Driver and Inspector.",
-          ),
-        ),
-      );
-      return;
-    }
-
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text(
-          "Inspection ${inspection.inspectionNumber} validated successfully.",
+          "Please complete Registration, Driver and Inspector.",
         ),
       ),
     );
+    return;
   }
+
+  debugPrint("STEP 3");
+
+  try {
+    await _inspectionService.saveInspection(inspection);
+    debugPrint("STEP 4");
+  } catch (e, stackTrace) {
+    debugPrint("SAVE ERROR: $e");
+    debugPrint(stackTrace.toString());
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Database error: $e"),
+      ),
+    );
+    return;
+  }
+
+  if (!mounted) return;
+
+  debugPrint("STEP 5");
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        "Inspection ${inspection.inspectionNumber} saved successfully.",
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Daily Walkaround Inspection"),
+        title: const Text('Daily Walkaround Inspection'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -138,22 +163,22 @@ class _InspectionScreenState extends State<InspectionScreen> {
           const SizedBox(height: 20),
 
           ChecklistSection(
-            title: "Exterior",
-            items: byCategory("Exterior"),
+            title: 'Exterior',
+            items: byCategory('Exterior'),
             onStatusChanged: updateStatus,
             onNotesChanged: updateNotes,
           ),
 
           ChecklistSection(
-            title: "Safety",
-            items: byCategory("Safety"),
+            title: 'Safety',
+            items: byCategory('Safety'),
             onStatusChanged: updateStatus,
             onNotesChanged: updateNotes,
           ),
 
           ChecklistSection(
-            title: "Accessibility",
-            items: byCategory("Accessibility"),
+            title: 'Accessibility',
+            items: byCategory('Accessibility'),
             onStatusChanged: updateStatus,
             onNotesChanged: updateNotes,
           ),
@@ -164,7 +189,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
             controller: commentsController,
             maxLines: 5,
             decoration: const InputDecoration(
-              labelText: "General Comments",
+              labelText: 'General Comments',
               border: OutlineInputBorder(),
             ),
           ),

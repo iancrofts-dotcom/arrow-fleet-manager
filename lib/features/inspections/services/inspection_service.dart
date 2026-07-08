@@ -1,6 +1,15 @@
+import '../../../database/database_service.dart';
+import '../../../database/inspection_repository.dart';
 import '../models/inspection.dart';
 
 class InspectionService {
+  InspectionService()
+      : _repository = InspectionRepository(
+          databaseService: DatabaseService(),
+        );
+
+  final InspectionRepository _repository;
+
   static int _inspectionSequence = 1;
 
   Inspection createInspection() {
@@ -25,6 +34,10 @@ class InspectionService {
     return inspection.registration.trim().isNotEmpty &&
         inspection.driver.trim().isNotEmpty &&
         inspection.inspector.trim().isNotEmpty;
+  }
+
+  Future<void> saveInspection(Inspection inspection) async {
+    await _repository.saveInspection(inspection);
   }
 
   void resetSequence() {
