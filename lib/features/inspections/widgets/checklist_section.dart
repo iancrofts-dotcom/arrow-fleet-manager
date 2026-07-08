@@ -7,10 +7,15 @@ class ChecklistSection extends StatelessWidget {
   final String title;
   final List<InspectionItem> items;
 
+  final void Function(InspectionItem, InspectionStatus) onStatusChanged;
+  final void Function(InspectionItem, String) onNotesChanged;
+
   const ChecklistSection({
     super.key,
     required this.title,
     required this.items,
+    required this.onStatusChanged,
+    required this.onNotesChanged,
   });
 
   @override
@@ -34,7 +39,15 @@ class ChecklistSection extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Column(
               children: items
-                  .map((item) => ChecklistTile(item: item))
+                  .map(
+                    (item) => ChecklistTile(
+                      item: item,
+                      onStatusChanged: (status) =>
+                          onStatusChanged(item, status),
+                      onNotesChanged: (notes) =>
+                          onNotesChanged(item, notes),
+                    ),
+                  )
                   .toList(),
             ),
           ),

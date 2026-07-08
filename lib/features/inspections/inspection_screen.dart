@@ -5,6 +5,7 @@ import 'models/inspection.dart';
 import 'models/inspection_item.dart';
 import 'services/inspection_service.dart';
 import 'widgets/checklist_section.dart';
+import 'widgets/defect_summary.dart';
 import 'widgets/inspection_header.dart';
 import 'widgets/inspection_progress.dart';
 import 'widgets/save_button.dart';
@@ -33,7 +34,6 @@ class _InspectionScreenState extends State<InspectionScreen> {
   @override
   void initState() {
     super.initState();
-
     inspection = _inspectionService.createInspection();
   }
 
@@ -47,16 +47,29 @@ class _InspectionScreenState extends State<InspectionScreen> {
     super.dispose();
   }
 
-  int get completedChecks {
-    return inspectionItems
-        .where((item) => item.status != InspectionStatus.notApplicable)
-        .length;
+  int get completedChecks =>
+      inspectionItems.where((i) => i.status != InspectionStatus.notApplicable).length;
+
+  int get defectCount =>
+      inspectionItems.where((i) => i.status == InspectionStatus.fail).length;
+
+  List<InspectionItem> byCategory(String category) =>
+      inspectionItems.where((i) => i.category == category).toList();
+
+  void updateStatus(
+    InspectionItem item,
+    InspectionStatus status,
+  ) {
+    setState(() {
+      item.status = status;
+    });
   }
 
-  List<InspectionItem> byCategory(String category) {
-    return inspectionItems
-        .where((item) => item.category == category)
-        .toList();
+  void updateNotes(
+    InspectionItem item,
+    String notes,
+  ) {
+    item.notes = notes;
   }
 
   void saveInspection() {
@@ -65,7 +78,8 @@ class _InspectionScreenState extends State<InspectionScreen> {
     inspection.inspector = inspectorController.text;
     inspection.comments = commentsController.text;
 
-    inspection.mileage = int.tryParse(mileageController.text) ?? 0;
+    inspection.mileage =
+        int.tryParse(mileageController.text.trim()) ?? 0;
 
     final valid = _inspectionService.validateInspection(inspection);
 
@@ -126,16 +140,22 @@ class _InspectionScreenState extends State<InspectionScreen> {
           ChecklistSection(
             title: "Exterior",
             items: byCategory("Exterior"),
+            onStatusChanged: updateStatus,
+            onNotesChanged: updateNotes,
           ),
 
           ChecklistSection(
             title: "Safety",
             items: byCategory("Safety"),
+            onStatusChanged: updateStatus,
+            onNotesChanged: updateNotes,
           ),
 
           ChecklistSection(
             title: "Accessibility",
             items: byCategory("Accessibility"),
+            onStatusChanged: updateStatus,
+            onNotesChanged: updateNotes,
           ),
 
           const SizedBox(height: 20),
@@ -147,6 +167,14 @@ class _InspectionScreenState extends State<InspectionScreen> {
               labelText: "General Comments",
               border: OutlineInputBorder(),
             ),
+          ),
+
+          const SizedBox(height: 20),
+
+          DefectSummary(
+            completedChecks: completedChecks,
+            totalChecks: inspectionItems.length,
+            defectCount: defectCount,
           ),
 
           const SizedBox(height: 30),

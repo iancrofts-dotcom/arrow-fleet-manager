@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 
 import '../models/inspection_item.dart';
+import 'photo_button.dart';
 
-class ChecklistTile extends StatefulWidget {
+class ChecklistTile extends StatelessWidget {
   final InspectionItem item;
+  final ValueChanged<InspectionStatus> onStatusChanged;
+  final ValueChanged<String> onNotesChanged;
 
   const ChecklistTile({
     super.key,
     required this.item,
+    required this.onStatusChanged,
+    required this.onNotesChanged,
   });
 
   @override
-  State<ChecklistTile> createState() => _ChecklistTileState();
-}
-
-class _ChecklistTileState extends State<ChecklistTile> {
-  @override
   Widget build(BuildContext context) {
-    final isFailed = widget.item.status == InspectionStatus.fail;
+    final isFailed = item.status == InspectionStatus.fail;
 
     return Card(
       elevation: 2,
@@ -27,9 +27,8 @@ class _ChecklistTileState extends State<ChecklistTile> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             Text(
-              widget.item.title,
+              item.title,
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -40,32 +39,25 @@ class _ChecklistTileState extends State<ChecklistTile> {
 
             SegmentedButton<InspectionStatus>(
               segments: const [
-
                 ButtonSegment(
                   value: InspectionStatus.pass,
-                  label: Text("PASS"),
                   icon: Icon(Icons.check_circle),
+                  label: Text("PASS"),
                 ),
-
                 ButtonSegment(
                   value: InspectionStatus.fail,
-                  label: Text("FAIL"),
                   icon: Icon(Icons.cancel),
+                  label: Text("FAIL"),
                 ),
-
                 ButtonSegment(
                   value: InspectionStatus.notApplicable,
-                  label: Text("N/A"),
                   icon: Icon(Icons.remove_circle),
+                  label: Text("N/A"),
                 ),
               ],
-
-              selected: {widget.item.status},
-
+              selected: {item.status},
               onSelectionChanged: (selection) {
-                setState(() {
-                  widget.item.status = selection.first;
-                });
+                onStatusChanged(selection.first);
               },
             ),
 
@@ -73,13 +65,22 @@ class _ChecklistTileState extends State<ChecklistTile> {
               const SizedBox(height: 16),
 
               TextField(
+                controller: TextEditingController(text: item.notes)
+                  ..selection = TextSelection.fromPosition(
+                    TextPosition(offset: item.notes.length),
+                  ),
                 decoration: const InputDecoration(
                   labelText: "Defect Notes",
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (value) {
-                  widget.item.notes = value;
-                },
+                onChanged: onNotesChanged,
+              ),
+
+              const SizedBox(height: 12),
+
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: PhotoButton(),
               ),
             ],
           ],
