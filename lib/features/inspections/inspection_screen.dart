@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'data/inspection_template.dart';
 import 'models/inspection.dart';
-import 'widgets/checklist_tile.dart';
+import 'models/inspection_item.dart';
+import 'widgets/checklist_section.dart';
 import 'widgets/inspection_header.dart';
+import 'widgets/inspection_progress.dart';
 import 'widgets/save_button.dart';
 import 'widgets/vehicle_details_card.dart';
 
@@ -23,7 +25,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
   late final Inspection inspection;
 
-  final inspectionItems = defaultInspectionTemplate;
+  final List<InspectionItem> inspectionItems = defaultInspectionTemplate;
 
   @override
   void initState() {
@@ -45,6 +47,18 @@ class _InspectionScreenState extends State<InspectionScreen> {
     super.dispose();
   }
 
+  int get completedChecks {
+    return inspectionItems
+        .where((item) => item.status != InspectionStatus.notApplicable)
+        .length;
+  }
+
+  List<InspectionItem> byCategory(String category) {
+    return inspectionItems
+        .where((item) => item.category == category)
+        .toList();
+  }
+
   void saveInspection() {
     inspection.registration = registrationController.text;
     inspection.driver = driverController.text;
@@ -52,13 +66,13 @@ class _InspectionScreenState extends State<InspectionScreen> {
     inspection.comments = commentsController.text;
 
     inspection.mileage =
-        int.tryParse(mileageController.text.trim()) ?? 0;
+        int.tryParse(mileageController.text) ?? 0;
 
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("Inspection saved successfully (database coming in v0.4.0)"),
+        content: Text("Inspection saved (database coming soon)"),
       ),
     );
   }
@@ -67,14 +81,22 @@ class _InspectionScreenState extends State<InspectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("New Inspection"),
+        title: const Text("Daily Walkaround Inspection"),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+
           InspectionHeader(
             inspectionNumber: inspection.inspectionNumber,
             inspectionDate: inspection.inspectionDate,
+          ),
+
+          const SizedBox(height: 20),
+
+          InspectionProgress(
+            completed: completedChecks,
+            total: inspectionItems.length,
           ),
 
           const SizedBox(height: 20),
@@ -86,20 +108,24 @@ class _InspectionScreenState extends State<InspectionScreen> {
             inspectorController: inspectorController,
           ),
 
-          const SizedBox(height: 25),
+          const SizedBox(height: 20),
 
-          Text(
-            "Daily Walkaround Inspection",
-            style: Theme.of(context).textTheme.headlineSmall,
+          ChecklistSection(
+            title: "Exterior",
+            items: byCategory("Exterior"),
           ),
 
-          const SizedBox(height: 15),
-
-          ...inspectionItems.map(
-            (item) => ChecklistTile(item: item),
+          ChecklistSection(
+            title: "Safety",
+            items: byCategory("Safety"),
           ),
 
-          const SizedBox(height: 25),
+          ChecklistSection(
+            title: "Accessibility",
+            items: byCategory("Accessibility"),
+          ),
+
+          const SizedBox(height: 20),
 
           TextField(
             controller: commentsController,
@@ -110,7 +136,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
             ),
           ),
 
-          const SizedBox(height: 25),
+          const SizedBox(height: 30),
 
           SaveButton(
             onSave: saveInspection,
