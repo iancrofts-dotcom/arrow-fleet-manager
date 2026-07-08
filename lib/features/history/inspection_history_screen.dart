@@ -1,7 +1,32 @@
 import 'package:flutter/material.dart';
 
-class InspectionHistoryScreen extends StatelessWidget {
+import '../../database/database_service.dart';
+import '../../database/inspection_repository.dart';
+
+class InspectionHistoryScreen extends StatefulWidget {
   const InspectionHistoryScreen({super.key});
+
+  @override
+  State<InspectionHistoryScreen> createState() =>
+      _InspectionHistoryScreenState();
+}
+
+class _InspectionHistoryScreenState
+    extends State<InspectionHistoryScreen> {
+  late final InspectionRepository repository;
+
+  late Future<List<Map<String, dynamic>>> inspectionsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+
+    repository = InspectionRepository(
+      databaseService: DatabaseService(),
+    );
+
+    inspectionsFuture = repository.getInspections();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -9,13 +34,65 @@ class InspectionHistoryScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Inspection History'),
       ),
-      body: const Center(
-        child: Text(
-          'No inspections saved yet.',
-          style: TextStyle(
-            fontSize: 18,
-          ),
-        ),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: inspectionsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Error loading inspections:\n${snapshot.error}',
+              ),
+            );
+          }
+
+          final inspections = snapshot.data ?? [];
+
+          if (inspections.isEmpty) {
+            return const Center(
+              child: Text(
+                'No inspections found.',
+                style: TextStyle(fontSize: 18),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: inspections.length,
+            itemBuilder: (context, index) {
+              final inspection = inspections[index];
+
+              return Card(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: ListTile(
+                  leading: const Icon(Icons.assignment),
+                  title: Text(
+                    inspection['inspectionNumber'] ?? '',
+                  ),
+                  subtitle: Text(
+                    '${inspection['registration']}\n${inspection['driver']}',
+                  ),
+                  isThreeLine: true,
+                  trailing: Text(
+                    inspection['inspectionDate']
+                        .toString()
+                        .split('T')
+                        .first,
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
