@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'data/inspection_template.dart';
 import 'models/inspection.dart';
 import 'models/inspection_item.dart';
+import 'services/inspection_service.dart';
 import 'widgets/checklist_section.dart';
 import 'widgets/inspection_header.dart';
 import 'widgets/inspection_progress.dart';
@@ -23,6 +24,8 @@ class _InspectionScreenState extends State<InspectionScreen> {
   final inspectorController = TextEditingController();
   final commentsController = TextEditingController();
 
+  final InspectionService _inspectionService = InspectionService();
+
   late final Inspection inspection;
 
   final List<InspectionItem> inspectionItems = defaultInspectionTemplate;
@@ -31,10 +34,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
   void initState() {
     super.initState();
 
-    inspection = Inspection(
-      inspectionNumber: "AST-${DateTime.now().year}-000001",
-      inspectionDate: DateTime.now(),
-    );
+    inspection = _inspectionService.createInspection();
   }
 
   @override
@@ -65,14 +65,28 @@ class _InspectionScreenState extends State<InspectionScreen> {
     inspection.inspector = inspectorController.text;
     inspection.comments = commentsController.text;
 
-    inspection.mileage =
-        int.tryParse(mileageController.text) ?? 0;
+    inspection.mileage = int.tryParse(mileageController.text) ?? 0;
+
+    final valid = _inspectionService.validateInspection(inspection);
 
     if (!mounted) return;
 
+    if (!valid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Please complete Registration, Driver and Inspector.",
+          ),
+        ),
+      );
+      return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Inspection saved (database coming soon)"),
+      SnackBar(
+        content: Text(
+          "Inspection ${inspection.inspectionNumber} validated successfully.",
+        ),
       ),
     );
   }
@@ -86,7 +100,6 @@ class _InspectionScreenState extends State<InspectionScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-
           InspectionHeader(
             inspectionNumber: inspection.inspectionNumber,
             inspectionDate: inspection.inspectionDate,
