@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/inspection_item.dart';
 
 class ChecklistTile extends StatefulWidget {
-
   final InspectionItem item;
 
   const ChecklistTile({
@@ -16,136 +15,76 @@ class ChecklistTile extends StatefulWidget {
 }
 
 class _ChecklistTileState extends State<ChecklistTile> {
-
   @override
   Widget build(BuildContext context) {
+    final isFailed = widget.item.status == InspectionStatus.fail;
 
     return Card(
-
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-
-        padding: const EdgeInsets.all(12),
-
+        padding: const EdgeInsets.all(16),
         child: Column(
-
           crossAxisAlignment: CrossAxisAlignment.start,
-
           children: [
 
             Text(
               widget.item.title,
               style: const TextStyle(
-                fontWeight: FontWeight.bold,
                 fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
 
-            Row(
+            const SizedBox(height: 12),
 
-              children: [
+            SegmentedButton<InspectionStatus>(
+              segments: const [
 
-                Expanded(
-
-                  child: RadioListTile(
-
-                    title: const Text("Pass"),
-
-                    value: InspectionStatus.pass,
-
-                    groupValue: widget.item.status,
-
-                    onChanged: (value) {
-
-                      setState(() {
-
-                        widget.item.status = value!;
-
-                      });
-
-                    },
-
-                  ),
-
+                ButtonSegment(
+                  value: InspectionStatus.pass,
+                  label: Text("PASS"),
+                  icon: Icon(Icons.check_circle),
                 ),
 
-                Expanded(
-
-                  child: RadioListTile(
-
-                    title: const Text("Fail"),
-
-                    value: InspectionStatus.fail,
-
-                    groupValue: widget.item.status,
-
-                    onChanged: (value) {
-
-                      setState(() {
-
-                        widget.item.status = value!;
-
-                      });
-
-                    },
-
-                  ),
-
+                ButtonSegment(
+                  value: InspectionStatus.fail,
+                  label: Text("FAIL"),
+                  icon: Icon(Icons.cancel),
                 ),
 
-                Expanded(
-
-                  child: RadioListTile(
-
-                    title: const Text("N/A"),
-
-                    value: InspectionStatus.na,
-
-                    groupValue: widget.item.status,
-
-                    onChanged: (value) {
-
-                      setState(() {
-
-                        widget.item.status = value!;
-
-                      });
-
-                    },
-
-                  ),
-
+                ButtonSegment(
+                  value: InspectionStatus.notApplicable,
+                  label: Text("N/A"),
+                  icon: Icon(Icons.remove_circle),
                 ),
-
               ],
 
+              selected: {widget.item.status},
+
+              onSelectionChanged: (selection) {
+                setState(() {
+                  widget.item.status = selection.first;
+                });
+              },
             ),
 
-            if (widget.item.status == InspectionStatus.fail)
+            if (isFailed) ...[
+              const SizedBox(height: 16),
 
               TextField(
-
                 decoration: const InputDecoration(
-
                   labelText: "Defect Notes",
-
+                  border: OutlineInputBorder(),
                 ),
-
                 onChanged: (value) {
-
                   widget.item.notes = value;
-
                 },
-
-              )
-
+              ),
+            ],
           ],
-
         ),
-
       ),
-
     );
-
   }
-
 }

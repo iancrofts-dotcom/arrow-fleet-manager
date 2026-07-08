@@ -1,26 +1,32 @@
 import 'package:flutter/material.dart';
 
 class VehicleDetailsCard extends StatelessWidget {
-
-  final TextEditingController registration;
-  final TextEditingController driver;
-  final TextEditingController inspector;
-  final TextEditingController mileage;
+  final TextEditingController registrationController;
+  final TextEditingController driverController;
+  final TextEditingController mileageController;
+  final TextEditingController inspectorController;
 
   const VehicleDetailsCard({
     super.key,
-    required this.registration,
-    required this.driver,
-    required this.inspector,
-    required this.mileage,
+    required this.registrationController,
+    required this.driverController,
+    required this.mileageController,
+    required this.inspectorController,
   });
 
-  Widget field(String label, TextEditingController controller) {
+  Widget buildField({
+    required String label,
+    required IconData icon,
+    required TextEditingController controller,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
+          prefixIcon: Icon(icon),
           labelText: label,
           border: const OutlineInputBorder(),
         ),
@@ -30,21 +36,47 @@ class VehicleDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Card(
+      elevation: 3,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            field("Vehicle Registration", registration),
+            Text(
+              "Vehicle Details",
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
 
-            field("Driver", driver),
+            const SizedBox(height: 20),
 
-            field("Mileage", mileage),
+            buildField(
+              label: "Vehicle Registration",
+              icon: Icons.local_shipping,
+              controller: registrationController,
+            ),
 
-            field("Inspector", inspector),
+            buildField(
+              label: "Driver",
+              icon: Icons.person,
+              controller: driverController,
+            ),
 
+            buildField(
+              label: "Mileage",
+              icon: Icons.speed,
+              controller: mileageController,
+              keyboardType: TextInputType.number,
+            ),
+
+            buildField(
+              label: "Inspector",
+              icon: Icons.badge,
+              controller: inspectorController,
+            ),
           ],
         ),
       ),
