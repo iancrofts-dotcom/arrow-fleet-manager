@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/constants.dart';
+import '../../widgets/app_header.dart';
 import '../../widgets/dashboard_button.dart';
 import '../../widgets/stat_card.dart';
 import '../inspections/inspection_screen.dart';
@@ -11,46 +12,25 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppConstants.appName),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(AppConstants.padding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(AppConstants.padding),
           children: [
-
-            Text(
-              "Welcome",
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-
-            const SizedBox(height: 5),
-
-            const Text(
-              AppConstants.companyName,
+            const AppHeader(
+              title: AppConstants.appName,
+              subtitle: AppConstants.companyName,
             ),
 
             const SizedBox(height: 25),
 
-            const Text(
-              "Today's Fleet",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
             const Row(
               children: [
-
                 Expanded(
                   child: StatCard(
                     title: "Vehicles",
-                    value: "147",
+                    value: "${AppConstants.totalVehicles}",
                     icon: Icons.local_shipping,
+                    color: AppConstants.primaryColor,
                   ),
                 ),
 
@@ -58,9 +38,10 @@ class DashboardScreen extends StatelessWidget {
 
                 Expanded(
                   child: StatCard(
-                    title: "Checks",
-                    value: "12",
+                    title: "Today's Checks",
+                    value: "${AppConstants.inspectionsToday}",
                     icon: Icons.assignment_turned_in,
+                    color: AppConstants.successColor,
                   ),
                 ),
 
@@ -69,22 +50,19 @@ class DashboardScreen extends StatelessWidget {
                 Expanded(
                   child: StatCard(
                     title: "Defects",
-                    value: "2",
+                    value: "${AppConstants.outstandingDefects}",
                     icon: Icons.warning,
+                    color: AppConstants.dangerColor,
                   ),
                 ),
-
               ],
             ),
 
-            const SizedBox(height: 35),
+            const SizedBox(height: 30),
 
-            const Text(
+            Text(
               "Quick Actions",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
 
             const SizedBox(height: 20),
@@ -93,29 +71,27 @@ class DashboardScreen extends StatelessWidget {
               icon: Icons.assignment,
               title: "New Inspection",
               onPressed: () {
-
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => const InspectionScreen(),
                   ),
                 );
-
               },
             ),
 
             const SizedBox(height: 12),
 
             DashboardButton(
-              icon: Icons.search,
-              title: "Search Inspections",
+              icon: Icons.local_shipping,
+              title: "Vehicles",
               onPressed: () {},
             ),
 
             const SizedBox(height: 12),
 
             DashboardButton(
-              icon: Icons.description,
+              icon: Icons.bar_chart,
               title: "Reports",
               onPressed: () {},
             ),
@@ -127,7 +103,6 @@ class DashboardScreen extends StatelessWidget {
               title: "Settings",
               onPressed: () {},
             ),
-
           ],
         ),
       ),
