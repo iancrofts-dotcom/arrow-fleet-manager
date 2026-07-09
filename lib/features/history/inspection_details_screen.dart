@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../inspections/models/inspection.dart';
+
 class InspectionDetailsScreen extends StatelessWidget {
-  final Map<String, dynamic> inspection;
+  final Inspection inspection;
 
   const InspectionDetailsScreen({
     super.key,
@@ -48,31 +50,31 @@ class InspectionDetailsScreen extends StatelessWidget {
               children: [
                 buildRow(
                   "Inspection No.",
-                  inspection["inspectionNumber"] ?? "",
+                  inspection.inspectionNumber,
                 ),
                 buildRow(
                   "Registration",
-                  inspection["registration"] ?? "",
+                  inspection.registration,
                 ),
                 buildRow(
                   "Driver",
-                  inspection["driver"] ?? "",
+                  inspection.driver,
                 ),
                 buildRow(
                   "Inspector",
-                  inspection["inspector"] ?? "",
+                  inspection.inspector,
                 ),
                 buildRow(
                   "Mileage",
-                  inspection["mileage"].toString(),
+                  inspection.mileage.toString(),
                 ),
                 buildRow(
                   "Inspection Date",
-                  inspection["inspectionDate"] ?? "",
+                  inspection.inspectionDate.toString(),
                 ),
                 buildRow(
                   "Comments",
-                  inspection["comments"] ?? "",
+                  inspection.comments,
                 ),
               ],
             ),

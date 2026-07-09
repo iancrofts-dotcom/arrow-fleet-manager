@@ -13,24 +13,47 @@ class InspectionRepository {
 
     await db.insert(
       'inspections',
-      {
-        'inspectionNumber': inspection.inspectionNumber,
-        'inspectionDate': inspection.inspectionDate.toIso8601String(),
-        'registration': inspection.registration,
-        'driver': inspection.driver,
-        'inspector': inspection.inspector,
-        'mileage': inspection.mileage,
-        'comments': inspection.comments,
-      },
+      inspection.toMap(),
     );
   }
 
-  Future<List<Map<String, dynamic>>> getInspections() async {
+  Future<List<Inspection>> getInspections() async {
     final db = await databaseService.database.database();
 
-    return await db.query(
+    final maps = await db.query(
       'inspections',
       orderBy: 'inspectionDate DESC',
+    );
+
+    return maps
+        .map((map) => Inspection.fromMap(map))
+        .toList();
+  }
+
+  Future<Inspection?> getInspectionById(int id) async {
+    final db = await databaseService.database.database();
+
+    final maps = await db.query(
+      'inspections',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (maps.isEmpty) {
+      return null;
+    }
+
+    return Inspection.fromMap(maps.first);
+  }
+
+  Future<int> deleteInspection(int id) async {
+    final db = await databaseService.database.database();
+
+    return db.delete(
+      'inspections',
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
 
@@ -62,7 +85,7 @@ class InspectionRepository {
   }
 
   Future<int> getOpenDefectCount() async {
-    // Placeholder until defect records are stored.
+    // Placeholder until defects are implemented.
     return 0;
   }
 

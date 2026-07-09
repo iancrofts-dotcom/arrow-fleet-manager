@@ -12,11 +12,12 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 2,
+      version: 4,
       onCreate: (db, version) async {
         await _createTables(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
+        // Version 2 - Vehicles table
         if (oldVersion < 2) {
           await db.execute("""
             CREATE TABLE IF NOT EXISTS vehicles(
@@ -33,6 +34,29 @@ class AppDatabase {
             )
           """);
         }
+
+        // Version 3 - Link inspections to vehicles
+        if (oldVersion < 3) {
+          await db.execute("""
+            ALTER TABLE inspections
+            ADD COLUMN vehicleId INTEGER
+          """);
+        }
+
+        // Version 4 - Inspection checklist results
+        if (oldVersion < 4) {
+          await db.execute("""
+            CREATE TABLE IF NOT EXISTS inspection_results(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              inspectionNumber TEXT NOT NULL,
+              itemId TEXT NOT NULL,
+              title TEXT NOT NULL,
+              category TEXT NOT NULL,
+              status TEXT NOT NULL,
+              notes TEXT
+            )
+          """);
+        }
       },
     );
 
@@ -45,6 +69,7 @@ class AppDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         inspectionNumber TEXT,
         inspectionDate TEXT,
+        vehicleId INTEGER,
         registration TEXT,
         driver TEXT,
         inspector TEXT,
@@ -65,6 +90,18 @@ class AppDatabase {
         motExpiry TEXT,
         serviceDue TEXT,
         active INTEGER DEFAULT 1
+      )
+    """);
+
+    await db.execute("""
+      CREATE TABLE inspection_results(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        inspectionNumber TEXT NOT NULL,
+        itemId TEXT NOT NULL,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL,
+        status TEXT NOT NULL,
+        notes TEXT
       )
     """);
   }

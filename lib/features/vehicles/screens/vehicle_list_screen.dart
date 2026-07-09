@@ -4,6 +4,9 @@ import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
 import '../widgets/vehicle_card.dart';
 import 'add_vehicle_screen.dart';
+import '../widgets/delete_vehicle_dialog.dart';
+import '../widgets/vehicle_actions_sheet.dart';
+import 'edit_vehicle_screen.dart';
 
 class VehicleListScreen extends StatefulWidget {
   const VehicleListScreen({super.key});
@@ -24,8 +27,14 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   }
 
   void loadVehicles() {
-    vehiclesFuture = _vehicleService.getVehicles();
-  }
+  vehiclesFuture = _vehicleService.getVehicles();
+}
+
+Future<void> refreshVehicles() async {
+  setState(() {
+    loadVehicles();
+  });
+}
 
   Future<void> addVehicle() async {
     final vehicle = await Navigator.push<Vehicle>(
@@ -39,9 +48,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
 
     await _vehicleService.addVehicle(vehicle);
 
-    setState(() {
-      loadVehicles();
-    });
+    await refreshVehicles();
 
     if (!mounted) return;
 
@@ -55,9 +62,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   }
 
   Future<void> refresh() async {
-    setState(() {
-      loadVehicles();
-    });
+   await refreshVehicles();
   }
 
   @override
@@ -105,7 +110,53 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
               itemBuilder: (context, index) {
                 return VehicleCard(
                   vehicle: vehicles[index],
-                  onTap: () {},
+                  onTap: () async {
+  showModalBottomSheet(
+    context: context,
+    builder: (_) => VehicleActionsSheet(
+      onEdit: () async {
+        Navigator.pop(context);
+
+        final updatedVehicle = await Navigator.push<Vehicle>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EditVehicleScreen(
+              vehicle: vehicles[index],
+            ),
+          ),
+        );
+
+        if (updatedVehicle != null) {
+          await _vehicleService.updateVehicle(updatedVehicle);
+
+          if (!mounted) return;
+
+          setState(loadVehicles);
+        }
+      },
+      onDelete: () async {
+        Navigator.pop(context);
+
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (_) => DeleteVehicleDialog(
+            registration: vehicles[index].registration,
+          ),
+        );
+
+        if (confirm == true && vehicles[index].id != null) {
+          await _vehicleService.deleteVehicle(
+            vehicles[index].id!,
+          );
+
+          if (!mounted) return;
+
+          setState(loadVehicles);
+        }
+      },
+    ),
+  );
+},
                 );
               },
             ),

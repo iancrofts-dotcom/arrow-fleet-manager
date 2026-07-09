@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../database/database_service.dart';
 import '../../database/inspection_repository.dart';
+import '../inspections/models/inspection.dart';
 import 'inspection_details_screen.dart';
 
 class InspectionHistoryScreen extends StatefulWidget {
@@ -15,7 +16,8 @@ class InspectionHistoryScreen extends StatefulWidget {
 class _InspectionHistoryScreenState
     extends State<InspectionHistoryScreen> {
   late final InspectionRepository repository;
-  late Future<List<Map<String, dynamic>>> inspectionsFuture;
+
+  late Future<List<Inspection>> inspectionsFuture;
 
   @override
   void initState() {
@@ -40,7 +42,7 @@ class _InspectionHistoryScreenState
       appBar: AppBar(
         title: const Text("Inspection History"),
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
+      body: FutureBuilder<List<Inspection>>(
         future: inspectionsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState ==
@@ -82,10 +84,10 @@ class _InspectionHistoryScreenState
                   child: ListTile(
                     leading: const Icon(Icons.assignment),
                     title: Text(
-                      inspection["inspectionNumber"] ?? "",
+                      inspection.inspectionNumber,
                     ),
                     subtitle: Text(
-                      "${inspection["registration"]}\n${inspection["driver"]}",
+                      "${inspection.registration}\n${inspection.driver}",
                     ),
                     isThreeLine: true,
                     trailing: const Icon(Icons.chevron_right),

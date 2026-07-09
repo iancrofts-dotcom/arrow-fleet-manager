@@ -36,8 +36,16 @@ class InspectionService {
         inspection.inspector.trim().isNotEmpty;
   }
 
-  Future<void> saveInspection(Inspection inspection) async {
-    await _repository.saveInspection(inspection);
+  Future<void> saveInspection(Inspection inspection) {
+    return _repository.saveInspection(inspection);
+  }
+
+  Future<List<Inspection>> getInspections() {
+    return _repository.getInspections();
+  }
+
+  Future<int> getInspectionCount() {
+    return _repository.getInspectionCount();
   }
 
   void resetSequence() {

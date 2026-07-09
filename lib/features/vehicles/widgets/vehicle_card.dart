@@ -21,8 +21,9 @@ class VehicleCard extends StatelessWidget {
         vertical: 8,
       ),
       child: ListTile(
-        leading: const CircleAvatar(
-          child: Icon(Icons.local_shipping),
+        onTap: onTap,
+        leading: CircleAvatar(
+          child: Text(vehicle.fleetNumber),
         ),
         title: Text(
           vehicle.registration,
@@ -31,18 +32,9 @@ class VehicleCard extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          '${vehicle.make} ${vehicle.model}\nFleet No: ${vehicle.fleetNumber}',
+          "${vehicle.make} ${vehicle.model}",
         ),
-        isThreeLine: true,
-        trailing: Icon(
-          vehicle.active
-              ? Icons.check_circle
-              : Icons.cancel,
-          color: vehicle.active
-              ? Colors.green
-              : Colors.red,
-        ),
-        onTap: onTap,
+        trailing: const Icon(Icons.more_vert),
       ),
     );
   }
