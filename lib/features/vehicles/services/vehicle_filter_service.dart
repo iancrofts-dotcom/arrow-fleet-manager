@@ -12,10 +12,13 @@ class VehicleFilterService {
       case VehicleFilter.all:
         return vehicles;
 
-      // Vehicle status is not yet implemented.
-      // These filters will become active once the
-      // Vehicle model gains a status field.
       case VehicleFilter.active:
+        return vehicles
+            .where((vehicle) => vehicle.active)
+            .toList();
+
+      // Placeholder until the full Vehicle Status
+      // feature is implemented.
       case VehicleFilter.workshop:
       case VehicleFilter.retired:
         return vehicles;

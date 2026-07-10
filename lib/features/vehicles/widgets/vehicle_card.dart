@@ -68,6 +68,21 @@ class VehicleCard extends StatelessWidget {
                     ),
                   ),
 
+                  Chip(
+                    label: Text(
+                      vehicle.active
+                          ? 'Active'
+                          : 'Inactive',
+                    ),
+                    backgroundColor: vehicle.active
+                        ? Colors.green.shade100
+                        : Colors.grey.shade300,
+                    visualDensity:
+                        VisualDensity.compact,
+                  ),
+
+                  const SizedBox(width: 8),
+
                   const Icon(Icons.more_vert),
                 ],
               ),
@@ -86,7 +101,6 @@ class VehicleCard extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   ComplianceStatusChip(
                     status: motStatus,
                   ),
@@ -107,7 +121,6 @@ class VehicleCard extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   ComplianceStatusChip(
                     status: serviceStatus,
                   ),
