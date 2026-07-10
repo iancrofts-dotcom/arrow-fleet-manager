@@ -5,11 +5,15 @@ import '../../inspections/models/inspection.dart';
 import '../../vehicles/services/vehicle_service.dart';
 
 import '../models/dashboard_summary.dart';
+import 'fleet_metrics_service.dart';
 
 class DashboardService {
   DashboardService();
 
   final VehicleService _vehicleService = VehicleService();
+
+  final FleetMetricsService _fleetMetricsService =
+      const FleetMetricsService();
 
   final InspectionRepository _inspectionRepository =
       InspectionRepository(
@@ -30,33 +34,8 @@ class DashboardService {
     final recentInspections =
         await _inspectionRepository.getRecentInspections();
 
-    int motDue = 0;
-    int serviceDue = 0;
-    int overdue = 0;
-
-    final now = DateTime.now();
-
-    for (final vehicle in vehicles) {
-      if (vehicle.motExpiry != null) {
-        final days = vehicle.motExpiry!.difference(now).inDays;
-
-        if (days < 0) {
-          overdue++;
-        } else if (days <= 30) {
-          motDue++;
-        }
-      }
-
-      if (vehicle.serviceDue != null) {
-        final days = vehicle.serviceDue!.difference(now).inDays;
-
-        if (days < 0) {
-          overdue++;
-        } else if (days <= 30) {
-          serviceDue++;
-        }
-      }
-    }
+    final metrics =
+        _fleetMetricsService.calculate(vehicles);
 
     final fleetHealth = _calculateFleetHealth(
       vehicles: vehicleCount,
@@ -70,9 +49,9 @@ class DashboardService {
       inspections: inspectionCount,
       defects: defectCount,
       fleetHealth: fleetHealth,
-      motDue: motDue,
-      serviceDue: serviceDue,
-      overdue: overdue,
+      motDue: metrics.motDue,
+      serviceDue: metrics.serviceDue,
+      overdue: metrics.overdue,
       recentActivity: _buildRecentActivity(
         recentInspections,
       ),
