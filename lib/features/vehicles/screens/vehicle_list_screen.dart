@@ -13,6 +13,10 @@ import '../models/vehicle_filter.dart';
 import '../services/vehicle_filter_service.dart';
 import '../widgets/fleet_filter_bar.dart';
 
+import '../models/vehicle_sort.dart';
+import '../services/vehicle_sort_service.dart';
+import '../widgets/fleet_sort_button.dart';
+
 class VehicleListScreen extends StatefulWidget {
   const VehicleListScreen({super.key});
 
@@ -28,7 +32,12 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
 final VehicleFilterService _filterService =
     const VehicleFilterService();
 
+final VehicleSortService _sortService =
+    const VehicleSortService();
+
 VehicleFilter _selectedFilter = VehicleFilter.all;
+VehicleSort _selectedSort = VehicleSort.registration;
+
 
 final TextEditingController _searchController =
     TextEditingController();
@@ -90,9 +99,19 @@ Future<void> refreshVehicles() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Fleet Vehicles"),
-      ),
+     appBar: AppBar(
+  title: const Text("Fleet Vehicles"),
+  actions: [
+    FleetSortButton(
+      selectedSort: _selectedSort,
+      onChanged: (sort) {
+        setState(() {
+          _selectedSort = sort;
+        });
+      },
+    ),
+  ],
+),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: addVehicle,
         icon: const Icon(Icons.add),
@@ -118,9 +137,14 @@ Future<void> refreshVehicles() async {
   query: _searchQuery,
 );
 
-final vehicles = _filterService.filterVehicles(
+final filteredVehicles = _filterService.filterVehicles(
   vehicles: searchedVehicles,
   filter: _selectedFilter,
+);
+
+final vehicles = _sortService.sortVehicles(
+  vehicles: filteredVehicles,
+  sort: _selectedSort,
 );
 
           if (vehicles.isEmpty) {
