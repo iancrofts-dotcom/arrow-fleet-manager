@@ -95,6 +95,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         icon: Icons.local_shipping,
                       ),
                       StatCard(
+                        title: "Active",
+                        value: summary.activeVehicles.toString(),
+                        icon: Icons.check_circle,
+                      ),
+
+                      StatCard(
+                        title: "Inactive",
+                        value: summary.inactiveVehicles.toString(),
+                        icon: Icons.pause_circle,
+                      ),
+                      StatCard(
                         title: "Drivers",
                         value: summary.drivers.toString(),
                         icon: Icons.person,

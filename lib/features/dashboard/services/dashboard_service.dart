@@ -37,14 +37,17 @@ class DashboardService {
     final metrics =
         _fleetMetricsService.calculate(vehicles);
 
-    final fleetHealth = _calculateFleetHealth(
-      vehicles: vehicleCount,
-      inspections: inspectionCount,
-      defects: defectCount,
-    );
+   final fleetHealth = _calculateFleetHealth(
+  vehicles: vehicleCount,
+  inspections: inspectionCount,
+  defects: defectCount,
+  inactiveVehicles: metrics.inactive,
+);
 
     return DashboardSummary(
       vehicles: vehicleCount,
+      activeVehicles: metrics.active,
+      inactiveVehicles: metrics.inactive,
       drivers: 0,
       inspections: inspectionCount,
       defects: defectCount,
@@ -71,10 +74,11 @@ class DashboardService {
   }
 
   int _calculateFleetHealth({
-    required int vehicles,
-    required int inspections,
-    required int defects,
-  }) {
+  required int vehicles,
+  required int inspections,
+  required int defects,
+  required int inactiveVehicles,
+}) {
     int score = 100;
 
     if (vehicles == 0) {
@@ -86,6 +90,7 @@ class DashboardService {
     }
 
     score -= defects * 5;
+    score -= inactiveVehicles * 2;
 
     if (score < 0) {
       score = 0;

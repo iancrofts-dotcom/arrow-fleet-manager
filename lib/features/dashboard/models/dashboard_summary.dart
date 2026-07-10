@@ -12,9 +12,13 @@ class DashboardActivity {
 
 class DashboardSummary {
   final int vehicles;
+  final int activeVehicles;
+  final int inactiveVehicles;
+
   final int drivers;
   final int inspections;
   final int defects;
+
   final int fleetHealth;
 
   final int motDue;
@@ -25,6 +29,8 @@ class DashboardSummary {
 
   const DashboardSummary({
     required this.vehicles,
+    required this.activeVehicles,
+    required this.inactiveVehicles,
     required this.drivers,
     required this.inspections,
     required this.defects,
