@@ -7,6 +7,9 @@ import 'add_vehicle_screen.dart';
 import '../widgets/delete_vehicle_dialog.dart';
 import '../widgets/vehicle_actions_sheet.dart';
 import 'edit_vehicle_screen.dart';
+import '../services/vehicle_search_service.dart';
+import '../widgets/fleet_search_bar.dart';
+
 
 class VehicleListScreen extends StatefulWidget {
   const VehicleListScreen({super.key});
@@ -17,6 +20,13 @@ class VehicleListScreen extends StatefulWidget {
 
 class _VehicleListScreenState extends State<VehicleListScreen> {
   final VehicleService _vehicleService = VehicleService();
+ final VehicleSearchService _searchService =
+    const VehicleSearchService();
+
+final TextEditingController _searchController =
+    TextEditingController();
+
+String _searchQuery = '';
 
   late Future<List<Vehicle>> vehiclesFuture;
 
@@ -25,6 +35,11 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
     super.initState();
     loadVehicles();
   }
+  @override
+void dispose() {
+  _searchController.dispose();
+  super.dispose();
+}
 
   void loadVehicles() {
   vehiclesFuture = _vehicleService.getVehicles();
@@ -91,7 +106,10 @@ Future<void> refreshVehicles() async {
             );
           }
 
-          final vehicles = snapshot.data ?? [];
+          final vehicles = _searchService.filterVehicles(
+  vehicles: snapshot.data ?? [],
+  query: _searchQuery,
+);
 
           if (vehicles.isEmpty) {
             return const Center(
@@ -103,7 +121,19 @@ Future<void> refreshVehicles() async {
             );
           }
 
-          return RefreshIndicator(
+          return Column(
+  children: [
+    FleetSearchBar(
+      controller: _searchController,
+      onChanged: (value) {
+        setState(() {
+          _searchQuery = value;
+        });
+      },
+    ),
+
+    Expanded(
+      child: RefreshIndicator(
             onRefresh: refresh,
             child: ListView.builder(
               itemCount: vehicles.length,
@@ -160,7 +190,10 @@ Future<void> refreshVehicles() async {
                 );
               },
             ),
-          );
+       ),
+        ),
+      ],
+    );
         },
       ),
     );

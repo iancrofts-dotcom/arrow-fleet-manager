@@ -8,6 +8,16 @@ class VehicleRepository {
     required this.databaseService,
   });
 
+Future<int> getVehicleCount() async {
+  final db = await databaseService.database.database();
+
+  final result = await db.rawQuery(
+    'SELECT COUNT(*) AS total FROM vehicles',
+  );
+
+  return (result.first['total'] as int?) ?? 0;
+}
+
   Future<void> addVehicle(Vehicle vehicle) async {
     final db = await databaseService.database.database();
 

@@ -19,6 +19,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final yearController = TextEditingController();
   final vinController = TextEditingController();
 
+  DateTime? motExpiry;
+  DateTime? serviceDue;
+
   @override
   void dispose() {
     fleetNumberController.dispose();
@@ -28,6 +31,24 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     yearController.dispose();
     vinController.dispose();
     super.dispose();
+  }
+
+  Future<void> selectDate({
+    required DateTime? currentDate,
+    required ValueChanged<DateTime?> onSelected,
+  }) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: currentDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null) {
+      setState(() {
+        onSelected(picked);
+      });
+    }
   }
 
   void saveVehicle() {
@@ -40,6 +61,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       model: modelController.text.trim(),
       year: int.tryParse(yearController.text) ?? DateTime.now().year,
       vin: vinController.text.trim(),
+      motExpiry: motExpiry,
+      serviceDue: serviceDue,
     );
 
     Navigator.pop(context, vehicle);
@@ -50,6 +73,14 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       labelText: label,
       border: const OutlineInputBorder(),
     );
+  }
+
+  String formatDate(DateTime? date) {
+    if (date == null) {
+      return "Not Selected";
+    }
+
+    return "${date.day}/${date.month}/${date.year}";
   }
 
   @override
@@ -106,6 +137,40 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             TextFormField(
               controller: vinController,
               decoration: decoration("VIN"),
+            ),
+
+            const SizedBox(height: 24),
+
+            OutlinedButton.icon(
+              onPressed: () {
+                selectDate(
+                  currentDate: motExpiry,
+                  onSelected: (date) {
+                    motExpiry = date;
+                  },
+                );
+              },
+              icon: const Icon(Icons.event),
+              label: Text(
+                "MOT Expiry: ${formatDate(motExpiry)}",
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            OutlinedButton.icon(
+              onPressed: () {
+                selectDate(
+                  currentDate: serviceDue,
+                  onSelected: (date) {
+                    serviceDue = date;
+                  },
+                );
+              },
+              icon: const Icon(Icons.build),
+              label: Text(
+                "Service Due: ${formatDate(serviceDue)}",
+              ),
             ),
 
             const SizedBox(height: 30),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../compliance/services/compliance_service.dart';
+import '../../compliance/widgets/compliance_status_chip.dart';
+
 import '../models/vehicle.dart';
 
 class VehicleCard extends StatelessWidget {
@@ -14,27 +17,105 @@ class VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const complianceService = ComplianceService();
+
+    final motStatus =
+        complianceService.getStatus(vehicle.motExpiry);
+
+    final serviceStatus =
+        complianceService.getStatus(vehicle.serviceDue);
+
     return Card(
       elevation: 3,
       margin: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 8,
       ),
-      child: ListTile(
+      child: InkWell(
         onTap: onTap,
-        leading: CircleAvatar(
-          child: Text(vehicle.fleetNumber),
-        ),
-        title: Text(
-          vehicle.registration,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    child: Text(vehicle.fleetNumber),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          vehicle.registration,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight:
+                                FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          "${vehicle.make} ${vehicle.model}",
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const Icon(Icons.more_vert),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 80,
+                    child: Text(
+                      "MOT",
+                      style: TextStyle(
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  ComplianceStatusChip(
+                    status: motStatus,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 80,
+                    child: Text(
+                      "Service",
+                      style: TextStyle(
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  ComplianceStatusChip(
+                    status: serviceStatus,
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        subtitle: Text(
-          "${vehicle.make} ${vehicle.model}",
-        ),
-        trailing: const Icon(Icons.more_vert),
       ),
     );
   }

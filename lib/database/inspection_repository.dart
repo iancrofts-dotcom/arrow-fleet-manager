@@ -100,4 +100,21 @@ class InspectionRepository {
 
     return ((total - defects) / total) * 100;
   }
+
+Future<List<Inspection>> getRecentInspections({
+  int limit = 5,
+}) async {
+  final db = await databaseService.database.database();
+
+  final maps = await db.query(
+    'inspections',
+    orderBy: 'inspectionDate DESC',
+    limit: limit,
+  );
+
+  return maps
+      .map((e) => Inspection.fromMap(e))
+      .toList();
+}
+
 }

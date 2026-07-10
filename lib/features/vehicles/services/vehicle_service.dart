@@ -13,7 +13,9 @@ class VehicleService {
   Future<List<Vehicle>> getVehicles() async {
     return _repository.getVehicles();
   }
-
+Future<int> getVehicleCount() async {
+  return _repository.getVehicleCount();
+}
   Future<void> addVehicle(Vehicle vehicle) async {
     await _repository.addVehicle(vehicle);
   }
