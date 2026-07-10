@@ -9,7 +9,9 @@ import '../widgets/vehicle_actions_sheet.dart';
 import 'edit_vehicle_screen.dart';
 import '../services/vehicle_search_service.dart';
 import '../widgets/fleet_search_bar.dart';
-
+import '../models/vehicle_filter.dart';
+import '../services/vehicle_filter_service.dart';
+import '../widgets/fleet_filter_bar.dart';
 
 class VehicleListScreen extends StatefulWidget {
   const VehicleListScreen({super.key});
@@ -22,6 +24,11 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   final VehicleService _vehicleService = VehicleService();
  final VehicleSearchService _searchService =
     const VehicleSearchService();
+
+final VehicleFilterService _filterService =
+    const VehicleFilterService();
+
+VehicleFilter _selectedFilter = VehicleFilter.all;
 
 final TextEditingController _searchController =
     TextEditingController();
@@ -106,9 +113,14 @@ Future<void> refreshVehicles() async {
             );
           }
 
-          final vehicles = _searchService.filterVehicles(
+          final searchedVehicles = _searchService.filterVehicles(
   vehicles: snapshot.data ?? [],
   query: _searchQuery,
+);
+
+final vehicles = _filterService.filterVehicles(
+  vehicles: searchedVehicles,
+  filter: _selectedFilter,
 );
 
           if (vehicles.isEmpty) {
@@ -124,13 +136,22 @@ Future<void> refreshVehicles() async {
           return Column(
   children: [
     FleetSearchBar(
-      controller: _searchController,
-      onChanged: (value) {
-        setState(() {
-          _searchQuery = value;
-        });
-      },
-    ),
+  controller: _searchController,
+  onChanged: (value) {
+    setState(() {
+      _searchQuery = value;
+    });
+  },
+),
+
+FleetFilterBar(
+  selectedFilter: _selectedFilter,
+  onChanged: (filter) {
+    setState(() {
+      _selectedFilter = filter;
+    });
+  },
+),
 
     Expanded(
       child: RefreshIndicator(
