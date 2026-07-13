@@ -12,7 +12,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: (db, version) async {
         await _createTables(db);
       },
@@ -54,6 +54,22 @@ class AppDatabase {
               category TEXT NOT NULL,
               status TEXT NOT NULL,
               notes TEXT
+            )
+          """);
+        }
+
+        // Version 5 - Drivers
+        if (oldVersion < 5) {
+          await db.execute("""
+            CREATE TABLE IF NOT EXISTS drivers(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              first_name TEXT NOT NULL,
+              last_name TEXT NOT NULL,
+              licence_number TEXT NOT NULL,
+              licence_expiry INTEGER,
+              phone TEXT,
+              email TEXT,
+              active INTEGER DEFAULT 1
             )
           """);
         }
@@ -102,6 +118,19 @@ class AppDatabase {
         category TEXT NOT NULL,
         status TEXT NOT NULL,
         notes TEXT
+      )
+    """);
+
+    await db.execute("""
+      CREATE TABLE drivers(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        licence_number TEXT NOT NULL,
+        licence_expiry INTEGER,
+        phone TEXT,
+        email TEXT,
+        active INTEGER DEFAULT 1
       )
     """);
   }

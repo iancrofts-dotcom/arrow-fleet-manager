@@ -1,37 +1,42 @@
 import '../models/driver.dart';
+import '../models/driver_entity.dart';
+import '../repositories/driver_repository.dart';
 
 class DriverService {
-  DriverService();
+  DriverService({
+    DriverRepository? repository,
+  }) : _repository = repository ?? DriverRepository();
 
-  final List<Driver> _drivers = [];
+  final DriverRepository _repository;
 
   Future<List<Driver>> getDrivers() async {
-    return List.unmodifiable(_drivers);
+    final entities =
+        await _repository.getAllDrivers();
+
+    return entities
+        .map((entity) => entity.toDriver())
+        .toList(growable: false);
   }
 
   Future<void> addDriver(
     Driver driver,
   ) async {
-    _drivers.add(driver);
+    await _repository.insertDriver(
+      DriverEntity.fromDriver(driver),
+    );
   }
 
   Future<void> updateDriver(
     Driver driver,
   ) async {
-    final index = _drivers.indexWhere(
-      (d) => d.id == driver.id,
+    await _repository.updateDriver(
+      DriverEntity.fromDriver(driver),
     );
-
-    if (index != -1) {
-      _drivers[index] = driver;
-    }
   }
 
   Future<void> deleteDriver(
     int id,
   ) async {
-    _drivers.removeWhere(
-      (d) => d.id == id,
-    );
+    await _repository.deleteDriver(id);
   }
 }
