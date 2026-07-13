@@ -6,6 +6,7 @@ import '../vehicles/screens/vehicle_list_screen.dart';
 
 import 'models/dashboard_summary.dart';
 import 'services/dashboard_service.dart';
+import 'widgets/dashboard_insights_card.dart';
 
 import 'widgets/compliance_summary_card.dart';
 import 'widgets/dashboard_header.dart';
@@ -129,9 +130,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   healthScore: summary.fleetHealth,
 ),
 
-                  const SizedBox(height: 30),
+const SizedBox(height: 30),
 
-                  ComplianceSummaryCard(
+DashboardInsightsCard(
+  insights: summary.insights,
+),
+
+const SizedBox(height: 30),
+
+ComplianceSummaryCard(
   motDue: summary.motDue,
   serviceDue: summary.serviceDue,
   overdue: summary.overdue,

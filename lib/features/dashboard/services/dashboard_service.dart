@@ -7,6 +7,8 @@ import '../../vehicles/services/vehicle_service.dart';
 import '../models/dashboard_summary.dart';
 import 'fleet_metrics_service.dart';
 
+import 'dashboard_insight_service.dart';
+
 class DashboardService {
   DashboardService();
 
@@ -14,6 +16,9 @@ class DashboardService {
 
   final FleetMetricsService _fleetMetricsService =
       const FleetMetricsService();
+
+  final DashboardInsightService _dashboardInsightService =
+    const DashboardInsightService();
 
   final InspectionRepository _inspectionRepository =
       InspectionRepository(
@@ -37,6 +42,9 @@ class DashboardService {
     final metrics =
         _fleetMetricsService.calculate(vehicles);
 
+  final insights =
+    _dashboardInsightService.generateInsights(metrics);
+  
    final fleetHealth = _calculateFleetHealth(
   vehicles: vehicleCount,
   inspections: inspectionCount,
@@ -55,6 +63,7 @@ class DashboardService {
       motDue: metrics.motDue,
       serviceDue: metrics.serviceDue,
       overdue: metrics.overdue,
+      insights: insights,
       recentActivity: _buildRecentActivity(
         recentInspections,
       ),

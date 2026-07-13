@@ -1,3 +1,5 @@
+import 'dashboard_insight.dart';
+
 class DashboardActivity {
   final String title;
   final String subtitle;
@@ -25,6 +27,7 @@ class DashboardSummary {
   final int serviceDue;
   final int overdue;
 
+  final List<DashboardInsight> insights;
   final List<DashboardActivity> recentActivity;
 
   const DashboardSummary({
@@ -38,6 +41,7 @@ class DashboardSummary {
     required this.motDue,
     required this.serviceDue,
     required this.overdue,
+    required this.insights,
     required this.recentActivity,
   });
 }
