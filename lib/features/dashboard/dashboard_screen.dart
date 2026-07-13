@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../history/inspection_history_screen.dart';
 import '../inspections/inspection_screen.dart';
 import '../vehicles/screens/vehicle_list_screen.dart';
-
+import '../calendar/screens/calendar_screen.dart';
 import 'models/dashboard_summary.dart';
 import 'services/dashboard_service.dart';
 import 'widgets/dashboard_insights_card.dart';
@@ -196,6 +196,18 @@ ComplianceSummaryCard(
                           );
                         },
                       ),
+                      FilledButton.icon(
+  icon: const Icon(Icons.calendar_month),
+  label: const Text("Fleet Calendar"),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CalendarScreen(),
+      ),
+    );
+  },
+),
                     ],
                   ),
 
