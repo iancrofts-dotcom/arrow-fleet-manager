@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/fleet_report.dart';
+import '../services/report_format_service.dart';
 
 class FleetReportCard extends StatelessWidget {
   final FleetReport report;
@@ -12,33 +13,83 @@ class FleetReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const formatter = ReportFormatService();
+
     return Card(
-      elevation: 3,
+      elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
             Text(
               'Fleet Report',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall,
             ),
-            const SizedBox(height: 16),
-            _buildRow('Generated', report.generatedAt.toString()),
-            _buildRow('Vehicles', '${report.vehicles}'),
-            _buildRow('Active', '${report.activeVehicles}'),
-            _buildRow('Inactive', '${report.inactiveVehicles}'),
-            _buildRow('Inspections', '${report.inspections}'),
-            _buildRow('Defects', '${report.defects}'),
-            _buildRow('MOT Due', '${report.motDue}'),
-            _buildRow('Service Due', '${report.serviceDue}'),
-            _buildRow('Overdue', '${report.overdue}'),
-            const Divider(),
+
+            const SizedBox(height: 8),
+
+            Text(
+              'Generated: ${formatter.formatDate(report.generatedAt)}',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium,
+            ),
+
+            const Divider(height: 32),
+
+            _buildRow(
+              'Vehicles',
+              report.vehicles.toString(),
+            ),
+            _buildRow(
+              'Active Vehicles',
+              report.activeVehicles.toString(),
+            ),
+            _buildRow(
+              'Inactive Vehicles',
+              report.inactiveVehicles.toString(),
+            ),
+            _buildRow(
+              'Inspections',
+              report.inspections.toString(),
+            ),
+            _buildRow(
+              'Defects',
+              report.defects.toString(),
+            ),
+            _buildRow(
+              'MOT Due',
+              report.motDue.toString(),
+            ),
+            _buildRow(
+              'Service Due',
+              report.serviceDue.toString(),
+            ),
+            _buildRow(
+              'Overdue',
+              report.overdue.toString(),
+            ),
+
+            const Divider(height: 32),
+
             _buildRow(
               'Fleet Health',
-              '${report.fleetHealth}%',
-              valueStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
+              formatter.formatFleetHealth(
+                report.fleetHealth,
+              ),
+              valueStyle: TextStyle(
+                color:
+                    report.fleetHealth >= 90
+                        ? Colors.green
+                        : report.fleetHealth >= 75
+                            ? Colors.orange
+                            : Colors.red,
+                fontWeight:
+                    FontWeight.bold,
               ),
             ),
           ],
@@ -48,16 +99,18 @@ class FleetReportCard extends StatelessWidget {
   }
 
   Widget _buildRow(
-    String label,
+    String title,
     String value, {
     TextStyle? valueStyle,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        vertical: 4,
+      ),
       child: Row(
         children: [
           Expanded(
-            child: Text(label),
+            child: Text(title),
           ),
           Text(
             value,

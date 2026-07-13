@@ -1,25 +1,43 @@
+import 'dart:typed_data';
+
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../models/fleet_report.dart';
-import 'dart:typed_data';
+import 'report_branding_service.dart';
+import 'report_format_service.dart';
 
 class PdfReportService {
   const PdfReportService();
 
- Future<Uint8List> generatePdf(
+  Future<Uint8List> generatePdf(
     FleetReport report,
   ) async {
+    const formatter = ReportFormatService();
+    const branding = ReportBrandingService();
+
     final pdf = pw.Document();
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+
+        footer: (context) => pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            '${branding.footer} • ${branding.version}',
+            style: const pw.TextStyle(
+              fontSize: 10,
+            ),
+          ),
+        ),
+
         build: (context) => [
           pw.Header(
             level: 0,
             child: pw.Text(
-              'Arrow Fleet Manager',
+              branding.companyName,
               style: pw.TextStyle(
                 fontSize: 24,
                 fontWeight: pw.FontWeight.bold,
@@ -27,19 +45,21 @@ class PdfReportService {
             ),
           ),
 
-          pw.SizedBox(height: 8),
-
           pw.Text(
-            'Fleet Report',
+            branding.reportTitle,
             style: pw.TextStyle(
               fontSize: 18,
               fontWeight: pw.FontWeight.bold,
             ),
           ),
 
+          pw.SizedBox(height: 8),
+
           pw.Text(
-            'Generated: ${report.generatedAt}',
+            'Generated: ${formatter.formatDate(report.generatedAt)}',
           ),
+
+          pw.SizedBox(height: 16),
 
           pw.Divider(),
 
@@ -56,13 +76,17 @@ class PdfReportService {
 
           _row(
             'Fleet Health',
-            '${report.fleetHealth}%',
+            formatter.formatFleetHealth(
+              report.fleetHealth,
+            ),
           ),
         ],
       ),
     );
 
-    return Uint8List.fromList(await pdf.save());
+    return Uint8List.fromList(
+      await pdf.save(),
+    );
   }
 
   pw.Widget _row(

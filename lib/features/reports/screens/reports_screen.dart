@@ -45,6 +45,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Future<void> _previewPdf() async {
     final report = await _reportService.generateReport();
+
     final pdfBytes =
         await _pdfReportService.generatePdf(report);
 
@@ -100,6 +101,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fleet Reports'),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
@@ -151,8 +153,21 @@ class _ReportsScreenState extends State<ReportsScreen> {
               physics:
                   const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
-              child: FleetReportCard(
-                report: snapshot.data!,
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Fleet Summary',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall,
+                  ),
+                  const SizedBox(height: 16),
+                  FleetReportCard(
+                    report: snapshot.data!,
+                  ),
+                ],
               ),
             ),
           );
