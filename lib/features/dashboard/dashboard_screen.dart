@@ -14,6 +14,7 @@ import 'widgets/fleet_health_card.dart';
 import 'widgets/recent_activity_card.dart';
 import 'widgets/section_header.dart';
 import 'widgets/stat_card.dart';
+import '../drivers/screens/driver_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -220,7 +221,18 @@ FilledButton.icon(
     );
   },
 ),
-
+FilledButton.icon(
+  icon: const Icon(Icons.badge),
+  label: const Text('Drivers'),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const DriverListScreen(),
+      ),
+    );
+  },
+),
                     ],
                   ),
 
