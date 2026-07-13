@@ -4,6 +4,8 @@ import 'package:printing/printing.dart';
 import '../models/fleet_report.dart';
 import '../services/fleet_report_service.dart';
 import '../services/pdf_report_service.dart';
+import '../services/pdf_export_service.dart';
+import '../services/pdf_share_service.dart';
 import '../widgets/fleet_report_card.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -15,8 +17,15 @@ class ReportsScreen extends StatefulWidget {
 
 class _ReportsScreenState extends State<ReportsScreen> {
   final FleetReportService _reportService = FleetReportService();
+
   final PdfReportService _pdfReportService =
       const PdfReportService();
+
+  final PdfExportService _pdfExportService =
+      const PdfExportService();
+
+  final PdfShareService _pdfShareService =
+      const PdfShareService();
 
   late Future<FleetReport> _reportFuture;
 
@@ -50,6 +59,42 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
+  Future<void> _savePdf() async {
+    final report = await _reportService.generateReport();
+
+    final pdfBytes =
+        await _pdfReportService.generatePdf(report);
+
+    final file = await _pdfExportService.savePdf(
+      pdfBytes,
+      'fleet_report_${DateTime.now().millisecondsSinceEpoch}',
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'PDF saved to:\n${file.path}',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _sharePdf() async {
+    final report = await _reportService.generateReport();
+
+    final pdfBytes =
+        await _pdfReportService.generatePdf(report);
+
+    final file = await _pdfExportService.savePdf(
+      pdfBytes,
+      'fleet_report_share',
+    );
+
+    await _pdfShareService.sharePdf(file);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,6 +105,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
             icon: const Icon(Icons.picture_as_pdf),
             tooltip: 'Preview PDF',
             onPressed: _previewPdf,
+          ),
+          IconButton(
+            icon: const Icon(Icons.save_alt),
+            tooltip: 'Save PDF',
+            onPressed: _savePdf,
+          ),
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Share PDF',
+            onPressed: _sharePdf,
           ),
         ],
       ),
@@ -84,7 +139,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
           if (!snapshot.hasData) {
             return const Center(
-              child: Text('No report available.'),
+              child: Text(
+                'No report available.',
+              ),
             );
           }
 
