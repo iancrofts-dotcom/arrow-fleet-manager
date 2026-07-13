@@ -11,6 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  pdf: ^3.11.0
+  printing: ^5.13.4
+
   cupertino_icons: ^1.0.8
 
   # Navigation
