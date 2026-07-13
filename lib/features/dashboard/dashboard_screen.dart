@@ -7,7 +7,7 @@ import '../calendar/screens/calendar_screen.dart';
 import 'models/dashboard_summary.dart';
 import 'services/dashboard_service.dart';
 import 'widgets/dashboard_insights_card.dart';
-
+import '../reports/screens/reports_screen.dart';
 import 'widgets/compliance_summary_card.dart';
 import 'widgets/dashboard_header.dart';
 import 'widgets/fleet_health_card.dart';
@@ -208,6 +208,19 @@ ComplianceSummaryCard(
     );
   },
 ),
+FilledButton.icon(
+  icon: const Icon(Icons.description),
+  label: const Text("Fleet Reports"),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ReportsScreen(),
+      ),
+    );
+  },
+),
+
                     ],
                   ),
 
