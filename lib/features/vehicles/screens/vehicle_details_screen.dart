@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../drivers/models/driver.dart';
+import '../../drivers/services/driver_assignment_service.dart';
 import '../models/vehicle.dart';
+import 'edit_vehicle_screen.dart';
 
 class VehicleDetailsScreen extends StatefulWidget {
   const VehicleDetailsScreen({
@@ -19,10 +22,43 @@ class _VehicleDetailsScreenState
     extends State<VehicleDetailsScreen> {
   late Vehicle _vehicle;
 
+  final DriverAssignmentService _assignmentService =
+      DriverAssignmentService();
+
+  Driver? _assignedDriver;
+
   @override
   void initState() {
     super.initState();
     _vehicle = widget.vehicle;
+    _loadAssignedDriver();
+  }
+
+  Future<void> _loadAssignedDriver() async {
+    if (_vehicle.id == null) {
+      return;
+    }
+
+    try {
+      final driver = await _assignmentService.getAssignedDriver(
+        _vehicle.id!,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _assignedDriver = driver;
+      });
+    } catch (e, stackTrace) {
+      debugPrint('Error loading assigned driver: $e');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      setState(() {
+        _assignedDriver = null;
+      });
+    }
   }
 
   Widget _detailTile({
@@ -131,15 +167,46 @@ class _VehicleDetailsScreenState
             child: ListTile(
               leading: const Icon(Icons.person),
               title: const Text('Assigned Driver'),
-              subtitle: const Text('No driver assigned'),
+              subtitle: Text(
+                _assignedDriver?.fullName ??
+                    'No driver assigned',
+              ),
               trailing: IconButton(
                 icon: const Icon(Icons.person_add),
                 tooltip: 'Assign Driver',
                 onPressed: () {
-                  // Driver assignment will be added next.
+                  // Assignment dialog in next sprint.
                 },
               ),
             ),
+          ),
+
+          const SizedBox(height: 24),
+
+          FilledButton.icon(
+            onPressed: () async {
+              final updatedVehicle =
+                  await Navigator.push<Vehicle>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => EditVehicleScreen(
+                    vehicle: _vehicle,
+                  ),
+                ),
+              );
+
+              if (!mounted || updatedVehicle == null) {
+                return;
+              }
+
+              setState(() {
+                _vehicle = updatedVehicle;
+              });
+
+              await _loadAssignedDriver();
+            },
+            icon: const Icon(Icons.edit),
+            label: const Text('Edit Vehicle'),
           ),
         ],
       ),
