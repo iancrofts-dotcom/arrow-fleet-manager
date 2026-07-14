@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../models/driver.dart';
-import '../models/driver_assignment_result.dart';
 import 'driver_assignment_picker.dart';
 
 class DriverAssignmentDialog extends StatefulWidget {
@@ -45,40 +44,20 @@ class _DriverAssignmentDialogState
       actions: [
         TextButton(
           onPressed: () {
-            Navigator.pop(
-              context,
-              const DriverAssignmentResult(
-                cancelled: true,
-              ),
-            );
+            Navigator.pop(context);
           },
           child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.pop(
-              context,
-              const DriverAssignmentResult(
-                cancelled: false,
-                driver: null,
-              ),
-            );
-          },
-          child: const Text('Remove Assignment'),
         ),
         FilledButton(
           onPressed: () {
             Navigator.pop(
               context,
-              DriverAssignmentResult(
-                cancelled: false,
-                driver: _selectedDriver,
-              ),
+              _selectedDriver,
             );
           },
           child: Text(
             _selectedDriver == null
-                ? 'Save'
+                ? 'Assign Later'
                 : 'Assign',
           ),
         ),
