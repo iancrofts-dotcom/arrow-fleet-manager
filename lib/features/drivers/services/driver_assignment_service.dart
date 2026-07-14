@@ -1,4 +1,5 @@
 import '../models/driver.dart';
+import '../models/driver_assignment_result.dart';
 import '../models/driver_vehicle_assignment.dart';
 import '../repositories/driver_assignment_repository.dart';
 import 'driver_service.dart';
@@ -15,39 +16,31 @@ class DriverAssignmentService {
   final DriverAssignmentRepository _repository;
   final DriverService _driverService;
 
-  Future<List<DriverVehicleAssignment>>
-      getAssignments() async {
+  Future<List<DriverVehicleAssignment>> getAssignments() async {
     return _repository.getAllAssignments();
   }
 
-  Future<List<DriverVehicleAssignment>>
-      getActiveAssignments() async {
+  Future<List<DriverVehicleAssignment>> getActiveAssignments() async {
     return _repository.getActiveAssignments();
   }
 
-  Future<DriverVehicleAssignment?>
-      getCurrentAssignmentForDriver(
+  Future<DriverVehicleAssignment?> getCurrentAssignmentForDriver(
     int driverId,
   ) async {
-    return _repository
-        .getCurrentAssignmentForDriver(driverId);
+    return _repository.getCurrentAssignmentForDriver(driverId);
   }
 
-  Future<DriverVehicleAssignment?>
-      getCurrentAssignmentForVehicle(
+  Future<DriverVehicleAssignment?> getCurrentAssignmentForVehicle(
     int vehicleId,
   ) async {
-    return _repository
-        .getCurrentAssignmentForVehicle(vehicleId);
+    return _repository.getCurrentAssignmentForVehicle(vehicleId);
   }
 
   Future<Driver?> getAssignedDriver(
     int vehicleId,
   ) async {
     final assignment =
-        await getCurrentAssignmentForVehicle(
-      vehicleId,
-    );
+        await getCurrentAssignmentForVehicle(vehicleId);
 
     if (assignment == null) {
       return null;
@@ -58,14 +51,40 @@ class DriverAssignmentService {
     );
   }
 
+  /// Main API used by the UI.
+  Future<void> assignDriverToVehicle({
+    required int vehicleId,
+    required DriverAssignmentResult result,
+  }) async {
+    if (result.cancelled) {
+      return;
+    }
+
+    if (result.removeAssignment) {
+      await removeAssignment(vehicleId);
+      return;
+    }
+
+    final driver = result.driver;
+
+    if (driver == null || driver.id == null) {
+      throw Exception(
+        'Invalid driver selected.',
+      );
+    }
+
+    await assignOrUpdate(
+      driverId: driver.id!,
+      vehicleId: vehicleId,
+    );
+  }
+
   Future<void> assignDriver({
     required int driverId,
     required int vehicleId,
   }) async {
     final driverAssignment =
-        await getCurrentAssignmentForDriver(
-      driverId,
-    );
+        await getCurrentAssignmentForDriver(driverId);
 
     if (driverAssignment != null) {
       throw Exception(
@@ -74,9 +93,7 @@ class DriverAssignmentService {
     }
 
     final vehicleAssignment =
-        await getCurrentAssignmentForVehicle(
-      vehicleId,
-    );
+        await getCurrentAssignmentForVehicle(vehicleId);
 
     if (vehicleAssignment != null) {
       throw Exception(
@@ -99,9 +116,7 @@ class DriverAssignmentService {
     required int vehicleId,
   }) async {
     final current =
-        await getCurrentAssignmentForVehicle(
-      vehicleId,
-    );
+        await getCurrentAssignmentForVehicle(vehicleId);
 
     if (current != null) {
       await endAssignment(current);
@@ -117,9 +132,7 @@ class DriverAssignmentService {
     int vehicleId,
   ) async {
     final current =
-        await getCurrentAssignmentForVehicle(
-      vehicleId,
-    );
+        await getCurrentAssignmentForVehicle(vehicleId);
 
     if (current == null) {
       return;

@@ -1,15 +1,57 @@
 import 'package:flutter/material.dart';
 
+import '../../drivers/models/driver.dart';
+import '../../drivers/services/driver_assignment_service.dart';
 import '../models/vehicle.dart';
 import 'edit_vehicle_screen.dart';
 
-class VehicleDetailsScreen extends StatelessWidget {
+class VehicleDetailsScreen extends StatefulWidget {
   const VehicleDetailsScreen({
     super.key,
     required this.vehicle,
   });
 
   final Vehicle vehicle;
+
+  @override
+  State<VehicleDetailsScreen> createState() =>
+      _VehicleDetailsScreenState();
+}
+
+class _VehicleDetailsScreenState
+    extends State<VehicleDetailsScreen> {
+  late Vehicle _vehicle;
+
+  final DriverAssignmentService _assignmentService =
+      DriverAssignmentService();
+
+  Driver? _assignedDriver;
+
+  @override
+  void initState() {
+    super.initState();
+    _vehicle = widget.vehicle;
+    _loadAssignedDriver();
+  }
+
+  Future<void> _loadAssignedDriver() async {
+    if (_vehicle.id == null) {
+      return;
+    }
+
+    final driver =
+        await _assignmentService.getAssignedDriver(
+      _vehicle.id!,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _assignedDriver = driver;
+    });
+  }
 
   Widget _detailTile({
     required IconData icon,
@@ -37,7 +79,7 @@ class VehicleDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(vehicle.registration),
+        title: Text(_vehicle.registration),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -55,13 +97,13 @@ class VehicleDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    vehicle.registration,
+                    _vehicle.registration,
                     style: Theme.of(context)
                         .textTheme
                         .headlineSmall,
                   ),
                   Text(
-                    vehicle.fleetNumber,
+                    _vehicle.fleetNumber,
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium,
@@ -76,63 +118,54 @@ class VehicleDetailsScreen extends StatelessWidget {
           _detailTile(
             icon: Icons.directions_car,
             title: 'Make',
-            value: vehicle.make,
+            value: _vehicle.make,
           ),
 
           _detailTile(
             icon: Icons.badge,
             title: 'Model',
-            value: vehicle.model,
+            value: _vehicle.model,
           ),
 
           _detailTile(
             icon: Icons.calendar_today,
             title: 'Year',
-            value: vehicle.year.toString(),
+            value: _vehicle.year.toString(),
           ),
 
           _detailTile(
             icon: Icons.confirmation_number,
             title: 'VIN',
-            value: vehicle.vin,
+            value: _vehicle.vin,
           ),
 
           _detailTile(
             icon: Icons.assignment,
             title: 'MOT Expiry',
-            value: _formatDate(
-              vehicle.motExpiry,
-            ),
+            value: _formatDate(_vehicle.motExpiry),
           ),
 
           _detailTile(
             icon: Icons.build,
             title: 'Service Due',
-            value: _formatDate(
-              vehicle.serviceDue,
-            ),
+            value: _formatDate(_vehicle.serviceDue),
           ),
 
           const SizedBox(height: 20),
 
           Card(
             child: ListTile(
-              leading: const Icon(
-                Icons.person,
-              ),
-              title: const Text(
-                'Assigned Driver',
-              ),
-              subtitle: const Text(
-                'No driver assigned',
+              leading: const Icon(Icons.person),
+              title: const Text('Assigned Driver'),
+              subtitle: Text(
+                _assignedDriver?.fullName ??
+                    'No driver assigned',
               ),
               trailing: FilledButton(
                 onPressed: () {
-                  // Sprint 7.6
+                  // Assignment dialog in next step.
                 },
-                child: const Text(
-                  'Assign',
-                ),
+                child: const Text('Assign'),
               ),
             ),
           ),
@@ -141,20 +174,29 @@ class VehicleDetailsScreen extends StatelessWidget {
 
           FilledButton.icon(
             onPressed: () async {
-              await Navigator.push(
+              final updatedVehicle =
+                  await Navigator.push<Vehicle>(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      EditVehicleScreen(
-                    vehicle: vehicle,
+                  builder: (_) => EditVehicleScreen(
+                    vehicle: _vehicle,
                   ),
                 ),
               );
+
+              if (!mounted ||
+                  updatedVehicle == null) {
+                return;
+              }
+
+              setState(() {
+                _vehicle = updatedVehicle;
+              });
+
+              await _loadAssignedDriver();
             },
             icon: const Icon(Icons.edit),
-            label: const Text(
-              'Edit Vehicle',
-            ),
+            label: const Text('Edit Vehicle'),
           ),
 
           const SizedBox(height: 12),
@@ -190,9 +232,7 @@ class VehicleDetailsScreen extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.build_circle),
-            label: const Text(
-              'Maintenance',
-            ),
+            label: const Text('Maintenance'),
           ),
 
           const SizedBox(height: 12),
@@ -211,9 +251,7 @@ class VehicleDetailsScreen extends StatelessWidget {
             icon: const Icon(
               Icons.local_gas_station,
             ),
-            label: const Text(
-              'Fuel History',
-            ),
+            label: const Text('Fuel History'),
           ),
         ],
       ),
