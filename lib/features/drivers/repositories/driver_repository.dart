@@ -24,6 +24,27 @@ class DriverRepository {
         .toList();
   }
 
+  Future<DriverEntity?> getDriverById(
+    int id,
+  ) async {
+    final db = await _db;
+
+    final maps = await db.query(
+      'drivers',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (maps.isEmpty) {
+      return null;
+    }
+
+    return DriverEntity.fromMap(
+      maps.first,
+    );
+  }
+
   Future<int> insertDriver(
     DriverEntity driver,
   ) async {

@@ -12,7 +12,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: (db, version) async {
         await _createTables(db);
       },
@@ -69,6 +69,20 @@ class AppDatabase {
               licence_expiry INTEGER,
               phone TEXT,
               email TEXT,
+              active INTEGER DEFAULT 1
+            )
+          """);
+        }
+
+        // Version 6 - Driver Assignments
+        if (oldVersion < 6) {
+          await db.execute("""
+            CREATE TABLE IF NOT EXISTS driver_assignments(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              driver_id INTEGER NOT NULL,
+              vehicle_id INTEGER NOT NULL,
+              assigned_from INTEGER NOT NULL,
+              assigned_to INTEGER,
               active INTEGER DEFAULT 1
             )
           """);
@@ -130,6 +144,17 @@ class AppDatabase {
         licence_expiry INTEGER,
         phone TEXT,
         email TEXT,
+        active INTEGER DEFAULT 1
+      )
+    """);
+
+    await db.execute("""
+      CREATE TABLE driver_assignments(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        driver_id INTEGER NOT NULL,
+        vehicle_id INTEGER NOT NULL,
+        assigned_from INTEGER NOT NULL,
+        assigned_to INTEGER,
         active INTEGER DEFAULT 1
       )
     """);

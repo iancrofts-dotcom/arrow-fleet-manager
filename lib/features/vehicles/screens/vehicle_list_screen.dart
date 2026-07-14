@@ -4,15 +4,13 @@ import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
 import '../widgets/vehicle_card.dart';
 import 'add_vehicle_screen.dart';
-import '../widgets/delete_vehicle_dialog.dart';
-import '../widgets/vehicle_actions_sheet.dart';
-import 'edit_vehicle_screen.dart';
+
 import '../services/vehicle_search_service.dart';
 import '../widgets/fleet_search_bar.dart';
 import '../models/vehicle_filter.dart';
 import '../services/vehicle_filter_service.dart';
 import '../widgets/fleet_filter_bar.dart';
-
+import 'vehicle_details_screen.dart';
 import '../models/vehicle_sort.dart';
 import '../services/vehicle_sort_service.dart';
 import '../widgets/fleet_sort_button.dart';
@@ -184,55 +182,26 @@ FleetFilterBar(
               itemCount: vehicles.length,
               itemBuilder: (context, index) {
                 return VehicleCard(
-                  vehicle: vehicles[index],
-                  onTap: () async {
-  showModalBottomSheet(
-    context: context,
-    builder: (_) => VehicleActionsSheet(
-      onEdit: () async {
-        Navigator.pop(context);
+  vehicle: vehicles[index],
+  onTap: () async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VehicleDetailsScreen(
+          vehicle: vehicles[index],
+        ),
+      ),
+    );
 
-        final updatedVehicle = await Navigator.push<Vehicle>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => EditVehicleScreen(
-              vehicle: vehicles[index],
-            ),
-          ),
-        );
+    if (!mounted) {
+      return;
+    }
 
-        if (updatedVehicle != null) {
-          await _vehicleService.updateVehicle(updatedVehicle);
+    setState(loadVehicles);
+  },
+);
 
-          if (!mounted) return;
-
-          setState(loadVehicles);
-        }
-      },
-      onDelete: () async {
-        Navigator.pop(context);
-
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (_) => DeleteVehicleDialog(
-            registration: vehicles[index].registration,
-          ),
-        );
-
-        if (confirm == true && vehicles[index].id != null) {
-          await _vehicleService.deleteVehicle(
-            vehicles[index].id!,
-          );
-
-          if (!mounted) return;
-
-          setState(loadVehicles);
-        }
-      },
-    ),
-  );
-},
-                );
+                
               },
             ),
        ),

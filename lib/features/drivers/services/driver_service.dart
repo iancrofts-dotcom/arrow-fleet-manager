@@ -10,12 +10,26 @@ class DriverService {
   final DriverRepository _repository;
 
   Future<List<Driver>> getDrivers() async {
-    final entities =
-        await _repository.getAllDrivers();
+    final entities = await _repository.getAllDrivers();
 
     return entities
         .map((entity) => entity.toDriver())
         .toList(growable: false);
+  }
+
+  Future<Driver?> getDriverById(
+    int id,
+  ) async {
+    final entity =
+        await _repository.getDriverById(id);
+
+    return entity?.toDriver();
+  }
+
+  Future<bool> driverExists(
+    int id,
+  ) async {
+    return await getDriverById(id) != null;
   }
 
   Future<void> addDriver(
