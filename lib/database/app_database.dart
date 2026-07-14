@@ -12,7 +12,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: (db, version) async {
         await _createTables(db);
       },
@@ -99,6 +99,23 @@ class AppDatabase {
             )
           """);
         }
+        // Version 8 - Maintenance Records
+        if (oldVersion < 8) {
+          await db.execute("""
+            CREATE TABLE IF NOT EXISTS maintenance_records(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              vehicle_id INTEGER NOT NULL,
+              title TEXT NOT NULL,
+              description TEXT NOT NULL,
+              due_date INTEGER NOT NULL,
+              completed_date INTEGER,
+              estimated_cost REAL NOT NULL,
+              actual_cost REAL,
+              completed INTEGER DEFAULT 0
+            )
+          """);
+        }
+
       },
     );
 
@@ -179,5 +196,19 @@ class AppDatabase {
         medicalExpiry TEXT NOT NULL
       )
     """);
+
+    await db.execute("""
+  CREATE TABLE maintenance_records(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    vehicle_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    due_date INTEGER NOT NULL,
+    completed_date INTEGER,
+    estimated_cost REAL NOT NULL,
+    actual_cost REAL,
+    completed INTEGER DEFAULT 0
+  )
+""");
   }
 }

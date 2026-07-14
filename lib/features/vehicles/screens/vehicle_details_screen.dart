@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../../maintenance/screens/maintenance_list_screen.dart';
 import '../../drivers/models/driver.dart';
 import '../../drivers/services/driver_assignment_service.dart';
 import '../models/vehicle.dart';
@@ -221,19 +221,29 @@ class _VehicleDetailsScreenState
           const SizedBox(height: 12),
 
           OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Maintenance module coming in Sprint 7.8.',
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.build_circle),
-            label: const Text('Maintenance'),
-          ),
+  onPressed: () async {
+    if (_vehicle.id == null) {
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MaintenanceListScreen(
+          vehicleId: _vehicle.id!,
+        ),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    await _loadAssignedDriver();
+  },
+  icon: const Icon(Icons.build_circle),
+  label: const Text('Maintenance'),
+),
 
           const SizedBox(height: 12),
 
