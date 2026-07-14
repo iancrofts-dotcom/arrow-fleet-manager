@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../maintenance/screens/maintenance_list_screen.dart';
-import '../../drivers/models/driver.dart';
-import '../../drivers/services/driver_assignment_service.dart';
+
 import '../models/vehicle.dart';
-import 'edit_vehicle_screen.dart';
 
 class VehicleDetailsScreen extends StatefulWidget {
   const VehicleDetailsScreen({
@@ -22,35 +19,10 @@ class _VehicleDetailsScreenState
     extends State<VehicleDetailsScreen> {
   late Vehicle _vehicle;
 
-  final DriverAssignmentService _assignmentService =
-      DriverAssignmentService();
-
-  Driver? _assignedDriver;
-
   @override
   void initState() {
     super.initState();
     _vehicle = widget.vehicle;
-    _loadAssignedDriver();
-  }
-
-  Future<void> _loadAssignedDriver() async {
-    if (_vehicle.id == null) {
-      return;
-    }
-
-    final driver =
-        await _assignmentService.getAssignedDriver(
-      _vehicle.id!,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _assignedDriver = driver;
-    });
   }
 
   Widget _detailTile({
@@ -93,7 +65,9 @@ class _VehicleDetailsScreenState
                   Icon(
                     Icons.local_shipping,
                     size: 64,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary,
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -157,111 +131,15 @@ class _VehicleDetailsScreenState
             child: ListTile(
               leading: const Icon(Icons.person),
               title: const Text('Assigned Driver'),
-              subtitle: Text(
-                _assignedDriver?.fullName ??
-                    'No driver assigned',
-              ),
-              trailing: FilledButton(
+              subtitle: const Text('No driver assigned'),
+              trailing: IconButton(
+                icon: const Icon(Icons.person_add),
+                tooltip: 'Assign Driver',
                 onPressed: () {
-                  // Assignment dialog in next step.
+                  // Driver assignment will be added next.
                 },
-                child: const Text('Assign'),
               ),
             ),
-          ),
-
-          const SizedBox(height: 24),
-
-          FilledButton.icon(
-            onPressed: () async {
-              final updatedVehicle =
-                  await Navigator.push<Vehicle>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EditVehicleScreen(
-                    vehicle: _vehicle,
-                  ),
-                ),
-              );
-
-              if (!mounted ||
-                  updatedVehicle == null) {
-                return;
-              }
-
-              setState(() {
-                _vehicle = updatedVehicle;
-              });
-
-              await _loadAssignedDriver();
-            },
-            icon: const Icon(Icons.edit),
-            label: const Text('Edit Vehicle'),
-          ),
-
-          const SizedBox(height: 12),
-
-          OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Assignment history coming in Sprint 7.6.',
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.history),
-            label: const Text(
-              'Assignment History',
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          OutlinedButton.icon(
-  onPressed: () async {
-    if (_vehicle.id == null) {
-      return;
-    }
-
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MaintenanceListScreen(
-          vehicleId: _vehicle.id!,
-        ),
-      ),
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    await _loadAssignedDriver();
-  },
-  icon: const Icon(Icons.build_circle),
-  label: const Text('Maintenance'),
-),
-
-          const SizedBox(height: 12),
-
-          OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Fuel management coming in Sprint 7.9.',
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(
-              Icons.local_gas_station,
-            ),
-            label: const Text('Fuel History'),
           ),
         ],
       ),
