@@ -18,8 +18,7 @@ class VehicleDetailsScreen extends StatefulWidget {
       _VehicleDetailsScreenState();
 }
 
-class _VehicleDetailsScreenState
-    extends State<VehicleDetailsScreen> {
+class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   late Vehicle _vehicle;
 
   final DriverAssignmentService _assignmentService =
@@ -35,9 +34,7 @@ class _VehicleDetailsScreenState
   }
 
   Future<void> _loadAssignedDriver() async {
-    if (_vehicle.id == null) {
-      return;
-    }
+    if (_vehicle.id == null) return;
 
     try {
       final driver = await _assignmentService.getAssignedDriver(
@@ -76,9 +73,7 @@ class _VehicleDetailsScreenState
   }
 
   String _formatDate(DateTime? date) {
-    if (date == null) {
-      return 'Not Set';
-    }
+    if (date == null) return 'Not Set';
 
     return '${date.day}/${date.month}/${date.year}';
   }
@@ -101,9 +96,7 @@ class _VehicleDetailsScreenState
                   Icon(
                     Icons.local_shipping,
                     size: 64,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -175,7 +168,7 @@ class _VehicleDetailsScreenState
                 icon: const Icon(Icons.person_add),
                 tooltip: 'Assign Driver',
                 onPressed: () {
-                  // Assignment dialog in next sprint.
+                  // Assignment dialog will be added later.
                 },
               ),
             ),
@@ -195,7 +188,8 @@ class _VehicleDetailsScreenState
                 ),
               );
 
-              if (!mounted || updatedVehicle == null) {
+              if (!mounted ||
+                  updatedVehicle == null) {
                 return;
               }
 
@@ -207,6 +201,22 @@ class _VehicleDetailsScreenState
             },
             icon: const Icon(Icons.edit),
             label: const Text('Edit Vehicle'),
+          ),
+
+          const SizedBox(height: 12),
+
+          OutlinedButton.icon(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Assignment History coming in Sprint 7.9.',
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.history),
+            label: const Text('Assignment History'),
           ),
         ],
       ),
