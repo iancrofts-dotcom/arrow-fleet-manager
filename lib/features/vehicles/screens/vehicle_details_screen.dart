@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../drivers/models/driver.dart';
+import '../../drivers/models/driver_vehicle_assignment.dart';
+import '../../drivers/repositories/driver_assignment_repository.dart';
+import '../../drivers/screens/assign_driver_screen.dart';
+import '../../drivers/screens/assignment_history_screen.dart';
 import '../../drivers/services/driver_assignment_service.dart';
 import '../models/vehicle.dart';
 import 'edit_vehicle_screen.dart';
@@ -18,11 +22,16 @@ class VehicleDetailsScreen extends StatefulWidget {
       _VehicleDetailsScreenState();
 }
 
-class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
+class _VehicleDetailsScreenState
+    extends State<VehicleDetailsScreen> {
   late Vehicle _vehicle;
 
   final DriverAssignmentService _assignmentService =
       DriverAssignmentService();
+
+  final DriverAssignmentRepository
+      _assignmentRepository =
+      DriverAssignmentRepository();
 
   Driver? _assignedDriver;
 
@@ -34,23 +43,34 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   }
 
   Future<void> _loadAssignedDriver() async {
-    if (_vehicle.id == null) return;
+    if (_vehicle.id == null) {
+      return;
+    }
 
     try {
-      final driver = await _assignmentService.getAssignedDriver(
+      final driver =
+          await _assignmentService.getAssignedDriver(
         _vehicle.id!,
       );
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _assignedDriver = driver;
       });
     } catch (e, stackTrace) {
-      debugPrint('Error loading assigned driver: $e');
-      debugPrintStack(stackTrace: stackTrace);
+      debugPrint(
+        'Error loading assigned driver: $e',
+      );
+      debugPrintStack(
+        stackTrace: stackTrace,
+      );
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _assignedDriver = null;
@@ -58,7 +78,37 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
     }
   }
 
-  Widget _detailTile({
+  Future<void> _assignDriver() async {
+    if (_vehicle.id == null) {
+      return;
+    }
+
+    final driver =
+        await Navigator.push<Driver>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            const AssignDriverScreen(),
+      ),
+    );
+
+    if (!mounted || driver == null) {
+      return;
+    }
+
+    await _assignmentRepository
+        .insertAssignment(
+      DriverVehicleAssignment(
+        driverId: driver.id!,
+        vehicleId: _vehicle.id!,
+        assignedFrom: DateTime.now(),
+        active: true,
+      ),
+    );
+
+    await _loadAssignedDriver();
+  }
+    Widget _detailTile({
     required IconData icon,
     required String title,
     required String value,
@@ -73,7 +123,9 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   }
 
   String _formatDate(DateTime? date) {
-    if (date == null) return 'Not Set';
+    if (date == null) {
+      return 'Not Set';
+    }
 
     return '${date.day}/${date.month}/${date.year}';
   }
@@ -96,7 +148,9 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                   Icon(
                     Icons.local_shipping,
                     size: 64,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary,
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -167,9 +221,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
               trailing: IconButton(
                 icon: const Icon(Icons.person_add),
                 tooltip: 'Assign Driver',
-                onPressed: () {
-                  // Assignment dialog will be added later.
-                },
+                onPressed: _assignDriver,
               ),
             ),
           ),
@@ -206,17 +258,31 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
           const SizedBox(height: 12),
 
           OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Assignment History coming in Sprint 7.9.',
+            onPressed: () async {
+              if (_vehicle.id == null) {
+                return;
+              }
+
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      AssignmentHistoryScreen(
+                    vehicleId: _vehicle.id!,
                   ),
                 ),
               );
+
+              if (!mounted) {
+                return;
+              }
+
+              await _loadAssignedDriver();
             },
             icon: const Icon(Icons.history),
-            label: const Text('Assignment History'),
+            label: const Text(
+              'Assignment History',
+            ),
           ),
         ],
       ),
