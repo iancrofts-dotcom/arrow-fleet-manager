@@ -4,7 +4,7 @@ import '../models/driver.dart';
 import '../services/driver_service.dart';
 import '../widgets/driver_card.dart';
 import 'add_driver_screen.dart';
-import 'edit_driver_screen.dart';
+import 'driver_details_screen.dart';
 
 class DriverListScreen extends StatefulWidget {
   const DriverListScreen({super.key});
@@ -24,13 +24,16 @@ class _DriverListScreenState
   @override
   void initState() {
     super.initState();
+    _loadDrivers();
+  }
+
+  void _loadDrivers() {
     _driversFuture = _driverService.getDrivers();
   }
 
   Future<void> _refresh() async {
     setState(() {
-      _driversFuture =
-          _driverService.getDrivers();
+      _loadDrivers();
     });
 
     await _driversFuture;
@@ -50,10 +53,7 @@ class _DriverListScreenState
 
     if (!mounted) return;
 
-    setState(() {
-      _driversFuture =
-          _driverService.getDrivers();
-    });
+    setState(_loadDrivers);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -64,39 +64,22 @@ class _DriverListScreenState
     );
   }
 
-  Future<void> _editDriver(
+  Future<void> _openDriver(
     Driver driver,
   ) async {
-    final updatedDriver =
-        await Navigator.push<Driver>(
+    final refresh =
+        await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => EditDriverScreen(
+        builder: (_) => DriverDetailsScreen(
           driver: driver,
         ),
       ),
     );
 
-    if (updatedDriver == null) return;
-
-    await _driverService.updateDriver(
-      updatedDriver,
-    );
-
-    if (!mounted) return;
-
-    setState(() {
-      _driversFuture =
-          _driverService.getDrivers();
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${updatedDriver.fullName} updated successfully.',
-        ),
-      ),
-    );
+    if (refresh == true && mounted) {
+      setState(_loadDrivers);
+    }
   }
 
   Future<void> _deleteDriver(
@@ -117,12 +100,18 @@ class _DriverListScreenState
         actions: [
           TextButton(
             onPressed: () =>
-                Navigator.pop(context, false),
+                Navigator.pop(
+              context,
+              false,
+            ),
             child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () =>
-                Navigator.pop(context, true),
+                Navigator.pop(
+              context,
+              true,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -137,10 +126,15 @@ class _DriverListScreenState
 
     if (!mounted) return;
 
-    setState(() {
-      _driversFuture =
-          _driverService.getDrivers();
-    });
+    setState(_loadDrivers);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${driver.fullName} deleted.',
+        ),
+      ),
+    );
   }
 
   @override
@@ -188,7 +182,8 @@ class _DriverListScreenState
                   Center(
                     child: Text(
                       'No drivers found.\nTap Add Driver to begin.',
-                      textAlign: TextAlign.center,
+                      textAlign:
+                          TextAlign.center,
                       style: TextStyle(
                         fontSize: 18,
                       ),
@@ -203,13 +198,15 @@ class _DriverListScreenState
             onRefresh: _refresh,
             child: ListView.builder(
               itemCount: drivers.length,
-              itemBuilder: (context, index) {
+              itemBuilder:
+                  (context, index) {
                 return Dismissible(
                   key: ValueKey(
-                    drivers[index].hashCode,
+                    drivers[index].id,
                   ),
                   direction:
-                      DismissDirection.endToStart,
+                      DismissDirection
+                          .endToStart,
                   background: Container(
                     color: Colors.red,
                     alignment:
@@ -223,7 +220,8 @@ class _DriverListScreenState
                       color: Colors.white,
                     ),
                   ),
-                  confirmDismiss: (_) async {
+                  confirmDismiss:
+                      (_) async {
                     await _deleteDriver(
                       drivers[index],
                     );
@@ -232,7 +230,7 @@ class _DriverListScreenState
                   child: DriverCard(
                     driver: drivers[index],
                     onTap: () =>
-                        _editDriver(
+                        _openDriver(
                       drivers[index],
                     ),
                   ),

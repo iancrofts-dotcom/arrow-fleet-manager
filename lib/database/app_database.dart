@@ -12,7 +12,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: (db, version) async {
         await _createTables(db);
       },
@@ -87,6 +87,18 @@ class AppDatabase {
             )
           """);
         }
+
+        // Version 7 - Driver Compliance
+        if (oldVersion < 7) {
+          await db.execute("""
+            CREATE TABLE IF NOT EXISTS driver_compliance(
+              driverId INTEGER PRIMARY KEY,
+              licenceExpiry TEXT NOT NULL,
+              cpcExpiry TEXT NOT NULL,
+              medicalExpiry TEXT NOT NULL
+            )
+          """);
+        }
       },
     );
 
@@ -156,6 +168,15 @@ class AppDatabase {
         assigned_from INTEGER NOT NULL,
         assigned_to INTEGER,
         active INTEGER DEFAULT 1
+      )
+    """);
+
+    await db.execute("""
+      CREATE TABLE driver_compliance(
+        driverId INTEGER PRIMARY KEY,
+        licenceExpiry TEXT NOT NULL,
+        cpcExpiry TEXT NOT NULL,
+        medicalExpiry TEXT NOT NULL
       )
     """);
   }

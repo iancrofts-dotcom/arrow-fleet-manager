@@ -1,5 +1,4 @@
 import '../models/driver.dart';
-import '../models/driver_assignment_result.dart';
 import '../models/driver_vehicle_assignment.dart';
 import '../repositories/driver_assignment_repository.dart';
 import 'driver_service.dart';
@@ -54,22 +53,15 @@ class DriverAssignmentService {
   /// Main API used by the UI.
   Future<void> assignDriverToVehicle({
     required int vehicleId,
-    required DriverAssignmentResult result,
+    Driver? driver,
   }) async {
-    if (result.cancelled) {
+    if (driver == null) {
       return;
     }
 
-    if (result.removeAssignment) {
-      await removeAssignment(vehicleId);
-      return;
-    }
-
-    final driver = result.driver;
-
-    if (driver == null || driver.id == null) {
+    if (driver.id == null) {
       throw Exception(
-        'Invalid driver selected.',
+        'Driver must be saved before it can be assigned.',
       );
     }
 
