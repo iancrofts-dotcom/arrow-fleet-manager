@@ -92,36 +92,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     runSpacing: 16,
                     children: [
                       StatCard(
-                        title: "Vehicles",
-                        value: summary.vehicles.toString(),
-                        icon: Icons.local_shipping,
-                      ),
-                      StatCard(
-                        title: "Active",
-                        value: summary.activeVehicles.toString(),
-                        icon: Icons.check_circle,
-                      ),
+  title: "Vehicles",
+  value: summary.vehicleCount.toString(),
+  icon: Icons.local_shipping,
+),
 
-                      StatCard(
-                        title: "Inactive",
-                        value: summary.inactiveVehicles.toString(),
-                        icon: Icons.pause_circle,
-                      ),
-                      StatCard(
-                        title: "Drivers",
-                        value: summary.drivers.toString(),
-                        icon: Icons.person,
-                      ),
-                      StatCard(
-                        title: "Inspections",
-                        value: summary.inspections.toString(),
-                        icon: Icons.assignment,
-                      ),
-                      StatCard(
-                        title: "Defects",
-                        value: summary.defects.toString(),
-                        icon: Icons.warning_amber,
-                      ),
+StatCard(
+  title: "Drivers",
+  value: summary.driverCount.toString(),
+  icon: Icons.person,
+),
+
+StatCard(
+  title: "Assigned",
+  value: summary.assignedDrivers.toString(),
+  icon: Icons.badge,
+),
+
+StatCard(
+  title: "Unassigned",
+  value: summary.unassignedDrivers.toString(),
+  icon: Icons.person_off,
+),
+
+StatCard(
+  title: "Maintenance Due",
+  value: summary.maintenanceDue.toString(),
+  icon: Icons.build,
+),
+
+StatCard(
+  title: "Maintenance Overdue",
+  value: summary.maintenanceOverdue.toString(),
+  icon: Icons.warning,
+),
+
+StatCard(
+  title: "Compliance Due",
+  value: summary.complianceDue.toString(),
+  icon: Icons.rule,
+),
+
+StatCard(
+  title: "Compliance Expired",
+  value: summary.complianceExpired.toString(),
+  icon: Icons.gpp_bad,
+),
                     ],
                   ),
 

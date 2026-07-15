@@ -1,5 +1,6 @@
 import 'dashboard_insight.dart';
 import 'package:flutter/material.dart';
+import 'dashboard_activity.dart';
 
 class DashboardSummary {
   const DashboardSummary({
@@ -147,16 +148,4 @@ List<DashboardInsight> get insights {
               this.complianceExpired,
     );
   }
-}
-
-class DashboardActivity {
-  const DashboardActivity({
-    required this.title,
-    required this.subtitle,
-    required this.date,
-  });
-
-  final String title;
-  final String subtitle;
-  final DateTime date;
 }

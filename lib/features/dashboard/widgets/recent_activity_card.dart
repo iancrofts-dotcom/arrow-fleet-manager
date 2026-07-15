@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../models/dashboard_summary.dart';
+import '../models/dashboard_activity.dart';
 
 class RecentActivityCard extends StatelessWidget {
-  final List<DashboardActivity> activities;
-
   const RecentActivityCard({
     super.key,
     required this.activities,
   });
+
+  final List<DashboardActivity> activities;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class RecentActivityCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Recent Activity",
+              'Recent Activity',
               style: Theme.of(context)
                   .textTheme
                   .titleLarge
@@ -31,13 +31,11 @@ class RecentActivityCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
             ),
-
             const SizedBox(height: 20),
-
             if (activities.isEmpty)
               const ListTile(
                 leading: Icon(Icons.history),
-                title: Text("No recent activity."),
+                title: Text('No recent activity'),
               )
             else
               ...activities.map(
@@ -47,9 +45,7 @@ class RecentActivityCard extends StatelessWidget {
                   ),
                   title: Text(activity.title),
                   subtitle: Text(activity.subtitle),
-                  trailing: Text(
-                    "${activity.date.day}/${activity.date.month}",
-                  ),
+                  trailing: Text(activity.formattedDate),
                 ),
               ),
           ],
