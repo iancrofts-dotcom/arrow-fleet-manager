@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'driver_compliance_screen.dart';
 import '../models/driver.dart';
 import 'edit_driver_screen.dart';
 import '../../vehicles/models/vehicle.dart';
@@ -157,15 +157,36 @@ else
   ),
           const SizedBox(height: 24),
 
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.verified_user),
-              title: const Text('Driver Compliance'),
-              subtitle: const Text(
-                'Compliance management will be enabled in the next step.',
-              ),
-            ),
+         Card(
+  child: ListTile(
+    leading: const Icon(Icons.verified_user),
+    title: const Text('Driver Compliance'),
+    subtitle: const Text(
+      'View and manage licence, CPC and medical expiry dates.',
+    ),
+    trailing: const Icon(Icons.chevron_right),
+    onTap: () async {
+      if (driver.id == null) {
+        return;
+      }
+
+      final refresh = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DriverComplianceScreen(
+            driverId: driver.id!,
           ),
+        ),
+      );
+
+      if (refresh == true && mounted) {
+        setState(() {
+          _loadAssignedVehicle();
+        });
+      }
+    },
+  ),
+),
 
           const SizedBox(height: 24),
 

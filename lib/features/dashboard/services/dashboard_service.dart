@@ -1,114 +1,86 @@
-import '../../../database/database_service.dart';
-import '../../../database/inspection_repository.dart';
-
-import '../../inspections/models/inspection.dart';
+import '../../drivers/services/driver_assignment_service.dart';
+import '../../drivers/services/driver_compliance_service.dart';
+import '../../drivers/services/driver_service.dart';
+import '../../maintenance/services/maintenance_service.dart';
 import '../../vehicles/services/vehicle_service.dart';
-
 import '../models/dashboard_summary.dart';
-import 'fleet_metrics_service.dart';
-
-import 'dashboard_insight_service.dart';
 
 class DashboardService {
-  DashboardService();
+  DashboardService({
+    VehicleService? vehicleService,
+    DriverService? driverService,
+    DriverAssignmentService? assignmentService,
+    DriverComplianceService? complianceService,
+    MaintenanceService? maintenanceService,
+  })  : _vehicleService =
+            vehicleService ?? VehicleService(),
+        _driverService =
+            driverService ?? DriverService(),
+        _assignmentService =
+            assignmentService ??
+                DriverAssignmentService(),
+        _complianceService =
+            complianceService ??
+                DriverComplianceService(),
+        _maintenanceService =
+            maintenanceService ??
+                MaintenanceService();
 
-  final VehicleService _vehicleService = VehicleService();
-
-  final FleetMetricsService _fleetMetricsService =
-      const FleetMetricsService();
-
-  final DashboardInsightService _dashboardInsightService =
-    const DashboardInsightService();
-
-  final InspectionRepository _inspectionRepository =
-      InspectionRepository(
-    databaseService: DatabaseService(),
-  );
+  final VehicleService _vehicleService;
+  final DriverService _driverService;
+  final DriverAssignmentService _assignmentService;
+  final DriverComplianceService _complianceService;
+  final MaintenanceService _maintenanceService;
 
   Future<DashboardSummary> loadSummary() async {
-    final vehicles = await _vehicleService.getVehicles();
+    final vehicles =
+        await _vehicleService.getVehicles();
 
-    final vehicleCount = vehicles.length;
+    final drivers =
+        await _driverService.getDrivers();
 
-    final inspectionCount =
-        await _inspectionRepository.getInspectionCount();
+    final assignments =
+        await _assignmentService
+            .getActiveAssignments();
 
-    final defectCount =
-        await _inspectionRepository.getOpenDefectCount();
+    final compliance =
+        await _complianceService.getAll();
 
-    final recentInspections =
-        await _inspectionRepository.getRecentInspections();
+    final maintenance =
+        await _maintenanceService.getAll();
 
-    final metrics =
-        _fleetMetricsService.calculate(vehicles);
+    final maintenanceDue =
+        _maintenanceService
+            .dueSoon(maintenance)
+            .length;
 
-  final insights =
-    _dashboardInsightService.generateInsights(metrics);
-  
-   final fleetHealth = _calculateFleetHealth(
-  vehicles: vehicleCount,
-  inspections: inspectionCount,
-  defects: defectCount,
-  inactiveVehicles: metrics.inactive,
-);
+    final maintenanceOverdue =
+        _maintenanceService
+            .overdue(maintenance)
+            .length;
+
+    final complianceDue =
+        _complianceService
+            .expiringSoon(compliance)
+            .length;
+
+    final complianceExpired =
+        _complianceService
+            .expired(compliance)
+            .length;
 
     return DashboardSummary(
-      vehicles: vehicleCount,
-      activeVehicles: metrics.active,
-      inactiveVehicles: metrics.inactive,
-      drivers: 0,
-      inspections: inspectionCount,
-      defects: defectCount,
-      fleetHealth: fleetHealth,
-      motDue: metrics.motDue,
-      serviceDue: metrics.serviceDue,
-      overdue: metrics.overdue,
-      insights: insights,
-      recentActivity: _buildRecentActivity(
-        recentInspections,
-      ),
+      vehicleCount: vehicles.length,
+      driverCount: drivers.length,
+      assignedDrivers: assignments.length,
+      unassignedDrivers:
+          drivers.length - assignments.length,
+      maintenanceDue: maintenanceDue,
+      maintenanceOverdue:
+          maintenanceOverdue,
+      complianceDue: complianceDue,
+      complianceExpired:
+          complianceExpired,
     );
-  }
-
-  List<DashboardActivity> _buildRecentActivity(
-    List<Inspection> inspections,
-  ) {
-    return inspections.map((inspection) {
-      return DashboardActivity(
-        title: "Inspection Completed",
-        subtitle: inspection.registration,
-        date: inspection.inspectionDate,
-      );
-    }).toList();
-  }
-
-  int _calculateFleetHealth({
-  required int vehicles,
-  required int inspections,
-  required int defects,
-  required int inactiveVehicles,
-}) {
-    int score = 100;
-
-    if (vehicles == 0) {
-      score -= 20;
-    }
-
-    if (inspections == 0) {
-      score -= 10;
-    }
-
-    score -= defects * 5;
-    score -= inactiveVehicles * 2;
-
-    if (score < 0) {
-      score = 0;
-    }
-
-    if (score > 100) {
-      score = 100;
-    }
-
-    return score;
   }
 }
