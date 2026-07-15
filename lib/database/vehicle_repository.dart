@@ -8,15 +8,15 @@ class VehicleRepository {
     required this.databaseService,
   });
 
-Future<int> getVehicleCount() async {
-  final db = await databaseService.database.database();
+  Future<int> getVehicleCount() async {
+    final db = await databaseService.database.database();
 
-  final result = await db.rawQuery(
-    'SELECT COUNT(*) AS total FROM vehicles',
-  );
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) AS total FROM vehicles',
+    );
 
-  return (result.first['total'] as int?) ?? 0;
-}
+    return (result.first['total'] as int?) ?? 0;
+  }
 
   Future<void> addVehicle(Vehicle vehicle) async {
     final db = await databaseService.database.database();
@@ -38,6 +38,23 @@ Future<int> getVehicleCount() async {
     return maps
         .map((e) => Vehicle.fromMap(e))
         .toList();
+  }
+
+  Future<Vehicle?> getVehicleById(int id) async {
+    final db = await databaseService.database.database();
+
+    final maps = await db.query(
+      'vehicles',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (maps.isEmpty) {
+      return null;
+    }
+
+    return Vehicle.fromMap(maps.first);
   }
 
   Future<void> deleteVehicle(int id) async {

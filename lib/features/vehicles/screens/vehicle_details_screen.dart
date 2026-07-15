@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../drivers/models/driver.dart';
-import '../../drivers/models/driver_vehicle_assignment.dart';
-import '../../drivers/repositories/driver_assignment_repository.dart';
+
 import '../../drivers/screens/assign_driver_screen.dart';
 import '../../drivers/screens/assignment_history_screen.dart';
 import '../../drivers/services/driver_assignment_service.dart';
@@ -29,10 +28,7 @@ class _VehicleDetailsScreenState
   final DriverAssignmentService _assignmentService =
       DriverAssignmentService();
 
-  final DriverAssignmentRepository
-      _assignmentRepository =
-      DriverAssignmentRepository();
-
+  
   Driver? _assignedDriver;
 
   @override
@@ -79,35 +75,41 @@ class _VehicleDetailsScreenState
   }
 
   Future<void> _assignDriver() async {
-    if (_vehicle.id == null) {
-      return;
-    }
-
-    final driver =
-        await Navigator.push<Driver>(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            const AssignDriverScreen(),
-      ),
-    );
-
-    if (!mounted || driver == null) {
-      return;
-    }
-
-    await _assignmentRepository
-        .insertAssignment(
-      DriverVehicleAssignment(
-        driverId: driver.id!,
-        vehicleId: _vehicle.id!,
-        assignedFrom: DateTime.now(),
-        active: true,
-      ),
-    );
-
-    await _loadAssignedDriver();
+  if (_vehicle.id == null) {
+    return;
   }
+
+  final driver = await Navigator.push<Driver>(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const AssignDriverScreen(),
+    ),
+  );
+
+  if (!mounted || driver == null) {
+    return;
+  }
+
+  // End the current assignment (if there is one).
+  await _assignmentService.assignDriverToVehicle(
+  vehicleId: _vehicle.id!,
+  driver: driver,
+);
+
+  await _loadAssignedDriver();
+
+  if (!mounted) {
+    return;
+  }
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        '${driver.fullName} assigned successfully.',
+      ),
+    ),
+  );
+}
     Widget _detailTile({
     required IconData icon,
     required String title,
