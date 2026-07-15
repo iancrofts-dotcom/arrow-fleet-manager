@@ -49,7 +49,11 @@ class DashboardService {
     final maintenance =
         await _maintenanceService.getAll();
 
-    final maintenanceDue =
+    final recentActivity =
+        await _assignmentService
+            .getRecentActivities();
+
+                final maintenanceDue =
         _maintenanceService
             .dueSoon(maintenance)
             .length;
@@ -76,11 +80,14 @@ class DashboardService {
       unassignedDrivers:
           drivers.length - assignments.length,
       maintenanceDue: maintenanceDue,
-      maintenanceOverdue:
-          maintenanceOverdue,
+      maintenanceOverdue: maintenanceOverdue,
       complianceDue: complianceDue,
-      complianceExpired:
-          complianceExpired,
+      complianceExpired: complianceExpired,
+
+      // Uncomment this AFTER DashboardSummary
+      // has been updated to support it.
+      //
+      recentActivity: recentActivity,
     );
   }
 }

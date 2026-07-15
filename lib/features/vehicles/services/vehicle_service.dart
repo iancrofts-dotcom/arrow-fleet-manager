@@ -14,6 +14,15 @@ class VehicleService {
     return _repository.getVehicles();
   }
 
+Future<Map<int, Vehicle>> getVehicleMap() async {
+  final vehicles = await getVehicles();
+
+  return {
+    for (final vehicle in vehicles)
+      if (vehicle.id != null) vehicle.id!: vehicle,
+  };
+}
+
   Future<int> getVehicleCount() async {
     return _repository.getVehicleCount();
   }

@@ -17,6 +17,15 @@ class DriverService {
         .toList(growable: false);
   }
 
+Future<Map<int, Driver>> getDriverMap() async {
+  final drivers = await getDrivers();
+
+  return {
+    for (final driver in drivers)
+      if (driver.id != null) driver.id!: driver,
+  };
+}
+
   Future<Driver?> getDriverById(
     int id,
   ) async {

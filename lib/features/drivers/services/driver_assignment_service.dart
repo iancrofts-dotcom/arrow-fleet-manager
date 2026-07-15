@@ -4,6 +4,8 @@ import '../models/driver.dart';
 import '../models/driver_vehicle_assignment.dart';
 import '../repositories/driver_assignment_repository.dart';
 import 'driver_service.dart';
+import '../../dashboard/models/dashboard_activity.dart';
+import '../../dashboard/mappers/assignment_activity_mapper.dart';
 
 class DriverAssignmentService {
   DriverAssignmentService({
@@ -20,6 +22,8 @@ class DriverAssignmentService {
   final DriverAssignmentRepository _repository;
   final DriverService _driverService;
   final VehicleService _vehicleService;
+  final AssignmentActivityMapper _activityMapper =
+    const AssignmentActivityMapper();
 
   Future<List<DriverVehicleAssignment>> getAssignments() async {
     return _repository.getAllAssignments();
@@ -165,6 +169,42 @@ class DriverAssignmentService {
       ),
     );
   }
+
+Future<List<DashboardActivity>> getRecentActivities({
+  int limit = 5,
+}) async {
+  final assignments = await getAssignments();
+
+  final driverMap =
+      await _driverService.getDriverMap();
+
+  final vehicleMap =
+      await _vehicleService.getVehicleMap();
+
+  final activities = <DashboardActivity>[];
+
+  for (final assignment in assignments) {
+    final driver =
+        driverMap[assignment.driverId];
+
+    final vehicle =
+        vehicleMap[assignment.vehicleId];
+
+    if (driver == null || vehicle == null) {
+      continue;
+    }
+
+    activities.add(
+      _activityMapper.toActivity(
+        assignment: assignment,
+        driver: driver,
+        vehicle: vehicle,
+      ),
+    );
+  }
+
+  return activities.take(limit).toList();
+}
 
   Future<void> deleteAssignment(
     int id,

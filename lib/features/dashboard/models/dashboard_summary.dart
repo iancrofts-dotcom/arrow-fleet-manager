@@ -1,6 +1,7 @@
-import 'dashboard_insight.dart';
 import 'package:flutter/material.dart';
+
 import 'dashboard_activity.dart';
+import 'dashboard_insight.dart';
 
 class DashboardSummary {
   const DashboardSummary({
@@ -12,6 +13,7 @@ class DashboardSummary {
     required this.maintenanceOverdue,
     required this.complianceDue,
     required this.complianceExpired,
+    required this.recentActivity,
   });
 
   // ===== New Dashboard =====
@@ -27,6 +29,8 @@ class DashboardSummary {
 
   final int complianceDue;
   final int complianceExpired;
+
+  final List<DashboardActivity> recentActivity;
 
   // ===== Legacy compatibility =====
 
@@ -62,56 +66,54 @@ class DashboardSummary {
     return score.clamp(0, 100).round();
   }
 
-List<DashboardInsight> get insights {
-  final list = <DashboardInsight>[];
+  List<DashboardInsight> get insights {
+    final list = <DashboardInsight>[];
 
-  if (maintenanceOverdue > 0) {
-    list.add(
-      DashboardInsight(
-        icon: Icons.build,
-        title: 'Maintenance',
-        message:
-            '$maintenanceOverdue vehicle(s) have overdue maintenance.',
-      ),
-    );
+    if (maintenanceOverdue > 0) {
+      list.add(
+        DashboardInsight(
+          icon: Icons.build,
+          title: 'Maintenance',
+          message:
+              '$maintenanceOverdue vehicle(s) have overdue maintenance.',
+        ),
+      );
+    }
+
+    if (complianceExpired > 0) {
+      list.add(
+        DashboardInsight(
+          icon: Icons.warning,
+          title: 'Compliance',
+          message:
+              '$complianceExpired driver(s) have expired compliance.',
+        ),
+      );
+    }
+
+    if (assignedDrivers < driverCount) {
+      list.add(
+        DashboardInsight(
+          icon: Icons.person_off,
+          title: 'Drivers',
+          message:
+              '${driverCount - assignedDrivers} driver(s) are unassigned.',
+        ),
+      );
+    }
+
+    if (list.isEmpty) {
+      list.add(
+        const DashboardInsight(
+          icon: Icons.check_circle,
+          title: 'Fleet Status',
+          message: 'Fleet operating normally.',
+        ),
+      );
+    }
+
+    return list;
   }
-
-  if (complianceExpired > 0) {
-    list.add(
-      DashboardInsight(
-        icon: Icons.warning,
-        title: 'Compliance',
-        message:
-            '$complianceExpired driver(s) have expired compliance.',
-      ),
-    );
-  }
-
-  if (assignedDrivers < driverCount) {
-    list.add(
-      DashboardInsight(
-        icon: Icons.person_off,
-        title: 'Drivers',
-        message:
-            '${driverCount - assignedDrivers} driver(s) are unassigned.',
-      ),
-    );
-  }
-
-  if (list.isEmpty) {
-    list.add(
-      const DashboardInsight(
-        icon: Icons.check_circle,
-        title: 'Fleet Status',
-        message: 'Fleet operating normally.',
-      ),
-    );
-  }
-
-  return list;
-}
-
-  List<DashboardActivity> get recentActivity => const [];
 
   DashboardSummary copyWith({
     int? vehicleCount,
@@ -122,8 +124,10 @@ List<DashboardInsight> get insights {
     int? maintenanceOverdue,
     int? complianceDue,
     int? complianceExpired,
+    List<DashboardActivity>? recentActivity,
   }) {
-    return DashboardSummary(
+
+        return DashboardSummary(
       vehicleCount:
           vehicleCount ?? this.vehicleCount,
       driverCount:
@@ -146,6 +150,9 @@ List<DashboardInsight> get insights {
       complianceExpired:
           complianceExpired ??
               this.complianceExpired,
+      recentActivity:
+          recentActivity ??
+              this.recentActivity,
     );
   }
 }
