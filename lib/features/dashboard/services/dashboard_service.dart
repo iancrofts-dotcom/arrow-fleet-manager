@@ -52,6 +52,7 @@ class DashboardService {
     final activities = [
   ...await _assignmentService.getRecentActivities(),
   ...await _maintenanceService.getRecentActivities(),
+  ...await _complianceService.getRecentActivities(),
 ];
 
 activities.sort(

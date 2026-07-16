@@ -1,13 +1,24 @@
+import '../../dashboard/mappers/compliance_activity_mapper.dart';
+import '../../dashboard/models/dashboard_activity.dart';
+
 import '../models/driver_compliance.dart';
 import '../repositories/driver_compliance_repository.dart';
+import 'driver_service.dart';
 
 class DriverComplianceService {
   DriverComplianceService({
     DriverComplianceRepository? repository,
-  }) : _repository =
-            repository ?? DriverComplianceRepository();
+    DriverService? driverService,
+  })  : _repository =
+            repository ?? DriverComplianceRepository(),
+        _driverService =
+            driverService ?? DriverService();
 
   final DriverComplianceRepository _repository;
+  final DriverService _driverService;
+
+  final ComplianceActivityMapper _activityMapper =
+      const ComplianceActivityMapper();
 
   Future<List<DriverCompliance>> getAll() async {
     return _repository.getAll();
@@ -31,7 +42,40 @@ class DriverComplianceService {
     await _repository.delete(driverId);
   }
 
-  bool isExpired(DateTime expiryDate) {
+  Future<List<DashboardActivity>>
+      getRecentActivities({
+    int limit = 5,
+  }) async {
+    final records = await getAll();
+
+    final drivers =
+        await _driverService.getDriverMap();
+
+    final activities = <DashboardActivity>[];
+
+    for (final record in records) {
+      final driver =
+          drivers[record.driverId];
+
+      if (driver == null) {
+        continue;
+      }
+
+      activities.add(
+        _activityMapper.toActivity(
+          compliance: record,
+          driver: driver,
+        ),
+      );
+    }
+
+    activities.sort(
+      (a, b) => b.date.compareTo(a.date),
+    );
+
+    return activities.take(limit).toList();
+  }
+    bool isExpired(DateTime expiryDate) {
     return expiryDate.isBefore(DateTime.now());
   }
 
