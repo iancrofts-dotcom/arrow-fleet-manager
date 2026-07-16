@@ -115,11 +115,12 @@ class _DriverComplianceScreenState
     });
 
     final compliance = DriverCompliance(
-      driverId: widget.driverId,
-      licenceExpiry: _licenceExpiry,
-      cpcExpiry: _cpcExpiry,
-      medicalExpiry: _medicalExpiry,
-    );
+  driverId: widget.driverId,
+  licenceExpiry: _licenceExpiry,
+  cpcExpiry: _cpcExpiry,
+  medicalExpiry: _medicalExpiry,
+  lastUpdated: DateTime.now(),
+);
 
     await _service.save(compliance);
 

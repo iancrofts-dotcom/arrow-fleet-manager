@@ -13,29 +13,8 @@ class ComplianceActivityMapper {
       title: 'Driver Compliance',
       subtitle:
           'Compliance updated for ${driver.fullName}',
-      date: _activityDate(compliance),
+      date: compliance.lastUpdated,
       type: DashboardActivityType.compliance,
     );
-  }
-
-  DateTime _activityDate(
-    DriverCompliance compliance,
-  ) {
-    final dates = <DateTime?>[
-      compliance.licenceExpiry,
-      compliance.cpcExpiry,
-      compliance.medicalExpiry,
-    ];
-
-    return dates
-            .whereType<DateTime>()
-            .fold<DateTime?>(
-              null,
-              (latest, current) =>
-                  latest == null || current.isAfter(latest)
-                      ? current
-                      : latest,
-            ) ??
-        DateTime.now();
   }
 }

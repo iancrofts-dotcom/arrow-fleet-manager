@@ -80,11 +80,12 @@ class _EditDriverComplianceScreenState
 
   Future<void> _save() async {
     final compliance = DriverCompliance(
-      driverId: widget.driver.id!,
-      licenceExpiry: _licenceExpiry,
-      cpcExpiry: _cpcExpiry,
-      medicalExpiry: _medicalExpiry,
-    );
+  driverId: widget.driver.id!,
+  licenceExpiry: _licenceExpiry,
+  cpcExpiry: _cpcExpiry,
+  medicalExpiry: _medicalExpiry,
+  lastUpdated: DateTime.now(),
+);
 
     await _service.save(compliance);
 

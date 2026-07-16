@@ -4,12 +4,16 @@ class DriverCompliance {
     required this.licenceExpiry,
     required this.cpcExpiry,
     required this.medicalExpiry,
+    required this.lastUpdated,
   });
 
   final int driverId;
   final DateTime licenceExpiry;
   final DateTime cpcExpiry;
   final DateTime medicalExpiry;
+
+  /// Records when this compliance record was last created or updated.
+  final DateTime lastUpdated;
 
   bool get licenceExpired =>
       licenceExpiry.isBefore(DateTime.now());
@@ -39,13 +43,18 @@ class DriverCompliance {
     DateTime? licenceExpiry,
     DateTime? cpcExpiry,
     DateTime? medicalExpiry,
+    DateTime? lastUpdated,
   }) {
     return DriverCompliance(
       driverId: driverId ?? this.driverId,
-      licenceExpiry: licenceExpiry ?? this.licenceExpiry,
-      cpcExpiry: cpcExpiry ?? this.cpcExpiry,
+      licenceExpiry:
+          licenceExpiry ?? this.licenceExpiry,
+      cpcExpiry:
+          cpcExpiry ?? this.cpcExpiry,
       medicalExpiry:
           medicalExpiry ?? this.medicalExpiry,
+      lastUpdated:
+          lastUpdated ?? this.lastUpdated,
     );
   }
 
@@ -58,6 +67,8 @@ class DriverCompliance {
           cpcExpiry.toIso8601String(),
       'medicalExpiry':
           medicalExpiry.toIso8601String(),
+      'lastUpdated':
+          lastUpdated.toIso8601String(),
     };
   }
 
@@ -75,6 +86,11 @@ class DriverCompliance {
       medicalExpiry: DateTime.parse(
         map['medicalExpiry'] as String,
       ),
+      lastUpdated: map['lastUpdated'] != null
+          ? DateTime.parse(
+              map['lastUpdated'] as String,
+            )
+          : DateTime.now(),
     );
   }
 }

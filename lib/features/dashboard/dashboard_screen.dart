@@ -47,8 +47,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Arrow Fleet Manager"),
-      ),
+  title: const Text("Arrow Fleet Manager"),
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.refresh),
+      tooltip: 'Refresh Dashboard',
+      onPressed: _refreshDashboard,
+    ),
+  ],
+),
       body: FutureBuilder<DashboardSummary>(
         future: summaryFuture,
         builder: (context, snapshot) {
@@ -145,6 +152,10 @@ StatCard(
 
                  FleetHealthCard(
   healthScore: summary.fleetHealth,
+  maintenanceOverdue: summary.maintenanceOverdue,
+  complianceExpired: summary.complianceExpired,
+  healthyVehicles:
+      summary.vehicleCount - summary.maintenanceOverdue,
 ),
 
 const SizedBox(height: 30),
