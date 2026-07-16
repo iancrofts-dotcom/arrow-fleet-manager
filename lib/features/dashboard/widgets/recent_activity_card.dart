@@ -10,6 +10,21 @@ class RecentActivityCard extends StatelessWidget {
 
   final List<DashboardActivity> activities;
 
+  IconData _iconForType(DashboardActivityType type) {
+    switch (type) {
+      case DashboardActivityType.assignment:
+        return Icons.person_add;
+      case DashboardActivityType.maintenance:
+        return Icons.build;
+      case DashboardActivityType.compliance:
+        return Icons.verified_user;
+      case DashboardActivityType.vehicle:
+        return Icons.local_shipping;
+      case DashboardActivityType.driver:
+        return Icons.person;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -40,12 +55,14 @@ class RecentActivityCard extends StatelessWidget {
             else
               ...activities.map(
                 (activity) => ListTile(
-                  leading: const Icon(
-                    Icons.assignment_turned_in,
+                  leading: Icon(
+                    _iconForType(activity.type),
                   ),
                   title: Text(activity.title),
                   subtitle: Text(activity.subtitle),
-                  trailing: Text(activity.formattedDate),
+                  trailing: Text(
+                    activity.relativeDate,
+                  ),
                 ),
               ),
           ],

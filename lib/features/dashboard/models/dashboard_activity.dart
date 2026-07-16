@@ -19,6 +19,39 @@ class DashboardActivity {
     return '$day/$month/$year';
   }
 
+  String get relativeDate {
+    final now = DateTime.now();
+
+    final today = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    );
+
+    final activityDay = DateTime(
+      date.year,
+      date.month,
+      date.day,
+    );
+
+    final difference =
+        today.difference(activityDay).inDays;
+
+    if (difference == 0) {
+      return 'Today';
+    }
+
+    if (difference == 1) {
+      return 'Yesterday';
+    }
+
+    if (difference < 7) {
+      return '$difference days ago';
+    }
+
+    return formattedDate;
+  }
+
   DashboardActivity copyWith({
     String? title,
     String? subtitle,
