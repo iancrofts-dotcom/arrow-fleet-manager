@@ -1,13 +1,24 @@
+import '../../dashboard/mappers/maintenance_activity_mapper.dart';
+import '../../dashboard/models/dashboard_activity.dart';
+import '../../vehicles/services/vehicle_service.dart';
+
 import '../models/maintenance_record.dart';
 import '../repositories/maintenance_repository.dart';
 
 class MaintenanceService {
   MaintenanceService({
     MaintenanceRepository? repository,
-  }) : _repository =
-            repository ?? MaintenanceRepository();
+    VehicleService? vehicleService,
+  })  : _repository =
+            repository ?? MaintenanceRepository(),
+        _vehicleService =
+            vehicleService ?? VehicleService();
 
   final MaintenanceRepository _repository;
+  final VehicleService _vehicleService;
+
+  final MaintenanceActivityMapper _activityMapper =
+      const MaintenanceActivityMapper();
 
   Future<List<MaintenanceRecord>> getAll() async {
     return _repository.getAll();
@@ -31,7 +42,39 @@ class MaintenanceService {
     await _repository.delete(id);
   }
 
-  List<MaintenanceRecord> overdue(
+  Future<List<DashboardActivity>>
+      getRecentActivities({
+    int limit = 5,
+  }) async {
+    final records = await getAll();
+
+    final vehicles =
+        await _vehicleService.getVehicleMap();
+
+    final activities = <DashboardActivity>[];
+
+    for (final record in records) {
+      final vehicle =
+          vehicles[record.vehicleId];
+
+      if (vehicle == null) {
+        continue;
+      }
+
+      activities.add(
+        _activityMapper.toActivity(
+          record: record,
+          vehicle: vehicle,
+        ),
+      );
+    }
+
+    activities.sort(
+      (a, b) => b.date.compareTo(a.date),
+    );
+
+    return activities.take(limit).toList();
+  }  List<MaintenanceRecord> overdue(
     List<MaintenanceRecord> records,
   ) {
     return records

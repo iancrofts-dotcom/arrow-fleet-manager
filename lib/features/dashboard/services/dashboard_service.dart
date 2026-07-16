@@ -49,9 +49,17 @@ class DashboardService {
     final maintenance =
         await _maintenanceService.getAll();
 
-    final recentActivity =
-        await _assignmentService
-            .getRecentActivities();
+    final activities = [
+  ...await _assignmentService.getRecentActivities(),
+  ...await _maintenanceService.getRecentActivities(),
+];
+
+activities.sort(
+  (a, b) => b.date.compareTo(a.date),
+);
+
+final recentActivity =
+    activities.take(10).toList();
 
                 final maintenanceDue =
         _maintenanceService
