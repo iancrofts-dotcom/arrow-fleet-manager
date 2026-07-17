@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../vehicles/models/vehicle.dart';
-import '../../vehicles/services/vehicle_service.dart';
-
 import '../models/calendar_event.dart';
 import '../services/calendar_service.dart';
 import '../widgets/calendar_event_list.dart';
@@ -15,9 +12,7 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  final VehicleService _vehicleService = VehicleService();
-  final CalendarService _calendarService =
-      const CalendarService();
+  final CalendarService _calendarService = CalendarService();
 
   late Future<List<CalendarEvent>> _eventsFuture;
 
@@ -27,11 +22,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _eventsFuture = _loadEvents();
   }
 
-  Future<List<CalendarEvent>> _loadEvents() async {
-    final List<Vehicle> vehicles =
-        await _vehicleService.getVehicles();
-
-    return _calendarService.buildEvents(vehicles);
+  Future<List<CalendarEvent>> _loadEvents() {
+    return _calendarService.buildEvents();
   }
 
   Future<void> _refresh() async {
@@ -51,8 +43,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       body: FutureBuilder<List<CalendarEvent>>(
         future: _eventsFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(),
             );
@@ -72,8 +63,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           return RefreshIndicator(
             onRefresh: _refresh,
             child: SingleChildScrollView(
-              physics:
-                  const AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               child: CalendarEventList(
                 events: events,

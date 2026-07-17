@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
 enum CalendarEventType {
-  mot,
-  service,
-  inspection,
-  overdue,
-
+  vehicle,
   maintenance,
   document,
   licence,
