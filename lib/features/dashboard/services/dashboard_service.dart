@@ -1,9 +1,12 @@
+import 'package:flutter/material.dart';
 import '../../drivers/services/driver_assignment_service.dart';
 import '../../drivers/services/driver_compliance_service.dart';
 import '../../drivers/services/driver_service.dart';
 import '../../maintenance/services/maintenance_service.dart';
 import '../../vehicles/services/vehicle_service.dart';
 import '../models/dashboard_summary.dart';
+import '../models/dashboard_alert.dart';
+
 
 class DashboardService {
   DashboardService({
@@ -62,6 +65,8 @@ activities.sort(
 final recentActivity =
     activities.take(10).toList();
 
+    
+
                 final maintenanceDue =
         _maintenanceService
             .dueSoon(maintenance)
@@ -82,6 +87,16 @@ final recentActivity =
             .expired(compliance)
             .length;
 
+final alerts = <DashboardAlert>[];
+
+
+final alerts = <DashboardAlert>[
+  ...await _maintenanceService.getDashboardAlerts(),
+];
+
+alerts.sort(
+  (a, b) => a.date.compareTo(b.date),
+);
     return DashboardSummary(
       vehicleCount: vehicles.length,
       driverCount: drivers.length,
@@ -97,6 +112,7 @@ final recentActivity =
       // has been updated to support it.
       //
       recentActivity: recentActivity,
+      alerts: alerts,
     );
   }
 }

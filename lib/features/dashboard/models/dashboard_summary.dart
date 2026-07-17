@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'dashboard_alert.dart';
 import 'dashboard_activity.dart';
 import 'dashboard_insight.dart';
 
@@ -14,6 +14,7 @@ class DashboardSummary {
     required this.complianceDue,
     required this.complianceExpired,
     required this.recentActivity,
+    required this.alerts,
   });
 
   // ===== New Dashboard =====
@@ -31,6 +32,7 @@ class DashboardSummary {
   final int complianceExpired;
 
   final List<DashboardActivity> recentActivity;
+  final List<DashboardAlert> alerts;
 
   // ===== Legacy compatibility =====
 
@@ -125,6 +127,7 @@ class DashboardSummary {
     int? complianceDue,
     int? complianceExpired,
     List<DashboardActivity>? recentActivity,
+    List<DashboardAlert>? alerts,
   }) {
 
         return DashboardSummary(
@@ -153,6 +156,7 @@ class DashboardSummary {
       recentActivity:
           recentActivity ??
               this.recentActivity,
+              alerts: alerts ?? this.alerts,
     );
   }
 }
