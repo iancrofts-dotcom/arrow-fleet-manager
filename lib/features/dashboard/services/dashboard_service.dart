@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../../documents/services/document_service.dart';
 import '../../drivers/services/driver_assignment_service.dart';
 import '../../drivers/services/driver_compliance_service.dart';
 import '../../drivers/services/driver_service.dart';
@@ -62,6 +62,9 @@ class DashboardService {
     final compliance = await _complianceService.getAll();
 
     final maintenance = await _maintenanceService.getAll();
+
+    final documents =
+    await DocumentService().getAll();
 
     final vehicleMap =
         await _vehicleService.getVehicleMap();
@@ -204,6 +207,43 @@ for (final record in compliance) {
       icon: Icons.medical_services,
       severity: DashboardAlertSeverity.warning,
       route: '/driver-compliance',
+    );
+  }
+}
+
+// Document alerts
+for (final document in documents) {
+  String owner = 'Fleet';
+
+  if (document.vehicleId != null) {
+    owner = vehicleMap[document.vehicleId!]?.registration ??
+        'Vehicle';
+  } else if (document.driverId != null) {
+    owner = driverMap[document.driverId!]?.fullName ??
+        'Driver';
+  }
+
+  if (document.isExpired) {
+    _addAlert(
+      alerts,
+      title: 'Documents',
+      message:
+          '$owner • ${document.title} has expired.',
+      date: document.expiryDate,
+      icon: Icons.description,
+      severity: DashboardAlertSeverity.critical,
+      route: '/documents',
+    );
+  } else if (document.isDueSoon) {
+    _addAlert(
+      alerts,
+      title: 'Documents',
+      message:
+          '$owner • ${document.title} expires in ${document.daysRemaining} day(s).',
+      date: document.expiryDate,
+      icon: Icons.description,
+      severity: DashboardAlertSeverity.warning,
+      route: '/documents',
     );
   }
 }
