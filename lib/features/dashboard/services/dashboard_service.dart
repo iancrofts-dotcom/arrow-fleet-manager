@@ -51,6 +51,18 @@ class DashboardService {
     );
   }
 
+String _daysMessage(int days) {
+  if (days <= 0) {
+    return 'expires today';
+  }
+
+  if (days == 1) {
+    return 'expires tomorrow';
+  }
+
+  return 'expires in $days days';
+}
+
   Future<DashboardSummary> loadSummary() async {
     final vehicles = await _vehicleService.getVehicles();
 
@@ -125,7 +137,7 @@ class DashboardService {
         alerts,
         title: 'Maintenance',
         message:
-            '${vehicle?.registration ?? "Vehicle"} • ${record.title} is due in ${record.daysRemaining} day(s).',
+            '${vehicle?.registration ?? "Vehicle"} • ${record.title} ${_daysMessage(record.daysRemaining)}.',
         date: record.dueDate,
         icon: Icons.build,
         severity: DashboardAlertSeverity.warning,
@@ -238,9 +250,9 @@ for (final document in documents) {
     _addAlert(
       alerts,
       title: 'Documents',
-      message:
-          '$owner • ${document.title} expires in ${document.daysRemaining} day(s).',
-      date: document.expiryDate,
+     message:
+    '$owner • ${document.title} ${_daysMessage(document.daysRemaining)}.',
+date: document.expiryDate,
       icon: Icons.description,
       severity: DashboardAlertSeverity.warning,
       route: '/documents',
@@ -248,9 +260,18 @@ for (final document in documents) {
   }
 }
 
-    alerts.sort(
-      (a, b) => a.date.compareTo(b.date),
-    );
+    alerts.sort((a, b) {
+  // Critical alerts before warnings
+  final severityCompare =
+      b.severity.index.compareTo(a.severity.index);
+
+  if (severityCompare != 0) {
+    return severityCompare;
+  }
+
+  // Within the same severity, show the earliest date first
+  return a.date.compareTo(b.date);
+});
 
     return DashboardSummary(
       vehicleCount: vehicles.length,
@@ -263,7 +284,7 @@ for (final document in documents) {
       complianceDue: complianceDue,
       complianceExpired: complianceExpired,
       recentActivity: recentActivity,
-      alerts: alerts,
+      alerts: alerts.take(15).toList(),
     );
   }
 }
