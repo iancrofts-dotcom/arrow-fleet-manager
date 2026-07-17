@@ -66,6 +66,9 @@ class DashboardService {
     final vehicleMap =
         await _vehicleService.getVehicleMap();
 
+    final driverMap =
+    await _driverService.getDriverMap();    
+
     final activities = [
       ...await _assignmentService.getRecentActivities(),
       ...await _maintenanceService.getRecentActivities(),
@@ -126,6 +129,84 @@ class DashboardService {
         route: '/maintenance',
       );
     }
+
+    // Driver compliance alerts
+for (final record in compliance) {
+  final driver = driverMap[record.driverId];
+  final driverName = driver?.fullName ?? 'Unknown driver';
+
+  // Licence
+  if (record.licenceExpired) {
+    _addAlert(
+      alerts,
+      title: 'Driver Compliance',
+      message: '$driverName • Licence has expired.',
+      date: record.licenceExpiry,
+      icon: Icons.badge,
+      severity: DashboardAlertSeverity.critical,
+      route: '/driver-compliance',
+    );
+  } else if (record.licenceDaysRemaining <= 30) {
+    _addAlert(
+      alerts,
+      title: 'Driver Compliance',
+      message:
+          '$driverName • Licence expires in ${record.licenceDaysRemaining} day(s).',
+      date: record.licenceExpiry,
+      icon: Icons.badge,
+      severity: DashboardAlertSeverity.warning,
+      route: '/driver-compliance',
+    );
+  }
+
+  // CPC
+  if (record.cpcExpired) {
+    _addAlert(
+      alerts,
+      title: 'Driver Compliance',
+      message: '$driverName • CPC has expired.',
+      date: record.cpcExpiry,
+      icon: Icons.school,
+      severity: DashboardAlertSeverity.critical,
+      route: '/driver-compliance',
+    );
+  } else if (record.cpcDaysRemaining <= 30) {
+    _addAlert(
+      alerts,
+      title: 'Driver Compliance',
+      message:
+          '$driverName • CPC expires in ${record.cpcDaysRemaining} day(s).',
+      date: record.cpcExpiry,
+      icon: Icons.school,
+      severity: DashboardAlertSeverity.warning,
+      route: '/driver-compliance',
+    );
+  }
+
+  // Medical
+  if (record.medicalExpired) {
+    _addAlert(
+      alerts,
+      title: 'Driver Compliance',
+      message: '$driverName • Medical has expired.',
+      date: record.medicalExpiry,
+      icon: Icons.medical_services,
+      severity: DashboardAlertSeverity.critical,
+      route: '/driver-compliance',
+    );
+  } else if (record.medicalDaysRemaining <= 30) {
+    _addAlert(
+      alerts,
+      title: 'Driver Compliance',
+      message:
+          '$driverName • Medical expires in ${record.medicalDaysRemaining} day(s).',
+      date: record.medicalExpiry,
+      icon: Icons.medical_services,
+      severity: DashboardAlertSeverity.warning,
+      route: '/driver-compliance',
+    );
+  }
+}
 
     alerts.sort(
       (a, b) => a.date.compareTo(b.date),
