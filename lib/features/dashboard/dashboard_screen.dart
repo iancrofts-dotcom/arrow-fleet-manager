@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'widgets/dashboard_alerts_card.dart';
 import '../history/inspection_history_screen.dart';
 import '../inspections/inspection_screen.dart';
 import '../vehicles/screens/vehicle_list_screen.dart';
@@ -102,55 +102,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
   title: "Vehicles",
   value: summary.vehicleCount.toString(),
   icon: Icons.local_shipping,
+  color: Colors.blue,
 ),
 
 StatCard(
   title: "Drivers",
   value: summary.driverCount.toString(),
   icon: Icons.person,
+  color: Colors.indigo,
 ),
 
 StatCard(
   title: "Assigned",
   value: summary.assignedDrivers.toString(),
   icon: Icons.badge,
+ color:  Colors.green,
 ),
 
 StatCard(
   title: "Unassigned",
   value: summary.unassignedDrivers.toString(),
   icon: Icons.person_off,
+ color:  Colors.orange,
 ),
 
 StatCard(
   title: "Maintenance Due",
   value: summary.maintenanceDue.toString(),
   icon: Icons.build,
+ color:  Colors.amber,
 ),
 
 StatCard(
   title: "Maintenance Overdue",
   value: summary.maintenanceOverdue.toString(),
   icon: Icons.warning,
+ color:  Colors.red,
 ),
 
 StatCard(
   title: "Compliance Due",
   value: summary.complianceDue.toString(),
   icon: Icons.rule,
+ color:  Colors.deepOrange,
 ),
 
 StatCard(
   title: "Compliance Expired",
   value: summary.complianceExpired.toString(),
   icon: Icons.gpp_bad,
+ color:  Colors.redAccent,
 ),
                     ],
                   ),
 
-                  const SizedBox(height: 30),
-
-                 FleetHealthCard(
+  FleetHealthCard(
   healthScore: summary.fleetHealth,
   maintenanceOverdue: summary.maintenanceOverdue,
   complianceExpired: summary.complianceExpired,
@@ -171,6 +177,14 @@ ComplianceSummaryCard(
   serviceDue: summary.serviceDue,
   overdue: summary.overdue,
 ),
+
+const SizedBox(height: 30),
+
+DashboardAlertsCard(
+  alerts: summary.alerts,
+),
+
+const SizedBox(height: 30),
 
                   const SizedBox(height: 30),
 
