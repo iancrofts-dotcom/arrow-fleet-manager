@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+
 import '../../drivers/services/driver_assignment_service.dart';
 import '../../drivers/services/driver_compliance_service.dart';
 import '../../drivers/services/driver_service.dart';
@@ -65,8 +65,6 @@ activities.sort(
 final recentActivity =
     activities.take(10).toList();
 
-    
-
                 final maintenanceDue =
         _maintenanceService
             .dueSoon(maintenance)
@@ -89,14 +87,6 @@ final recentActivity =
 
 final alerts = <DashboardAlert>[];
 
-
-final alerts = <DashboardAlert>[
-  ...await _maintenanceService.getDashboardAlerts(),
-];
-
-alerts.sort(
-  (a, b) => a.date.compareTo(b.date),
-);
     return DashboardSummary(
       vehicleCount: vehicles.length,
       driverCount: drivers.length,
