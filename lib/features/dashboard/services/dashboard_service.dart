@@ -1,4 +1,4 @@
-
+import 'package:flutter/material.dart';
 import '../../drivers/services/driver_assignment_service.dart';
 import '../../drivers/services/driver_compliance_service.dart';
 import '../../drivers/services/driver_service.dart';
@@ -52,6 +52,9 @@ class DashboardService {
     final maintenance =
         await _maintenanceService.getAll();
 
+final vehicleMap =
+    await _vehicleService.getVehicleMap();
+
     final activities = [
   ...await _assignmentService.getRecentActivities(),
   ...await _maintenanceService.getRecentActivities(),
@@ -86,6 +89,42 @@ final recentActivity =
             .length;
 
 final alerts = <DashboardAlert>[];
+
+for (final record in _maintenanceService.overdue(maintenance)) {
+  final vehicle = vehicleMap[record.vehicleId];
+
+  alerts.add(
+    DashboardAlert(
+      title: 'Maintenance',
+      message:
+          '${vehicle?.registration ?? "Vehicle"} • ${record.title} is overdue.',
+      date: record.dueDate,
+      icon: Icons.build,
+      severity: DashboardAlertSeverity.critical,
+      route: '/maintenance',
+    ),
+  );
+}
+
+for (final record in _maintenanceService.dueSoon(maintenance)) {
+  final vehicle = vehicleMap[record.vehicleId];
+
+  alerts.add(
+    DashboardAlert(
+      title: 'Maintenance',
+      message:
+          '${vehicle?.registration ?? "Vehicle"} • ${record.title} is due in ${record.daysRemaining} day(s).',
+      date: record.dueDate,
+      icon: Icons.build,
+      severity: DashboardAlertSeverity.warning,
+      route: '/maintenance',
+    ),
+  );
+}
+
+alerts.sort(
+  (a, b) => a.date.compareTo(b.date),
+);
 
     return DashboardSummary(
       vehicleCount: vehicles.length,
