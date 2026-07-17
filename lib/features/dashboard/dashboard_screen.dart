@@ -94,67 +94,151 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   const SizedBox(height: 20),
 
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
-                    children: [
-                      StatCard(
-  title: "Vehicles",
-  value: summary.vehicleCount.toString(),
-  icon: Icons.local_shipping,
-  color: Colors.blue,
+LayoutBuilder(
+  builder: (context, constraints) {
+    final columns = constraints.maxWidth >= 1200
+        ? 4
+        : constraints.maxWidth >= 800
+            ? 3
+            : 2;
+
+    final cardWidth =
+        (constraints.maxWidth - ((columns - 1) * 16)) / columns;
+
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      children: [
+        SizedBox(
+          width: cardWidth,
+          child: StatCard(
+            title: "Vehicles",
+            value: summary.vehicleCount.toString(),
+            icon: Icons.local_shipping,
+            color: Colors.blue,
+          ),
+        ),
+        SizedBox(
+          width: cardWidth,
+          child: StatCard(
+            title: "Drivers",
+            value: summary.driverCount.toString(),
+            icon: Icons.person,
+            color: Colors.indigo,
+          ),
+        ),
+        SizedBox(
+          width: cardWidth,
+          child: StatCard(
+            title: "Assigned",
+            value: summary.assignedDrivers.toString(),
+            icon: Icons.badge,
+            color: Colors.green,
+          ),
+        ),
+        SizedBox(
+          width: cardWidth,
+          child: StatCard(
+            title: "Unassigned",
+            value: summary.unassignedDrivers.toString(),
+            icon: Icons.person_off,
+            color: Colors.orange,
+          ),
+        ),
+      ],
+    );
+  },
 ),
 
-StatCard(
-  title: "Drivers",
-  value: summary.driverCount.toString(),
-  icon: Icons.person,
-  color: Colors.indigo,
+const SizedBox(height: 24),
+
+Text(
+  "Maintenance",
+  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.bold,
+      ),
 ),
 
-StatCard(
-  title: "Assigned",
-  value: summary.assignedDrivers.toString(),
-  icon: Icons.badge,
- color:  Colors.green,
+const SizedBox(height: 12),
+
+LayoutBuilder(
+  builder: (context, constraints) {
+    final columns = constraints.maxWidth >= 800 ? 2 : 1;
+
+    final cardWidth =
+        (constraints.maxWidth - ((columns - 1) * 16)) / columns;
+
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      children: [
+        SizedBox(
+          width: cardWidth,
+          child: StatCard(
+            title: "Maintenance Due",
+            value: summary.maintenanceDue.toString(),
+            icon: Icons.build,
+            color: Colors.amber,
+          ),
+        ),
+        SizedBox(
+          width: cardWidth,
+          child: StatCard(
+            title: "Maintenance Overdue",
+            value: summary.maintenanceOverdue.toString(),
+            icon: Icons.warning,
+            color: Colors.red,
+          ),
+        ),
+      ],
+    );
+  },
 ),
 
-StatCard(
-  title: "Unassigned",
-  value: summary.unassignedDrivers.toString(),
-  icon: Icons.person_off,
- color:  Colors.orange,
+const SizedBox(height: 24),
+
+Text(
+  "Compliance",
+  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.bold,
+      ),
 ),
 
-StatCard(
-  title: "Maintenance Due",
-  value: summary.maintenanceDue.toString(),
-  icon: Icons.build,
- color:  Colors.amber,
-),
+const SizedBox(height: 12),
 
-StatCard(
-  title: "Maintenance Overdue",
-  value: summary.maintenanceOverdue.toString(),
-  icon: Icons.warning,
- color:  Colors.red,
-),
+LayoutBuilder(
+  builder: (context, constraints) {
+    final columns = constraints.maxWidth >= 800 ? 2 : 1;
 
-StatCard(
-  title: "Compliance Due",
-  value: summary.complianceDue.toString(),
-  icon: Icons.rule,
- color:  Colors.deepOrange,
-),
+    final cardWidth =
+        (constraints.maxWidth - ((columns - 1) * 16)) / columns;
 
-StatCard(
-  title: "Compliance Expired",
-  value: summary.complianceExpired.toString(),
-  icon: Icons.gpp_bad,
- color:  Colors.redAccent,
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      children: [
+        SizedBox(
+          width: cardWidth,
+          child: StatCard(
+            title: "Compliance Due",
+            value: summary.complianceDue.toString(),
+            icon: Icons.rule,
+            color: Colors.deepOrange,
+          ),
+        ),
+        SizedBox(
+          width: cardWidth,
+          child: StatCard(
+            title: "Compliance Expired",
+            value: summary.complianceExpired.toString(),
+            icon: Icons.gpp_bad,
+            color: Colors.redAccent,
+          ),
+        ),
+      ],
+    );
+  },
 ),
-                    ],
-                  ),
 
   FleetHealthCard(
   healthScore: summary.fleetHealth,

@@ -31,12 +31,18 @@ class CalendarEventList extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         itemCount: events.length,
         separatorBuilder: (_, _) =>
-          const Divider(height: 1),
+            const Divider(height: 1),
         itemBuilder: (context, index) {
           final event = events[index];
 
           return ListTile(
-            leading: Icon(_icon(event.type)),
+            leading: CircleAvatar(
+              backgroundColor: event.color.withValues(alpha: 0.15),
+              child: Icon(
+                event.icon,
+                color: event.color,
+              ),
+            ),
             title: Text(event.title),
             subtitle: Text(event.subtitle),
             trailing: Text(
@@ -46,22 +52,6 @@ class CalendarEventList extends StatelessWidget {
         },
       ),
     );
-  }
-
-  IconData _icon(CalendarEventType type) {
-    switch (type) {
-      case CalendarEventType.mot:
-        return Icons.directions_car;
-
-      case CalendarEventType.service:
-        return Icons.build;
-
-      case CalendarEventType.inspection:
-        return Icons.assignment;
-
-      case CalendarEventType.overdue:
-        return Icons.warning;
-    }
   }
 
   String _formatDate(DateTime date) {

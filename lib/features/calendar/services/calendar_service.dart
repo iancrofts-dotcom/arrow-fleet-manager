@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../../vehicles/models/vehicle.dart';
 import '../models/calendar_event.dart';
 
@@ -17,6 +19,8 @@ class CalendarService {
             subtitle: vehicle.registration,
             date: vehicle.motExpiry!,
             type: CalendarEventType.mot,
+            icon: Icons.directions_car,
+            color: Colors.blue,
           ),
         );
       }
@@ -28,6 +32,8 @@ class CalendarService {
             subtitle: vehicle.registration,
             date: vehicle.serviceDue!,
             type: CalendarEventType.service,
+            icon: Icons.build,
+            color: Colors.orange,
           ),
         );
       }

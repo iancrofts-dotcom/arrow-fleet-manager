@@ -18,9 +18,7 @@ class StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cardColor = color ?? Theme.of(context).colorScheme.primary;
 
-    return SizedBox(
-      width: 180,
-      child: Card(
+    return Card(
         elevation: 3,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -30,11 +28,19 @@ class StatCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                icon,
-                size: 36,
-                color: cardColor,
-              ),
+              Container(
+  width: 56,
+  height: 56,
+  decoration: BoxDecoration(
+    color: cardColor.withValues(alpha: 0.12),
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: Icon(
+    icon,
+    size: 30,
+    color: cardColor,
+  ),
+),
 
               const SizedBox(height: 20),
 
@@ -54,7 +60,7 @@ class StatCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
+        
       ),
     );
   }
