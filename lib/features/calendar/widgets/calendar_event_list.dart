@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 
 import '../models/calendar_event.dart';
+import '../models/calendar_group.dart';
+import 'calendar_event_card.dart';
 
 class CalendarEventList extends StatelessWidget {
-  final List<CalendarEvent> events;
-
   const CalendarEventList({
     super.key,
     required this.events,
   });
+
+  final List<CalendarEvent> events;
 
   @override
   Widget build(BuildContext context) {
     if (events.isEmpty) {
       return const Card(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: EdgeInsets.all(32),
           child: Center(
             child: Text(
               'No upcoming fleet events.',
@@ -25,36 +27,100 @@ class CalendarEventList extends StatelessWidget {
       );
     }
 
-    return Card(
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: events.length,
-        separatorBuilder: (_, _) =>
-            const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final event = events[index];
+    final grouped = events.grouped();
 
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: event.color.withValues(alpha: 0.15),
-              child: Icon(
-                event.icon,
-                color: event.color,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: CalendarGroup.values
+          .map(
+            (group) => _buildSection(
+              context,
+              group,
+              grouped[group]!,
+            ),
+          )
+          .whereType<Widget>()
+          .toList(),
+    );
+  }
+
+  Widget? _buildSection(
+    BuildContext context,
+    CalendarGroup group,
+    List<CalendarEvent> events,
+  ) {
+    if (events.isEmpty) {
+      return null;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: 24,
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _icon(group),
+                color: _color(group),
               ),
+              const SizedBox(width: 8),
+              Text(
+                '${group.title} (${events.length})',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          ...events.map(
+            (event) => CalendarEventCard(
+              event: event,
             ),
-            title: Text(event.title),
-            subtitle: Text(event.subtitle),
-            trailing: Text(
-              _formatDate(event.date),
-            ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  IconData _icon(CalendarGroup group) {
+    switch (group) {
+      case CalendarGroup.overdue:
+        return Icons.warning;
+
+      case CalendarGroup.thisWeek:
+        return Icons.schedule;
+
+      case CalendarGroup.next30Days:
+        return Icons.event;
+
+      case CalendarGroup.future:
+        return Icons.calendar_month;
+    }
+  }
+
+  Color _color(CalendarGroup group) {
+    switch (group) {
+      case CalendarGroup.overdue:
+        return Colors.red;
+
+      case CalendarGroup.thisWeek:
+        return Colors.orange;
+
+      case CalendarGroup.next30Days:
+        return Colors.amber;
+
+      case CalendarGroup.future:
+        return Colors.blue;
+    }
   }
 }
