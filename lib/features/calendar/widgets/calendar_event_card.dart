@@ -14,7 +14,10 @@ class CalendarEventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     final today = DateTime.now();
+
     final daysRemaining = DateTime(
       event.date.year,
       event.date.month,
@@ -29,75 +32,116 @@ class CalendarEventCard extends StatelessWidget {
 
     return Card(
       elevation: 1,
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+        child: IntrinsicHeight(
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: event.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  event.icon,
-                  color: event.color,
-                ),
+                width: 5,
+                color: event.color,
               ),
-
-              const SizedBox(width: 16),
 
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      event.title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    Text(
-                      event.subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _StatusChip(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: event.color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          event.icon,
                           color: event.color,
-                          text: _status(daysRemaining),
+                          size: 30,
                         ),
-                        _DateChip(
-                          date: event.date,
+                      ),
+
+                      const SizedBox(width: 18),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              event.title,
+                              style: theme.textTheme.titleMedium
+                                  ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Text(
+                              event.subtitle,
+                              style: theme.textTheme.bodyMedium
+                                  ?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+
+                            const SizedBox(height: 18),
+
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.schedule,
+                                  size: 18,
+                                  color: event.color,
+                                ),
+
+                                const SizedBox(width: 6),
+
+                                Expanded(
+                                  child: Text(
+                                    _status(daysRemaining),
+                                    style: theme
+                                        .textTheme.bodySmall
+                                        ?.copyWith(
+                                      color: event.color,
+                                      fontWeight:
+                                          FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 16,
+                                  color: theme.colorScheme.outline,
+                                ),
+
+                                const SizedBox(width: 6),
+
+                                Text(
+                                  _formatDate(event.date),
+                                  style: theme
+                                      .textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      Icon(
+                        Icons.chevron_right,
+                        color: theme.colorScheme.outline,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-
-              const SizedBox(width: 12),
-
-              Icon(
-                Icons.chevron_right,
-                color: Theme.of(context).colorScheme.outline,
               ),
             ],
           ),
@@ -119,50 +163,29 @@ class CalendarEventCard extends StatelessWidget {
       return 'Due Tomorrow';
     }
 
+    if (days <= 7) {
+      return 'Due this week';
+    }
+
     return '$days days remaining';
   }
-}
 
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({
-    required this.color,
-    required this.text,
-  });
+  static String _formatDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
 
-  final Color color;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      avatar: Icon(
-        Icons.schedule,
-        size: 18,
-        color: color,
-      ),
-      label: Text(text),
-      backgroundColor: color.withValues(alpha: 0.10),
-    );
-  }
-}
-
-class _DateChip extends StatelessWidget {
-  const _DateChip({
-    required this.date,
-  });
-
-  final DateTime date;
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      avatar: const Icon(
-        Icons.calendar_today,
-        size: 18,
-      ),
-      label: Text(
-        '${date.day}/${date.month}/${date.year}',
-      ),
-    );
+    return '${date.day} ${months[date.month - 1]}';
   }
 }

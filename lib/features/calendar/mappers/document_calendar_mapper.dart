@@ -41,6 +41,8 @@ class DocumentCalendarMapper {
               : document.isDueSoon
                   ? Colors.orange
                   : Colors.blue,
+
+                  source: document,
         ),
       );
     }

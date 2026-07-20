@@ -21,6 +21,7 @@ class VehicleCalendarMapper {
             type: CalendarEventType.vehicle,
             icon: Icons.directions_car,
             color: Colors.blue,
+            source: vehicle,
           ),
         );
       }
@@ -34,6 +35,7 @@ class VehicleCalendarMapper {
             type: CalendarEventType.vehicle,
             icon: Icons.build,
             color: Colors.orange,
+            source: vehicle,
           ),
         );
       }

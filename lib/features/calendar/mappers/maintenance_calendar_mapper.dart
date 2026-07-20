@@ -32,6 +32,8 @@ class MaintenanceCalendarMapper {
           color: record.isOverdue
               ? Colors.red
               : Colors.orange,
+
+              source: record,
         ),
       );
     }

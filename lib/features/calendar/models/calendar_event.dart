@@ -11,13 +11,13 @@ enum CalendarEventType {
 
 class CalendarEvent {
   const CalendarEvent({
-    required this.title,
-    required this.subtitle,
-    required this.date,
-    required this.type,
-    required this.icon,
-    required this.color,
-    this.route,
+  required this.title,
+  required this.subtitle,
+  required this.date,
+  required this.type,
+  required this.icon,
+  required this.color,
+  this.source,
   });
 
   final String title;
@@ -28,5 +28,5 @@ class CalendarEvent {
   final IconData icon;
   final Color color;
 
-  final String? route;
+  final Object? source;
 }
