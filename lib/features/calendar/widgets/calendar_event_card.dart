@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../utils/calendar_date_formatter.dart';
 import '../models/calendar_event.dart';
 
 class CalendarEventCard extends StatelessWidget {
@@ -123,7 +123,7 @@ class CalendarEventCard extends StatelessWidget {
                                 const SizedBox(width: 6),
 
                                 Text(
-                                  _formatDate(event.date),
+                                 CalendarDateFormatter.format(event.date),
                                   style: theme
                                       .textTheme.bodySmall,
                                 ),
@@ -170,22 +170,4 @@ class CalendarEventCard extends StatelessWidget {
     return '$days days remaining';
   }
 
-  static String _formatDate(DateTime date) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    return '${date.day} ${months[date.month - 1]}';
-  }
-}
+ }
