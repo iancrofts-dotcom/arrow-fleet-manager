@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../models/calendar_event.dart';
+import '../models/calendar_filter.dart';
 import '../services/calendar_service.dart';
 import '../widgets/calendar_event_list.dart';
+import '../widgets/calendar_filter_chips.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -15,6 +17,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   final CalendarService _calendarService = CalendarService();
 
   late Future<List<CalendarEvent>> _eventsFuture;
+
+  CalendarFilter _selectedFilter = CalendarFilter.all;
 
   @override
   void initState() {
@@ -60,13 +64,33 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
           final events = snapshot.data ?? [];
 
+          final filteredEvents = events
+              .where(_selectedFilter.matches)
+              .toList();
+
           return RefreshIndicator(
             onRefresh: _refresh,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
-              child: CalendarEventList(
-                events: events,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CalendarFilterChips(
+                    selected: _selectedFilter,
+                    onSelected: (filter) {
+                      setState(() {
+                        _selectedFilter = filter;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  CalendarEventList(
+                    events: filteredEvents,
+                  ),
+                ],
               ),
             ),
           );

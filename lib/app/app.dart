@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../features/dashboard/dashboard_screen.dart';
+import '../features/auth/widgets/auth_gate.dart';
 import 'constants.dart';
 import 'theme.dart';
 
@@ -11,12 +11,9 @@ class ArrowFleetManagerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-
       title: AppConstants.appName,
-
       theme: AppTheme.lightTheme,
-
-      home: const DashboardScreen(),
+      home: const AuthGate(),
     );
   }
 }

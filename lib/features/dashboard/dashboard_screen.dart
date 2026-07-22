@@ -15,6 +15,10 @@ import 'widgets/recent_activity_card.dart';
 import 'widgets/section_header.dart';
 import 'widgets/stat_card.dart';
 import '../drivers/screens/driver_list_screen.dart';
+import '../auth/screens/login_screen.dart';
+import '../auth/services/auth_service.dart';
+import 'widgets/fleet_operations_card.dart';
+import 'widgets/fleet_analytics_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -49,6 +53,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
   title: const Text("Arrow Fleet Manager"),
   actions: [
+    IconButton(
+      icon: const Icon(Icons.logout),
+      tooltip: 'Logout',
+      onPressed: () async {
+        await AuthService.instance.logout();
+
+        if (!context.mounted) return;
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => const LoginScreen(),
+          ),
+          (route) => false,
+        );
+      },
+    ),
     IconButton(
       icon: const Icon(Icons.refresh),
       tooltip: 'Refresh Dashboard',
@@ -109,43 +129,52 @@ LayoutBuilder(
       spacing: 16,
       runSpacing: 16,
       children: [
-        SizedBox(
-          width: cardWidth,
-          child: StatCard(
-            title: "Vehicles",
-            value: summary.vehicleCount.toString(),
-            icon: Icons.local_shipping,
-            color: Colors.blue,
-          ),
-        ),
-        SizedBox(
-          width: cardWidth,
-          child: StatCard(
-            title: "Drivers",
-            value: summary.driverCount.toString(),
-            icon: Icons.person,
-            color: Colors.indigo,
-          ),
-        ),
-        SizedBox(
-          width: cardWidth,
-          child: StatCard(
-            title: "Assigned",
-            value: summary.assignedDrivers.toString(),
-            icon: Icons.badge,
-            color: Colors.green,
-          ),
-        ),
-        SizedBox(
-          width: cardWidth,
-          child: StatCard(
-            title: "Unassigned",
-            value: summary.unassignedDrivers.toString(),
-            icon: Icons.person_off,
-            color: Colors.orange,
-          ),
-        ),
-      ],
+  SizedBox(
+    width: cardWidth,
+    child: StatCard(
+      title: "Vehicles",
+      value: summary.vehicleCount.toString(),
+      subtitle: "${summary.activeVehicles} active",
+      icon: Icons.local_shipping,
+      color: Colors.blue,
+    ),
+  ),
+
+  SizedBox(
+    width: cardWidth,
+    child: StatCard(
+      title: "Drivers",
+      value: summary.driverCount.toString(),
+      subtitle: "${summary.activeDrivers} active",
+      icon: Icons.person,
+      color: Colors.indigo,
+    ),
+  ),
+
+  SizedBox(
+    width: cardWidth,
+    child: StatCard(
+      title: "Assigned Vehicles",
+      value: summary.assignedVehicles.toString(),
+      subtitle:
+          "${summary.unassignedVehicles} available",
+      icon: Icons.directions_car,
+      color: Colors.green,
+    ),
+  ),
+
+  SizedBox(
+    width: cardWidth,
+    child: StatCard(
+      title: "Assigned Drivers",
+      value: summary.assignedDrivers.toString(),
+      subtitle:
+          "${summary.unassignedDrivers} available",
+      icon: Icons.badge,
+      color: Colors.teal,
+    ),
+  ),
+],
     );
   },
 ),
@@ -246,6 +275,25 @@ LayoutBuilder(
   complianceExpired: summary.complianceExpired,
   healthyVehicles:
       summary.vehicleCount - summary.maintenanceOverdue,
+),
+const SizedBox(height: 30),
+
+FleetOperationsCard(
+  assignedVehicles: summary.assignedVehicles,
+  totalVehicles: summary.vehicleCount,
+  assignedDrivers: summary.assignedDrivers,
+  totalDrivers: summary.driverCount,
+  fleetHealth: summary.fleetHealth,
+),
+
+const SizedBox(height: 30),
+
+FleetAnalyticsCard(
+  vehicleCount: summary.vehicleCount,
+  driverCount: summary.driverCount,
+  assignedVehicles: summary.assignedVehicles,
+  assignedDrivers: summary.assignedDrivers,
+  fleetHealth: summary.fleetHealth,
 ),
 
 const SizedBox(height: 30),

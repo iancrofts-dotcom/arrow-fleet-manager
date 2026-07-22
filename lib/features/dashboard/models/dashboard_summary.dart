@@ -7,8 +7,12 @@ class DashboardSummary {
   const DashboardSummary({
     required this.vehicleCount,
     required this.driverCount,
+    required this.activeVehicles,
+    required this.activeDrivers,
     required this.assignedDrivers,
     required this.unassignedDrivers,
+    required this.assignedVehicles,
+    required this.unassignedVehicles,
     required this.maintenanceDue,
     required this.maintenanceOverdue,
     required this.complianceDue,
@@ -17,32 +21,43 @@ class DashboardSummary {
     required this.alerts,
   });
 
-  // ===== New Dashboard =====
+  // Fleet
 
   final int vehicleCount;
   final int driverCount;
 
+  final int activeVehicles;
+  final int activeDrivers;
+
   final int assignedDrivers;
   final int unassignedDrivers;
+
+  final int assignedVehicles;
+  final int unassignedVehicles;
+
+  // Maintenance
 
   final int maintenanceDue;
   final int maintenanceOverdue;
 
+  // Compliance
+
   final int complianceDue;
   final int complianceExpired;
+
+  // Activity
 
   final List<DashboardActivity> recentActivity;
   final List<DashboardAlert> alerts;
 
-  // ===== Legacy compatibility =====
+  // Legacy compatibility
 
   int get vehicles => vehicleCount;
 
   int get drivers => driverCount;
 
-  int get activeVehicles => vehicleCount;
-
-  int get inactiveVehicles => 0;
+  int get inactiveVehicles =>
+      vehicleCount - activeVehicles;
 
   int get inspections => 0;
 
@@ -93,13 +108,13 @@ class DashboardSummary {
       );
     }
 
-    if (assignedDrivers < driverCount) {
+    if (unassignedDrivers > 0) {
       list.add(
         DashboardInsight(
           icon: Icons.person_off,
           title: 'Drivers',
           message:
-              '${driverCount - assignedDrivers} driver(s) are unassigned.',
+              '$unassignedDrivers driver(s) are currently unassigned.',
         ),
       );
     }
@@ -120,8 +135,12 @@ class DashboardSummary {
   DashboardSummary copyWith({
     int? vehicleCount,
     int? driverCount,
+    int? activeVehicles,
+    int? activeDrivers,
     int? assignedDrivers,
     int? unassignedDrivers,
+    int? assignedVehicles,
+    int? unassignedVehicles,
     int? maintenanceDue,
     int? maintenanceOverdue,
     int? complianceDue,
@@ -129,34 +148,25 @@ class DashboardSummary {
     List<DashboardActivity>? recentActivity,
     List<DashboardAlert>? alerts,
   }) {
-
-        return DashboardSummary(
-      vehicleCount:
-          vehicleCount ?? this.vehicleCount,
-      driverCount:
-          driverCount ?? this.driverCount,
-      assignedDrivers:
-          assignedDrivers ??
-              this.assignedDrivers,
-      unassignedDrivers:
-          unassignedDrivers ??
-              this.unassignedDrivers,
-      maintenanceDue:
-          maintenanceDue ??
-              this.maintenanceDue,
+    return DashboardSummary(
+      vehicleCount: vehicleCount ?? this.vehicleCount,
+      driverCount: driverCount ?? this.driverCount,
+      activeVehicles: activeVehicles ?? this.activeVehicles,
+      activeDrivers: activeDrivers ?? this.activeDrivers,
+      assignedDrivers: assignedDrivers ?? this.assignedDrivers,
+      unassignedDrivers: unassignedDrivers ?? this.unassignedDrivers,
+      assignedVehicles: assignedVehicles ?? this.assignedVehicles,
+      unassignedVehicles:
+          unassignedVehicles ?? this.unassignedVehicles,
+      maintenanceDue: maintenanceDue ?? this.maintenanceDue,
       maintenanceOverdue:
-          maintenanceOverdue ??
-              this.maintenanceOverdue,
-      complianceDue:
-          complianceDue ??
-              this.complianceDue,
+          maintenanceOverdue ?? this.maintenanceOverdue,
+      complianceDue: complianceDue ?? this.complianceDue,
       complianceExpired:
-          complianceExpired ??
-              this.complianceExpired,
+          complianceExpired ?? this.complianceExpired,
       recentActivity:
-          recentActivity ??
-              this.recentActivity,
-              alerts: alerts ?? this.alerts,
+          recentActivity ?? this.recentActivity,
+      alerts: alerts ?? this.alerts,
     );
   }
 }

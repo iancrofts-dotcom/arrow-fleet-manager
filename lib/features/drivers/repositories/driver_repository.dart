@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../../../database/app_database.dart';
+import '../../../database/schema.dart';
 import '../models/driver_entity.dart';
 
 class DriverRepository {
@@ -8,29 +9,24 @@ class DriverRepository {
 
   final AppDatabase _database = AppDatabase();
 
-  Future<Database> get _db async =>
-      _database.database();
+  Future<Database> get _db async => _database.database();
 
   Future<List<DriverEntity>> getAllDrivers() async {
     final db = await _db;
 
     final maps = await db.query(
-      'drivers',
+      DbSchema.drivers,
       orderBy: 'last_name ASC, first_name ASC',
     );
 
-    return maps
-        .map(DriverEntity.fromMap)
-        .toList();
+    return maps.map(DriverEntity.fromMap).toList();
   }
 
-  Future<DriverEntity?> getDriverById(
-    int id,
-  ) async {
+  Future<DriverEntity?> getDriverById(int id) async {
     final db = await _db;
 
     final maps = await db.query(
-      'drivers',
+      DbSchema.drivers,
       where: 'id = ?',
       whereArgs: [id],
       limit: 1,
@@ -40,44 +36,35 @@ class DriverRepository {
       return null;
     }
 
-    return DriverEntity.fromMap(
-      maps.first,
-    );
+    return DriverEntity.fromMap(maps.first);
   }
 
-  Future<int> insertDriver(
-    DriverEntity driver,
-  ) async {
+  Future<int> insertDriver(DriverEntity driver) async {
     final db = await _db;
 
     return db.insert(
-      'drivers',
+      DbSchema.drivers,
       driver.toMap(),
-      conflictAlgorithm:
-          ConflictAlgorithm.replace,
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  Future<int> updateDriver(
-    DriverEntity driver,
-  ) async {
+  Future<int> updateDriver(DriverEntity driver) async {
     final db = await _db;
 
     return db.update(
-      'drivers',
+      DbSchema.drivers,
       driver.toMap(),
       where: 'id = ?',
       whereArgs: [driver.id],
     );
   }
 
-  Future<int> deleteDriver(
-    int id,
-  ) async {
+  Future<int> deleteDriver(int id) async {
     final db = await _db;
 
     return db.delete(
-      'drivers',
+      DbSchema.drivers,
       where: 'id = ?',
       whereArgs: [id],
     );

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../drivers/models/driver.dart';
-
 import '../../drivers/screens/assign_driver_screen.dart';
 import '../../drivers/screens/assignment_history_screen.dart';
-import '../../drivers/services/driver_assignment_service.dart';
+
+import '../../assignments/repositories/assignment_repository.dart';
+
 import '../models/vehicle.dart';
 import 'edit_vehicle_screen.dart';
 
@@ -25,10 +26,9 @@ class _VehicleDetailsScreenState
     extends State<VehicleDetailsScreen> {
   late Vehicle _vehicle;
 
-  final DriverAssignmentService _assignmentService =
-      DriverAssignmentService();
+  final AssignmentRepository _repository =
+      AssignmentRepository.instance;
 
-  
   Driver? _assignedDriver;
 
   @override
@@ -39,78 +39,71 @@ class _VehicleDetailsScreenState
   }
 
   Future<void> _loadAssignedDriver() async {
-    if (_vehicle.id == null) {
-      return;
-    }
+    if (_vehicle.id == null) return;
 
-    try {
-      final driver =
-          await _assignmentService.getAssignedDriver(
-        _vehicle.id!,
-      );
+    final driver =
+        await _repository.getAssignedDriver(
+      _vehicle.id!,
+    );
 
-      if (!mounted) {
-        return;
-      }
+    if (!mounted) return;
 
-      setState(() {
-        _assignedDriver = driver;
-      });
-    } catch (e, stackTrace) {
-      debugPrint(
-        'Error loading assigned driver: $e',
-      );
-      debugPrintStack(
-        stackTrace: stackTrace,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _assignedDriver = null;
-      });
-    }
+    setState(() {
+      _assignedDriver = driver;
+    });
   }
 
   Future<void> _assignDriver() async {
-  if (_vehicle.id == null) {
-    return;
-  }
+    if (_vehicle.id == null) return;
 
-  final driver = await Navigator.push<Driver>(
-    context,
-    MaterialPageRoute(
-      builder: (_) => const AssignDriverScreen(),
-    ),
-  );
-
-  if (!mounted || driver == null) {
-    return;
-  }
-
-  // End the current assignment (if there is one).
-  await _assignmentService.assignDriverToVehicle(
-  vehicleId: _vehicle.id!,
-  driver: driver,
-);
-
-  await _loadAssignedDriver();
-
-  if (!mounted) {
-    return;
-  }
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        '${driver.fullName} assigned successfully.',
+    final driver = await Navigator.push<Driver>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AssignDriverScreen(),
       ),
-    ),
-  );
-}
-    Widget _detailTile({
+    );
+
+    if (!mounted || driver == null) return;
+
+    await _repository.assignDriver(
+      driverId: driver.id!,
+      vehicleId: _vehicle.id!,
+    );
+
+    await _loadAssignedDriver();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${driver.fullName} assigned successfully.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _endAssignment() async {
+    if (_vehicle.id == null) return;
+
+    await _repository.unassignVehicle(
+      _vehicle.id!,
+    );
+
+    await _loadAssignedDriver();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Driver assignment ended.',
+        ),
+      ),
+    );
+  }
+
+  Widget _detailTile({
     required IconData icon,
     required String title,
     required String value,
@@ -131,8 +124,7 @@ class _VehicleDetailsScreenState
 
     return '${date.day}/${date.month}/${date.year}';
   }
-
-  @override
+    @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -210,25 +202,78 @@ class _VehicleDetailsScreenState
             value: _formatDate(_vehicle.serviceDue),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
           Card(
-            child: ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Assigned Driver'),
-              subtitle: Text(
-                _assignedDriver?.fullName ??
-                    'No driver assigned',
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.person_add),
-                tooltip: 'Assign Driver',
-                onPressed: _assignDriver,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Driver Assignment',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      child: Icon(Icons.person),
+                    ),
+                    title: Text(
+                      _assignedDriver?.fullName ??
+                          'No Driver Assigned',
+                    ),
+                    subtitle: Text(
+                      _assignedDriver == null
+                          ? 'Select a driver'
+                          : 'Currently assigned',
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: _assignDriver,
+                          icon: const Icon(
+                            Icons.person_add,
+                          ),
+                          label: Text(
+                            _assignedDriver == null
+                                ? 'Assign Driver'
+                                : 'Change Driver',
+                          ),
+                        ),
+                      ),
+
+                      if (_assignedDriver != null) ...[
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _endAssignment,
+                            icon: const Icon(Icons.link_off),
+                            label: const Text(
+                              'End Assignment',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           FilledButton.icon(
             onPressed: () async {
@@ -236,7 +281,8 @@ class _VehicleDetailsScreenState
                   await Navigator.push<Vehicle>(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => EditVehicleScreen(
+                  builder: (_) =>
+                      EditVehicleScreen(
                     vehicle: _vehicle,
                   ),
                 ),
@@ -254,7 +300,9 @@ class _VehicleDetailsScreenState
               await _loadAssignedDriver();
             },
             icon: const Icon(Icons.edit),
-            label: const Text('Edit Vehicle'),
+            label: const Text(
+              'Edit Vehicle',
+            ),
           ),
 
           const SizedBox(height: 12),
@@ -274,10 +322,6 @@ class _VehicleDetailsScreenState
                   ),
                 ),
               );
-
-              if (!mounted) {
-                return;
-              }
 
               await _loadAssignedDriver();
             },

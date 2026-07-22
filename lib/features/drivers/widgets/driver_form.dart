@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../models/driver.dart';
+import 'driver_details_section.dart';
+import 'driver_status_section.dart';
+import 'licence_details_section.dart';
+import 'login_details_section.dart';
 
 class DriverForm extends StatefulWidget {
   final Driver? driver;
@@ -13,8 +17,7 @@ class DriverForm extends StatefulWidget {
   });
 
   @override
-  State<DriverForm> createState() =>
-      _DriverFormState();
+  State<DriverForm> createState() => _DriverFormState();
 }
 
 class _DriverFormState extends State<DriverForm> {
@@ -22,11 +25,17 @@ class _DriverFormState extends State<DriverForm> {
 
   late final TextEditingController _firstName;
   late final TextEditingController _lastName;
-  late final TextEditingController _licence;
+  late final TextEditingController _licenceNumber;
   late final TextEditingController _phone;
   late final TextEditingController _email;
 
-  bool _active = true;
+  late final TextEditingController _username;
+  late final TextEditingController _password;
+  late final TextEditingController _confirmPassword;
+
+  DateTime? _licenceExpiry;
+
+  bool _isActive = true;
 
   @override
   void initState() {
@@ -42,7 +51,7 @@ class _DriverFormState extends State<DriverForm> {
       text: driver?.lastName ?? '',
     );
 
-    _licence = TextEditingController(
+    _licenceNumber = TextEditingController(
       text: driver?.licenceNumber ?? '',
     );
 
@@ -54,17 +63,48 @@ class _DriverFormState extends State<DriverForm> {
       text: driver?.email ?? '',
     );
 
-    _active = driver?.active ?? true;
+    _username = TextEditingController(
+      text: driver?.username ?? '',
+    );
+
+    _password = TextEditingController();
+
+    _confirmPassword = TextEditingController();
+
+    _licenceExpiry = driver?.licenceExpiry;
+
+    _isActive = driver?.isActive ?? true;
   }
 
   @override
   void dispose() {
     _firstName.dispose();
     _lastName.dispose();
-    _licence.dispose();
+    _licenceNumber.dispose();
     _phone.dispose();
     _email.dispose();
+    _username.dispose();
+    _password.dispose();
+    _confirmPassword.dispose();
+
     super.dispose();
+  }
+
+  Future<void> _selectLicenceExpiry() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate:
+          _licenceExpiry ??
+          DateTime.now().add(const Duration(days: 365)),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _licenceExpiry = picked;
+      });
+    }
   }
 
   void _submit() {
@@ -77,13 +117,23 @@ class _DriverFormState extends State<DriverForm> {
         id: widget.driver?.id,
         firstName: _firstName.text.trim(),
         lastName: _lastName.text.trim(),
-        licenceNumber: _licence.text.trim(),
-        licenceExpiry: widget.driver?.licenceExpiry,
-        phone: _phone.text.trim(),
-        email: _email.text.trim(),
-        active: _active,
+        licenceNumber: _licenceNumber.text.trim(),
+        licenceExpiry: _licenceExpiry,
+        phone: _phone.text.trim().isEmpty
+            ? null
+            : _phone.text.trim(),
+        email: _email.text.trim().isEmpty
+            ? null
+            : _email.text.trim(),
+        username: _username.text.trim().isEmpty
+            ? null
+            : _username.text.trim(),
+        isActive: _isActive,
       ),
     );
+
+    // Password creation/update will be handled
+    // by UserService in Phase 5.
   }
 
   @override
@@ -93,69 +143,37 @@ class _DriverFormState extends State<DriverForm> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          TextFormField(
-            controller: _firstName,
-            decoration: const InputDecoration(
-              labelText: 'First Name',
-            ),
-            validator: (value) =>
-                value == null || value.trim().isEmpty
-                    ? 'Enter a first name'
-                    : null,
+          DriverDetailsSection(
+            firstNameController: _firstName,
+            lastNameController: _lastName,
+            phoneController: _phone,
+            emailController: _email,
           ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _lastName,
-            decoration: const InputDecoration(
-              labelText: 'Last Name',
-            ),
-            validator: (value) =>
-                value == null || value.trim().isEmpty
-                    ? 'Enter a last name'
-                    : null,
+          LicenceDetailsSection(
+            licenceNumberController: _licenceNumber,
+            licenceExpiry: _licenceExpiry,
+            onSelectExpiry: _selectLicenceExpiry,
           ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _licence,
-            decoration: const InputDecoration(
-              labelText: 'Licence Number',
-            ),
-            validator: (value) =>
-                value == null || value.trim().isEmpty
-                    ? 'Enter a licence number'
-                    : null,
+          LoginDetailsSection(
+            usernameController: _username,
+            passwordController: _password,
+            confirmPasswordController: _confirmPassword,
           ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _phone,
-            decoration: const InputDecoration(
-              labelText: 'Phone',
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _email,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-            ),
-            keyboardType:
-                TextInputType.emailAddress,
-          ),
-          const SizedBox(height: 16),
-          SwitchListTile(
-            title: const Text('Active Driver'),
-            value: _active,
+          DriverStatusSection(
+            isActive: _isActive,
             onChanged: (value) {
               setState(() {
-                _active = value;
+                _isActive = value;
               });
             },
           ),
           const SizedBox(height: 24),
-          FilledButton(
+          FilledButton.icon(
             onPressed: _submit,
-            child: const Text('Save Driver'),
+            icon: const Icon(Icons.save),
+            label: const Text('Save Driver'),
           ),
+          const SizedBox(height: 24),
         ],
       ),
     );

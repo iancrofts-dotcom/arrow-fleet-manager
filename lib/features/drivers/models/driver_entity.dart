@@ -6,9 +6,10 @@ class DriverEntity {
   final String lastName;
   final String licenceNumber;
   final DateTime? licenceExpiry;
-  final String phone;
-  final String email;
-  final bool active;
+  final String? phone;
+  final String? email;
+  final String? username;
+  final bool isActive;
 
   const DriverEntity({
     this.id,
@@ -16,14 +17,13 @@ class DriverEntity {
     required this.lastName,
     required this.licenceNumber,
     this.licenceExpiry,
-    required this.phone,
-    required this.email,
-    required this.active,
+    this.phone,
+    this.email,
+    this.username,
+    required this.isActive,
   });
 
-  factory DriverEntity.fromDriver(
-    Driver driver,
-  ) {
+  factory DriverEntity.fromDriver(Driver driver) {
     return DriverEntity(
       id: driver.id,
       firstName: driver.firstName,
@@ -32,7 +32,8 @@ class DriverEntity {
       licenceExpiry: driver.licenceExpiry,
       phone: driver.phone,
       email: driver.email,
-      active: driver.active,
+      username: driver.username,
+      isActive: driver.isActive,
     );
   }
 
@@ -45,7 +46,8 @@ class DriverEntity {
       licenceExpiry: licenceExpiry,
       phone: phone,
       email: email,
-      active: active,
+      username: username,
+      isActive: isActive,
     );
   }
 
@@ -55,32 +57,29 @@ class DriverEntity {
       'first_name': firstName,
       'last_name': lastName,
       'licence_number': licenceNumber,
-      'licence_expiry':
-          licenceExpiry?.millisecondsSinceEpoch,
+      'licence_expiry': licenceExpiry?.millisecondsSinceEpoch,
       'phone': phone,
       'email': email,
-      'active': active ? 1 : 0,
+      'username': username,
+      'active': isActive ? 1 : 0,
     };
   }
 
-  factory DriverEntity.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory DriverEntity.fromMap(Map<String, dynamic> map) {
     return DriverEntity(
       id: map['id'] as int?,
       firstName: map['first_name'] as String,
       lastName: map['last_name'] as String,
-      licenceNumber:
-          map['licence_number'] as String,
-      licenceExpiry:
-          map['licence_expiry'] == null
-              ? null
-              : DateTime.fromMillisecondsSinceEpoch(
-                  map['licence_expiry'] as int,
-                ),
-      phone: map['phone'] as String,
-      email: map['email'] as String,
-      active: (map['active'] as int) == 1,
+      licenceNumber: map['licence_number'] as String,
+      licenceExpiry: map['licence_expiry'] == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(
+              map['licence_expiry'] as int,
+            ),
+      phone: map['phone'] as String?,
+      email: map['email'] as String?,
+      username: map['username'] as String?,
+      isActive: (map['active'] ?? 1) == 1,
     );
   }
 }

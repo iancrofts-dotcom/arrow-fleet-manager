@@ -32,15 +32,17 @@ class DriverCard extends StatelessWidget {
             Text(
               'Licence: ${driver.licenceNumber}',
             ),
-            Text(driver.email),
-            Text(driver.phone),
+            if (driver.email != null && driver.email!.isNotEmpty)
+              Text(driver.email!),
+            if (driver.phone != null && driver.phone!.isNotEmpty)
+              Text(driver.phone!),
           ],
         ),
         trailing: Icon(
-          driver.active
+          driver.isActive
               ? Icons.check_circle
               : Icons.cancel,
-          color: driver.active
+          color: driver.isActive
               ? Colors.green
               : Colors.red,
         ),

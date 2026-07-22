@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/driver.dart';
-import '../models/driver_vehicle_assignment.dart';
-import '../repositories/driver_assignment_repository.dart';
-import '../services/driver_service.dart';
+import '../../assignments/repositories/assignment_repository.dart';
 
 class AssignmentHistoryScreen extends StatefulWidget {
   const AssignmentHistoryScreen({
@@ -20,15 +17,12 @@ class AssignmentHistoryScreen extends StatefulWidget {
 
 class _AssignmentHistoryScreenState
     extends State<AssignmentHistoryScreen> {
-  final DriverAssignmentRepository _assignmentRepository =
-      DriverAssignmentRepository();
-
-  final DriverService _driverService =
-      DriverService();
+  final AssignmentRepository _repository =
+      AssignmentRepository.instance;
 
   bool _loading = true;
 
-  List<_AssignmentHistoryItem> _history = [];
+  List<Map<String, dynamic>> _history = [];
 
   @override
   void initState() {
@@ -37,43 +31,27 @@ class _AssignmentHistoryScreenState
   }
 
   Future<void> _loadHistory() async {
-    final assignments =
-        await _assignmentRepository.getAllAssignments();
+    final history =
+        await _repository.getVehicleAssignmentHistory(
+      widget.vehicleId,
+    );
 
-    final vehicleAssignments = assignments
-        .where((a) => a.vehicleId == widget.vehicleId)
-        .toList();
-
-    final items = <_AssignmentHistoryItem>[];
-
-    for (final assignment in vehicleAssignments) {
-      final Driver? driver =
-          await _driverService.getDriverById(
-        assignment.driverId,
-      );
-
-      items.add(
-        _AssignmentHistoryItem(
-          assignment: assignment,
-          driver: driver,
-        ),
-      );
-    }
-
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() {
-      _history = items;
+      _history = history;
       _loading = false;
     });
   }
 
-  String _formatDate(DateTime? date) {
-    if (date == null) {
+  String _formatDate(int? timestamp) {
+    if (timestamp == null) {
       return 'Current';
     }
+
+    final date = DateTime.fromMillisecondsSinceEpoch(
+      timestamp,
+    );
 
     return '${date.day}/${date.month}/${date.year}';
   }
@@ -82,11 +60,14 @@ class _AssignmentHistoryScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Assignment History'),
+        title: const Text(
+          'Assignment History',
+        ),
       ),
       body: _loading
           ? const Center(
-              child: CircularProgressIndicator(),
+              child:
+                  CircularProgressIndicator(),
             )
           : _history.isEmpty
               ? const Center(
@@ -99,44 +80,46 @@ class _AssignmentHistoryScreenState
                   itemBuilder: (context, index) {
                     final item = _history[index];
 
+                    final firstName =
+                        item['first_name'] as String? ??
+                            '';
+
+                    final lastName =
+                        item['last_name'] as String? ??
+                            '';
+
+                    final active =
+                        (item['active'] ?? 0) == 1;
+
                     return Card(
-                      margin: const EdgeInsets.symmetric(
+                      margin:
+                          const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,
                       ),
                       child: ListTile(
-                        leading: const Icon(Icons.person),
+                        leading: const CircleAvatar(
+                          child: Icon(Icons.person),
+                        ),
                         title: Text(
-                          item.driver?.fullName ??
-                              'Unknown Driver',
+                          '$firstName $lastName',
                         ),
                         subtitle: Text(
-                          '${_formatDate(item.assignment.assignedFrom)}'
+                          '${_formatDate(item['assigned_from'] as int?)}'
                           ' → '
-                          '${_formatDate(item.assignment.assignedTo)}',
+                          '${_formatDate(item['assigned_to'] as int?)}',
                         ),
-                        trailing: item.assignment.active
-                            ? const Chip(
-                                label: Text('Current'),
-                              )
-                            : const Chip(
-                                label: Text('Previous'),
-                              ),
+                        trailing: Chip(
+                          label: Text(
+                            active
+                                ? 'Current'
+                                : 'Previous',
+                          ),
+                        ),
                       ),
                     );
                   },
                 ),
     );
   }
-}
-
-class _AssignmentHistoryItem {
-  const _AssignmentHistoryItem({
-    required this.assignment,
-    required this.driver,
-  });
-
-  final DriverVehicleAssignment assignment;
-
-  final Driver? driver;
 }

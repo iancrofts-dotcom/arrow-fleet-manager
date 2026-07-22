@@ -3,7 +3,8 @@ import 'driver_compliance_screen.dart';
 import '../models/driver.dart';
 import 'edit_driver_screen.dart';
 import '../../vehicles/models/vehicle.dart';
-import '../services/driver_assignment_service.dart';
+import '../../assignments/repositories/assignment_repository.dart';
+import '../../vehicles/screens/assign_vehicle_screen.dart';
 
 class DriverDetailsScreen extends StatefulWidget {
   const DriverDetailsScreen({
@@ -21,8 +22,8 @@ class DriverDetailsScreen extends StatefulWidget {
 class _DriverDetailsScreenState
     extends State<DriverDetailsScreen> {
 
-  final DriverAssignmentService _assignmentService =
-      DriverAssignmentService();
+  final AssignmentRepository _repository =
+    AssignmentRepository.instance;
 
   Vehicle? _assignedVehicle;
 
@@ -43,7 +44,7 @@ class _DriverDetailsScreenState
     }
 
     final vehicle =
-        await _assignmentService.getAssignedVehicle(
+        await _repository.getAssignedVehicle(
       widget.driver.id!,
     );
 
@@ -54,6 +55,58 @@ class _DriverDetailsScreenState
       _loadingVehicle = false;
     });
   }
+
+Future<void> _assignVehicle() async {
+  if (widget.driver.id == null) return;
+
+  final vehicle = await Navigator.push<Vehicle>(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const AssignVehicleScreen(),
+    ),
+  );
+
+  if (!mounted || vehicle == null || vehicle.id == null) {
+    return;
+  }
+
+  await _repository.assignDriver(
+    driverId: widget.driver.id!,
+    vehicleId: vehicle.id!,
+  );
+
+  await _loadAssignedVehicle();
+
+  if (!mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        '${vehicle.registration} assigned successfully.',
+      ),
+    ),
+  );
+}
+
+Future<void> _endAssignment() async {
+  if (_assignedVehicle?.id == null) return;
+
+  await _repository.unassignVehicle(
+    _assignedVehicle!.id!,
+  );
+
+  await _loadAssignedVehicle();
+
+  if (!mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Vehicle assignment ended.',
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -95,22 +148,18 @@ class _DriverDetailsScreenState
 
           const SizedBox(height: 20),
 
-          _detailTile(
+      _detailTile(
   context,
   Icons.phone,
   'Phone',
-  driver.phone.isNotEmpty
-      ? driver.phone
-      : 'Not provided',
+  driver.phone ?? 'Not provided',
 ),
 
 _detailTile(
   context,
   Icons.email,
   'Email',
-  driver.email.isNotEmpty
-      ? driver.email
-      : 'Not provided',
+  driver.email ?? 'Not provided',
 ),
 
           _detailTile(
@@ -128,33 +177,81 @@ _detailTile(
                 ? _formatDate(driver.licenceExpiry!)
                 : 'Not set',
           ),
+        Card(
+  child: Padding(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Vehicle Assignment',
+          style: Theme.of(context)
+              .textTheme
+              .titleLarge,
+        ),
+
+        const SizedBox(height: 16),
+
         if (_loadingVehicle)
-  const Card(
-    child: ListTile(
-      leading: CircularProgressIndicator(),
-      title: Text('Loading assigned vehicle...'),
-    ),
-  )
-else if (_assignedVehicle != null)
-  Card(
-    child: ListTile(
-      leading: const Icon(Icons.local_shipping),
-      title: Text(_assignedVehicle!.registration),
-      subtitle: Text(
-        '${_assignedVehicle!.fleetNumber}\n'
-        '${_assignedVehicle!.make} ${_assignedVehicle!.model}',
-      ),
-      isThreeLine: true,
-    ),
-  )
-else
-  const Card(
-    child: ListTile(
-      leading: Icon(Icons.local_shipping_outlined),
-      title: Text('Assigned Vehicle'),
-      subtitle: Text('No vehicle assigned'),
+          const Center(
+            child: CircularProgressIndicator(),
+          )
+        else
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(
+              Icons.local_shipping,
+            ),
+            title: Text(
+              _assignedVehicle?.registration ??
+                  'No Vehicle Assigned',
+            ),
+            subtitle: Text(
+              _assignedVehicle == null
+                  ? 'Select a vehicle'
+                  : '${_assignedVehicle!.fleetNumber}\n'
+                      '${_assignedVehicle!.make} ${_assignedVehicle!.model}',
+            ),
+            isThreeLine:
+                _assignedVehicle != null,
+          ),
+
+        const SizedBox(height: 16),
+
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: _assignVehicle,
+                icon: const Icon(
+                  Icons.local_shipping,
+                ),
+                label: Text(
+                  _assignedVehicle == null
+                      ? 'Assign Vehicle'
+                      : 'Change Vehicle',
+                ),
+              ),
+            ),
+
+            if (_assignedVehicle != null) ...[
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _endAssignment,
+                  icon: const Icon(Icons.link_off),
+                  label: const Text(
+                    'End Assignment',
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
     ),
   ),
+),
           const SizedBox(height: 24),
 
          Card(

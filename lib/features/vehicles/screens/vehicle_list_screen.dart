@@ -4,19 +4,23 @@ import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
 import '../widgets/vehicle_card.dart';
 import 'add_vehicle_screen.dart';
-
+import 'vehicle_details_screen.dart';
 import '../services/vehicle_search_service.dart';
 import '../widgets/fleet_search_bar.dart';
 import '../models/vehicle_filter.dart';
 import '../services/vehicle_filter_service.dart';
 import '../widgets/fleet_filter_bar.dart';
-import 'vehicle_details_screen.dart';
 import '../models/vehicle_sort.dart';
 import '../services/vehicle_sort_service.dart';
 import '../widgets/fleet_sort_button.dart';
 
 class VehicleListScreen extends StatefulWidget {
-  const VehicleListScreen({super.key});
+  final VehicleFilter? initialFilter;
+
+  const VehicleListScreen({
+    super.key,
+    this.initialFilter,
+  });
 
   @override
   State<VehicleListScreen> createState() => _VehicleListScreenState();
@@ -47,7 +51,11 @@ String _searchQuery = '';
   @override
   void initState() {
     super.initState();
-    loadVehicles();
+
+_selectedFilter =
+    widget.initialFilter ?? VehicleFilter.all;
+
+loadVehicles();
   }
   @override
 void dispose() {
@@ -184,21 +192,19 @@ FleetFilterBar(
                 return VehicleCard(
   vehicle: vehicles[index],
   onTap: () async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => VehicleDetailsScreen(
-          vehicle: vehicles[index],
-        ),
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => VehicleDetailsScreen(
+        vehicle: vehicles[index],
       ),
-    );
+    ),
+  );
 
-    if (!mounted) {
-      return;
-    }
+  if (!mounted) return;
 
-    setState(loadVehicles);
-  },
+  await refreshVehicles();
+},
 );
 
                 

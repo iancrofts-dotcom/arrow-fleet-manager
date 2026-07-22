@@ -7,6 +7,7 @@ import '../../maintenance/services/maintenance_service.dart';
 import '../../vehicles/services/vehicle_service.dart';
 import '../models/dashboard_alert.dart';
 import '../models/dashboard_summary.dart';
+import '../repositories/fleet_dashboard_repository.dart';
 
 class DashboardService {
   DashboardService({
@@ -29,6 +30,8 @@ class DashboardService {
   final DriverAssignmentService _assignmentService;
   final DriverComplianceService _complianceService;
   final MaintenanceService _maintenanceService;
+  final FleetDashboardRepository _dashboardRepository =
+    FleetDashboardRepository.instance;
 
   void _addAlert(
     List<DashboardAlert> alerts, {
@@ -64,12 +67,31 @@ String _daysMessage(int days) {
 }
 
   Future<DashboardSummary> loadSummary() async {
-    final vehicles = await _vehicleService.getVehicles();
+    
+final vehicleCount =
+    await _dashboardRepository.getVehicleCount();
 
-    final drivers = await _driverService.getDrivers();
+final driverCount =
+    await _dashboardRepository.getDriverCount();
 
-    final assignments =
-        await _assignmentService.getActiveAssignments();
+final activeVehicles =
+    await _dashboardRepository.getActiveVehicleCount();
+
+final activeDrivers =
+    await _dashboardRepository.getActiveDriverCount();
+
+final assignedVehicles =
+    await _dashboardRepository.getAssignedVehicles();
+
+final unassignedVehicles =
+    await _dashboardRepository.getUnassignedVehicles();
+
+final assignedDrivers =
+    await _dashboardRepository.getAssignedDrivers();
+
+final availableDrivers =
+    await _dashboardRepository.getAvailableDrivers();
+
 
     final compliance = await _complianceService.getAll();
 
@@ -274,17 +296,20 @@ date: document.expiryDate,
 });
 
     return DashboardSummary(
-      vehicleCount: vehicles.length,
-      driverCount: drivers.length,
-      assignedDrivers: assignments.length,
-      unassignedDrivers:
-          drivers.length - assignments.length,
-      maintenanceDue: maintenanceDue,
-      maintenanceOverdue: maintenanceOverdue,
-      complianceDue: complianceDue,
-      complianceExpired: complianceExpired,
-      recentActivity: recentActivity,
-      alerts: alerts.take(15).toList(),
-    );
+  vehicleCount: vehicleCount,
+  driverCount: driverCount,
+  activeVehicles: activeVehicles,
+  activeDrivers: activeDrivers,
+  assignedDrivers: assignedDrivers,
+  unassignedDrivers: availableDrivers,
+  assignedVehicles: assignedVehicles,
+  unassignedVehicles: unassignedVehicles,
+  maintenanceDue: maintenanceDue,
+  maintenanceOverdue: maintenanceOverdue,
+  complianceDue: complianceDue,
+  complianceExpired: complianceExpired,
+  recentActivity: recentActivity,
+  alerts: alerts.take(15).toList(),
+);
   }
 }

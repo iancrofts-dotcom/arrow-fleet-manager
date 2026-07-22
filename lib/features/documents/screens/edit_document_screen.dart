@@ -331,30 +331,27 @@ const Text(
   ),
 ),
 
-RadioListTile<DocumentOwnerType>(
-  title: const Text('Driver'),
-  value: DocumentOwnerType.driver,
+RadioGroup<DocumentOwnerType>(
   groupValue: _ownerType,
-  onChanged: (value) {
+  onChanged: (DocumentOwnerType? value) {
     if (value == null) return;
 
     setState(() {
       _ownerType = value;
     });
   },
-),
-
-RadioListTile<DocumentOwnerType>(
-  title: const Text('Vehicle'),
-  value: DocumentOwnerType.vehicle,
-  groupValue: _ownerType,
-  onChanged: (value) {
-    if (value == null) return;
-
-    setState(() {
-      _ownerType = value;
-    });
-  },
+  child: Column(
+    children: [
+      RadioListTile<DocumentOwnerType>(
+        title: const Text('Driver'),
+        value: DocumentOwnerType.driver,
+      ),
+      RadioListTile<DocumentOwnerType>(
+        title: const Text('Vehicle'),
+        value: DocumentOwnerType.vehicle,
+      ),
+    ],
+  ),
 ),
 
 const SizedBox(height: 12),
