@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../assignments/repositories/assignment_repository.dart';
+import '../../auth/services/permission_service.dart';
+
 import '../../drivers/models/driver.dart';
 import '../../drivers/screens/assign_driver_screen.dart';
 import '../../drivers/screens/assignment_history_screen.dart';
-
-import '../../assignments/repositories/assignment_repository.dart';
 
 import '../models/vehicle.dart';
 import 'edit_vehicle_screen.dart';
@@ -28,6 +29,9 @@ class _VehicleDetailsScreenState
 
   final AssignmentRepository _repository =
       AssignmentRepository.instance;
+
+  final PermissionService _permissions =
+      PermissionService.instance;
 
   Driver? _assignedDriver;
 
@@ -124,8 +128,25 @@ class _VehicleDetailsScreenState
 
     return '${date.day}/${date.month}/${date.year}';
   }
-    @override
+
+  @override
   Widget build(BuildContext context) {
+
+    if (!_permissions.canViewVehicles) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Access Denied'),
+        ),
+        body: const Center(
+          child: Text(
+            'You do not have permission to view this vehicle.',
+            style: TextStyle(fontSize: 18),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_vehicle.registration),
@@ -237,24 +258,25 @@ class _VehicleDetailsScreenState
                   ),
 
                   const SizedBox(height: 12),
-
-                  Row(
+                                    Row(
                     children: [
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: _assignDriver,
-                          icon: const Icon(
-                            Icons.person_add,
-                          ),
-                          label: Text(
-                            _assignedDriver == null
-                                ? 'Assign Driver'
-                                : 'Change Driver',
+                      if (_permissions.canManageVehicles)
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: _assignDriver,
+                            icon: const Icon(
+                              Icons.person_add,
+                            ),
+                            label: Text(
+                              _assignedDriver == null
+                                  ? 'Assign Driver'
+                                  : 'Change Driver',
+                            ),
                           ),
                         ),
-                      ),
 
-                      if (_assignedDriver != null) ...[
+                      if (_permissions.canManageVehicles &&
+                          _assignedDriver != null) ...[
                         const SizedBox(width: 12),
                         Expanded(
                           child: OutlinedButton.icon(
@@ -275,37 +297,38 @@ class _VehicleDetailsScreenState
 
           const SizedBox(height: 20),
 
-          FilledButton.icon(
-            onPressed: () async {
-              final updatedVehicle =
-                  await Navigator.push<Vehicle>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      EditVehicleScreen(
-                    vehicle: _vehicle,
+          if (_permissions.canManageVehicles)
+            FilledButton.icon(
+              onPressed: () async {
+                final updatedVehicle =
+                    await Navigator.push<Vehicle>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditVehicleScreen(
+                      vehicle: _vehicle,
+                    ),
                   ),
-                ),
-              );
+                );
 
-              if (!mounted ||
-                  updatedVehicle == null) {
-                return;
-              }
+                if (!mounted ||
+                    updatedVehicle == null) {
+                  return;
+                }
 
-              setState(() {
-                _vehicle = updatedVehicle;
-              });
+                setState(() {
+                  _vehicle = updatedVehicle;
+                });
 
-              await _loadAssignedDriver();
-            },
-            icon: const Icon(Icons.edit),
-            label: const Text(
-              'Edit Vehicle',
+                await _loadAssignedDriver();
+              },
+              icon: const Icon(Icons.edit),
+              label: const Text(
+                'Edit Vehicle',
+              ),
             ),
-          ),
 
-          const SizedBox(height: 12),
+          if (_permissions.canManageVehicles)
+            const SizedBox(height: 12),
 
           OutlinedButton.icon(
             onPressed: () async {

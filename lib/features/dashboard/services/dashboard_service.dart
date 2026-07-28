@@ -8,6 +8,8 @@ import '../../vehicles/services/vehicle_service.dart';
 import '../models/dashboard_alert.dart';
 import '../models/dashboard_summary.dart';
 import '../repositories/fleet_dashboard_repository.dart';
+import '../models/fleet_health.dart';
+import 'fleet_health_service.dart';
 
 class DashboardService {
   DashboardService({
@@ -32,6 +34,8 @@ class DashboardService {
   final MaintenanceService _maintenanceService;
   final FleetDashboardRepository _dashboardRepository =
     FleetDashboardRepository.instance;
+  final FleetHealthService _fleetHealthService =
+    const FleetHealthService();
 
   void _addAlert(
     List<DashboardAlert> alerts, {
@@ -64,6 +68,12 @@ String _daysMessage(int days) {
   }
 
   return 'expires in $days days';
+}
+
+FleetHealth getFleetHealth(
+  DashboardSummary summary,
+) {
+  return _fleetHealthService.calculate(summary);
 }
 
   Future<DashboardSummary> loadSummary() async {

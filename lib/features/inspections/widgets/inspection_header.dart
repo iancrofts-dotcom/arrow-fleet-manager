@@ -14,7 +14,7 @@ class InspectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 3,
+      elevation: 5,
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.padding),
         child: Column(
@@ -25,7 +25,7 @@ class InspectionHeader extends StatelessWidget {
                 Icon(
                   Icons.local_shipping,
                   color: AppConstants.primaryColor,
-                  size: 40,
+                  size: 32,
                 ),
 
                 const SizedBox(width: 12),
@@ -55,6 +55,15 @@ class InspectionHeader extends StatelessWidget {
                 ),
               ],
             ),
+
+const SizedBox(height: 8),
+
+Text(
+  'Daily Walkaround Inspection',
+  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+    fontWeight: FontWeight.bold,
+  ),
+),
 
             const Divider(height: 32),
 
@@ -96,8 +105,53 @@ class InspectionHeader extends StatelessWidget {
                 ),
               ],
             ),
+
+Row(
+  children: [
+    const Icon(Icons.access_time),
+    const SizedBox(width: 8),
+    const Expanded(
+      child: Text("Inspection Time"),
+    ),
+    Text(
+      "${inspectionDate.hour.toString().padLeft(2,'0')}:"
+      "${inspectionDate.minute.toString().padLeft(2,'0')}",
+    ),
+  ],
+),
+            
+            Row(
+  children: [
+    const Icon(
+      Icons.check_circle,
+      color: Colors.green,
+    ),
+    const SizedBox(width: 8),
+    const Expanded(
+      child: Text("Status"),
+    ),
+    Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.green.shade100,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Text(
+        "New Inspection",
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ],
+),
+
           ],
         ),
+        
       ),
     );
   }

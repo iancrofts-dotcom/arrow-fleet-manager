@@ -1,34 +1,26 @@
 import 'package:flutter/material.dart';
-import 'widgets/dashboard_alerts_card.dart';
-import '../history/inspection_history_screen.dart';
-import '../inspections/inspection_screen.dart';
-import '../vehicles/screens/vehicle_list_screen.dart';
-import '../calendar/screens/calendar_screen.dart';
-import 'models/dashboard_summary.dart';
-import 'services/dashboard_service.dart';
-import 'widgets/dashboard_insights_card.dart';
-import '../reports/screens/reports_screen.dart';
-import 'widgets/compliance_summary_card.dart';
-import 'widgets/dashboard_header.dart';
-import 'widgets/fleet_health_card.dart';
-import 'widgets/recent_activity_card.dart';
-import 'widgets/section_header.dart';
-import 'widgets/stat_card.dart';
-import '../drivers/screens/driver_list_screen.dart';
+
 import '../auth/screens/login_screen.dart';
 import '../auth/services/auth_service.dart';
-import 'widgets/fleet_operations_card.dart';
-import 'widgets/fleet_analytics_card.dart';
+
+import 'builders/dashboard_router.dart';
+
+import 'models/dashboard_summary.dart';
+import 'models/dashboard_context.dart';
+import 'services/dashboard_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  State<DashboardScreen> createState() =>
+      _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState
+    extends State<DashboardScreen> {
   late final DashboardService _dashboardService;
+
   late Future<DashboardSummary> summaryFuture;
 
   @override
@@ -36,390 +28,104 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
 
     _dashboardService = DashboardService();
+
     summaryFuture = _dashboardService.loadSummary();
   }
 
   Future<void> _refreshDashboard() async {
     setState(() {
-      summaryFuture = _dashboardService.loadSummary();
+      summaryFuture =
+          _dashboardService.loadSummary();
     });
 
     await summaryFuture;
+  }
+
+  Future<void> _logout() async {
+    await AuthService.instance.logout();
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const LoginScreen(),
+      ),
+      (route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-  title: const Text("Arrow Fleet Manager"),
-  actions: [
-    IconButton(
-      icon: const Icon(Icons.logout),
-      tooltip: 'Logout',
-      onPressed: () async {
-        await AuthService.instance.logout();
-
-        if (!context.mounted) return;
-
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) => const LoginScreen(),
+        title:
+            const Text('Arrow Fleet Manager'),
+        actions: [
+          IconButton(
+            tooltip: 'Refresh',
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshDashboard,
           ),
-          (route) => false,
-        );
-      },
-    ),
-    IconButton(
-      icon: const Icon(Icons.refresh),
-      tooltip: 'Refresh Dashboard',
-      onPressed: _refreshDashboard,
-    ),
-  ],
-),
+          IconButton(
+            tooltip: 'Logout',
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+          ),
+        ],
+      ),
       body: FutureBuilder<DashboardSummary>(
         future: summaryFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(),
+              child:
+                  CircularProgressIndicator(),
             );
           }
 
           if (snapshot.hasError) {
             return Center(
+              child: Padding(
+                padding:
+                    const EdgeInsets.all(24),
+                child: Text(
+                  'Error loading dashboard\n\n${snapshot.error}',
+                  textAlign:
+                      TextAlign.center,
+                ),
+              ),
+            );
+          }
+
+          if (!snapshot.hasData) {
+            return const Center(
               child: Text(
-                "Error loading dashboard:\n${snapshot.error}",
-                textAlign: TextAlign.center,
+                'No dashboard data available',
               ),
             );
           }
 
           final summary = snapshot.data!;
 
-          return RefreshIndicator(
-            onRefresh: _refreshDashboard,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const DashboardHeader(),
+          final fleetHealth =
+              _dashboardService
+                  .getFleetHealth(summary);
 
-                  const SizedBox(height: 30),
+          // Temporary Administrator routing.
+          // In the next commit this will be
+          // replaced with the authenticated
+          // user's role.
+         final dashboardContext = DashboardContext(
+  summary: summary,
+  fleetHealth: fleetHealth,
+  onRefresh: _refreshDashboard,
+);
 
-                  const SectionHeader(
-                    title: "Fleet Overview",
-                  ),
-
-                  const SizedBox(height: 20),
-
-LayoutBuilder(
-  builder: (context, constraints) {
-    final columns = constraints.maxWidth >= 1200
-        ? 4
-        : constraints.maxWidth >= 800
-            ? 3
-            : 2;
-
-    final cardWidth =
-        (constraints.maxWidth - ((columns - 1) * 16)) / columns;
-
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      children: [
-  SizedBox(
-    width: cardWidth,
-    child: StatCard(
-      title: "Vehicles",
-      value: summary.vehicleCount.toString(),
-      subtitle: "${summary.activeVehicles} active",
-      icon: Icons.local_shipping,
-      color: Colors.blue,
-    ),
-  ),
-
-  SizedBox(
-    width: cardWidth,
-    child: StatCard(
-      title: "Drivers",
-      value: summary.driverCount.toString(),
-      subtitle: "${summary.activeDrivers} active",
-      icon: Icons.person,
-      color: Colors.indigo,
-    ),
-  ),
-
-  SizedBox(
-    width: cardWidth,
-    child: StatCard(
-      title: "Assigned Vehicles",
-      value: summary.assignedVehicles.toString(),
-      subtitle:
-          "${summary.unassignedVehicles} available",
-      icon: Icons.directions_car,
-      color: Colors.green,
-    ),
-  ),
-
-  SizedBox(
-    width: cardWidth,
-    child: StatCard(
-      title: "Assigned Drivers",
-      value: summary.assignedDrivers.toString(),
-      subtitle:
-          "${summary.unassignedDrivers} available",
-      icon: Icons.badge,
-      color: Colors.teal,
-    ),
-  ),
-],
-    );
-  },
-),
-
-const SizedBox(height: 24),
-
-Text(
-  "Maintenance",
-  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-      ),
-),
-
-const SizedBox(height: 12),
-
-LayoutBuilder(
-  builder: (context, constraints) {
-    final columns = constraints.maxWidth >= 800 ? 2 : 1;
-
-    final cardWidth =
-        (constraints.maxWidth - ((columns - 1) * 16)) / columns;
-
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      children: [
-        SizedBox(
-          width: cardWidth,
-          child: StatCard(
-            title: "Maintenance Due",
-            value: summary.maintenanceDue.toString(),
-            icon: Icons.build,
-            color: Colors.amber,
-          ),
-        ),
-        SizedBox(
-          width: cardWidth,
-          child: StatCard(
-            title: "Maintenance Overdue",
-            value: summary.maintenanceOverdue.toString(),
-            icon: Icons.warning,
-            color: Colors.red,
-          ),
-        ),
-      ],
-    );
-  },
-),
-
-const SizedBox(height: 24),
-
-Text(
-  "Compliance",
-  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-      ),
-),
-
-const SizedBox(height: 12),
-
-LayoutBuilder(
-  builder: (context, constraints) {
-    final columns = constraints.maxWidth >= 800 ? 2 : 1;
-
-    final cardWidth =
-        (constraints.maxWidth - ((columns - 1) * 16)) / columns;
-
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      children: [
-        SizedBox(
-          width: cardWidth,
-          child: StatCard(
-            title: "Compliance Due",
-            value: summary.complianceDue.toString(),
-            icon: Icons.rule,
-            color: Colors.deepOrange,
-          ),
-        ),
-        SizedBox(
-          width: cardWidth,
-          child: StatCard(
-            title: "Compliance Expired",
-            value: summary.complianceExpired.toString(),
-            icon: Icons.gpp_bad,
-            color: Colors.redAccent,
-          ),
-        ),
-      ],
-    );
-  },
-),
-
-  FleetHealthCard(
-  healthScore: summary.fleetHealth,
-  maintenanceOverdue: summary.maintenanceOverdue,
-  complianceExpired: summary.complianceExpired,
-  healthyVehicles:
-      summary.vehicleCount - summary.maintenanceOverdue,
-),
-const SizedBox(height: 30),
-
-FleetOperationsCard(
-  assignedVehicles: summary.assignedVehicles,
-  totalVehicles: summary.vehicleCount,
-  assignedDrivers: summary.assignedDrivers,
-  totalDrivers: summary.driverCount,
-  fleetHealth: summary.fleetHealth,
-),
-
-const SizedBox(height: 30),
-
-FleetAnalyticsCard(
-  vehicleCount: summary.vehicleCount,
-  driverCount: summary.driverCount,
-  assignedVehicles: summary.assignedVehicles,
-  assignedDrivers: summary.assignedDrivers,
-  fleetHealth: summary.fleetHealth,
-),
-
-const SizedBox(height: 30),
-
-DashboardInsightsCard(
-  insights: summary.insights,
-),
-
-const SizedBox(height: 30),
-
-ComplianceSummaryCard(
-  motDue: summary.motDue,
-  serviceDue: summary.serviceDue,
-  overdue: summary.overdue,
-),
-
-const SizedBox(height: 30),
-
-DashboardAlertsCard(
-  alerts: summary.alerts,
-),
-
-const SizedBox(height: 30),
-
-                  const SizedBox(height: 30),
-
-                  Text(
-                    "Quick Actions",
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      FilledButton.icon(
-                        icon: const Icon(Icons.local_shipping),
-                        label: const Text("Fleet Vehicles"),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const VehicleListScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      FilledButton.icon(
-                        icon: const Icon(Icons.assignment),
-                        label: const Text("New Inspection"),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const InspectionScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      FilledButton.icon(
-                        icon: const Icon(Icons.history),
-                        label: const Text("Inspection History"),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  const InspectionHistoryScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      FilledButton.icon(
-  icon: const Icon(Icons.calendar_month),
-  label: const Text("Fleet Calendar"),
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const CalendarScreen(),
-      ),
-    );
-  },
-),
-FilledButton.icon(
-  icon: const Icon(Icons.description),
-  label: const Text("Fleet Reports"),
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const ReportsScreen(),
-      ),
-    );
-  },
-),
-FilledButton.icon(
-  icon: const Icon(Icons.badge),
-  label: const Text('Drivers'),
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const DriverListScreen(),
-      ),
-    );
-  },
-),
-                    ],
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  RecentActivityCard(
-  activities: summary.recentActivity,
-),
-
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          );
+return DashboardRouter.build(
+  role: DashboardRole.administrator,
+  context: dashboardContext,
+);
         },
       ),
     );

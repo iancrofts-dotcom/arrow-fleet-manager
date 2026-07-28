@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/services/permission_service.dart';
+
 import '../models/vehicle.dart';
 
 class EditVehicleScreen extends StatefulWidget {
@@ -17,6 +19,10 @@ class EditVehicleScreen extends StatefulWidget {
 
 class _EditVehicleScreenState
     extends State<EditVehicleScreen> {
+
+  final PermissionService _permissions =
+      PermissionService.instance;
+
   late final TextEditingController fleetController;
   late final TextEditingController registrationController;
   late final TextEditingController makeController;
@@ -29,22 +35,34 @@ class _EditVehicleScreenState
     super.initState();
 
     fleetController =
-        TextEditingController(text: widget.vehicle.fleetNumber);
+        TextEditingController(
+      text: widget.vehicle.fleetNumber,
+    );
 
     registrationController =
-        TextEditingController(text: widget.vehicle.registration);
+        TextEditingController(
+      text: widget.vehicle.registration,
+    );
 
     makeController =
-        TextEditingController(text: widget.vehicle.make);
+        TextEditingController(
+      text: widget.vehicle.make,
+    );
 
     modelController =
-        TextEditingController(text: widget.vehicle.model);
+        TextEditingController(
+      text: widget.vehicle.model,
+    );
 
     yearController =
-        TextEditingController(text: widget.vehicle.year.toString());
+        TextEditingController(
+      text: widget.vehicle.year.toString(),
+    );
 
     vinController =
-        TextEditingController(text: widget.vehicle.vin);
+        TextEditingController(
+      text: widget.vehicle.vin,
+    );
   }
 
   @override
@@ -65,11 +83,15 @@ class _EditVehicleScreenState
         id: widget.vehicle.id,
         fleetNumber: fleetController.text.trim(),
         registration:
-            registrationController.text.trim().toUpperCase(),
+            registrationController.text
+                .trim()
+                .toUpperCase(),
         make: makeController.text.trim(),
         model: modelController.text.trim(),
         year:
-            int.tryParse(yearController.text.trim()) ??
+            int.tryParse(
+                  yearController.text.trim(),
+                ) ??
                 widget.vehicle.year,
         vin: vinController.text.trim(),
         motExpiry: widget.vehicle.motExpiry,
@@ -88,6 +110,22 @@ class _EditVehicleScreenState
 
   @override
   Widget build(BuildContext context) {
+
+    if (!_permissions.canManageVehicles) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Access Denied'),
+        ),
+        body: const Center(
+          child: Text(
+            'You do not have permission to edit vehicles.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Edit Vehicle"),
@@ -105,27 +143,32 @@ class _EditVehicleScreenState
             decoration: input("Registration"),
           ),
           const SizedBox(height: 16),
-          TextField(
+                    TextField(
             controller: makeController,
             decoration: input("Make"),
           ),
           const SizedBox(height: 16),
+
           TextField(
             controller: modelController,
             decoration: input("Model"),
           ),
           const SizedBox(height: 16),
+
           TextField(
             controller: yearController,
             keyboardType: TextInputType.number,
             decoration: input("Year"),
           ),
           const SizedBox(height: 16),
+
           TextField(
             controller: vinController,
             decoration: input("VIN"),
           ),
+
           const SizedBox(height: 30),
+
           FilledButton.icon(
             onPressed: save,
             icon: const Icon(Icons.save),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/navigation/dashboard_navigation.dart';
+
 class ComplianceSummaryCard extends StatelessWidget {
   final int motDue;
   final int serviceDue;
@@ -17,18 +19,29 @@ class ComplianceSummaryCard extends StatelessWidget {
     required IconData icon,
     required String title,
     required int value,
+    VoidCallback? onTap,
   }) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon),
       title: Text(title),
-      trailing: CircleAvatar(
-        radius: 14,
-        child: Text(
-          value.toString(),
-          style: const TextStyle(fontSize: 12),
-        ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 14,
+            child: Text(
+              value.toString(),
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+          if (onTap != null) ...[
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, size: 18),
+          ],
+        ],
       ),
+      onTap: onTap,
     );
   }
 
@@ -46,10 +59,7 @@ class ComplianceSummaryCard extends StatelessWidget {
           children: [
             Text(
               "Upcoming Compliance",
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
@@ -61,6 +71,7 @@ class ComplianceSummaryCard extends StatelessWidget {
               icon: Icons.assignment_turned_in,
               title: "MOT Due",
               value: motDue,
+              onTap: () => DashboardNavigation.openMotDue(context),
             ),
 
             _buildRow(
@@ -68,6 +79,7 @@ class ComplianceSummaryCard extends StatelessWidget {
               icon: Icons.build,
               title: "Service Due",
               value: serviceDue,
+              onTap: () => DashboardNavigation.openServiceDue(context),
             ),
 
             _buildRow(
@@ -75,6 +87,7 @@ class ComplianceSummaryCard extends StatelessWidget {
               icon: Icons.warning,
               title: "Overdue",
               value: overdue,
+              onTap: () => DashboardNavigation.openOverdue(context),
             ),
           ],
         ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/services/permission_service.dart';
+
 import '../models/driver.dart';
 import '../services/driver_service.dart';
 import '../widgets/driver_card.dart';
@@ -18,6 +20,9 @@ class _DriverListScreenState
     extends State<DriverListScreen> {
   final DriverService _driverService =
       DriverService();
+
+  final PermissionService _permissions =
+      PermissionService.instance;
 
   late Future<List<Driver>> _driversFuture;
 
@@ -40,22 +45,22 @@ class _DriverListScreenState
   }
 
   Future<void> _addDriver() async {
-    final driver = await Navigator.push<Driver>(
+    final driver =
+        await Navigator.push<Driver>(
       context,
       MaterialPageRoute(
-        builder: (_) => const AddDriverScreen(),
+        builder: (_) => AddDriverScreen(),
       ),
     );
 
     if (driver == null) return;
 
-    await _driverService.addDriver(driver);
-
     if (!mounted) return;
 
     setState(_loadDrivers);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
       SnackBar(
         content: Text(
           '${driver.fullName} added successfully.',
@@ -71,7 +76,8 @@ class _DriverListScreenState
         await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => DriverDetailsScreen(
+        builder: (_) =>
+            DriverDetailsScreen(
           driver: driver,
         ),
       ),
@@ -104,7 +110,8 @@ class _DriverListScreenState
               context,
               false,
             ),
-            child: const Text('Cancel'),
+            child:
+                const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () =>
@@ -112,7 +119,8 @@ class _DriverListScreenState
               context,
               true,
             ),
-            child: const Text('Delete'),
+            child:
+                const Text('Delete'),
           ),
         ],
       ),
@@ -128,7 +136,8 @@ class _DriverListScreenState
 
     setState(_loadDrivers);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
       SnackBar(
         content: Text(
           '${driver.fullName} deleted.',
@@ -139,16 +148,43 @@ class _DriverListScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (!_permissions.canViewDrivers) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Access Denied',
+          ),
+        ),
+        body: const Center(
+          child: Text(
+            'You do not have permission to view drivers.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Drivers'),
+        title: const Text(
+          'Drivers',
+        ),
       ),
       floatingActionButton:
-          FloatingActionButton.extended(
-        onPressed: _addDriver,
-        icon: const Icon(Icons.add),
-        label: const Text('Add Driver'),
-      ),
+          _permissions.canManageDrivers
+              ? FloatingActionButton.extended(
+                  onPressed: _addDriver,
+                  icon: const Icon(
+                    Icons.add,
+                  ),
+                  label: const Text(
+                    'Add Driver',
+                  ),
+                )
+              : null,
       body: FutureBuilder<List<Driver>>(
         future: _driversFuture,
         builder: (context, snapshot) {
@@ -169,7 +205,8 @@ class _DriverListScreenState
           }
 
           final drivers =
-              snapshot.data ?? const <Driver>[];
+              snapshot.data ??
+                  const <Driver>[];
 
           if (drivers.isEmpty) {
             return RefreshIndicator(
@@ -200,39 +237,57 @@ class _DriverListScreenState
               itemCount: drivers.length,
               itemBuilder:
                   (context, index) {
-                return Dismissible(
-                  key: ValueKey(
-                    drivers[index].id,
-                  ),
-                  direction:
-                      DismissDirection
-                          .endToStart,
-                  background: Container(
-                    color: Colors.red,
-                    alignment:
-                        Alignment.centerRight,
-                    padding:
-                        const EdgeInsets.symmetric(
-                      horizontal: 20,
+                final driver =
+                    drivers[index];
+
+                if (_permissions
+                    .canManageDrivers) {
+                  return Dismissible(
+                    key: ValueKey(
+                      driver.id,
                     ),
-                    child: const Icon(
-                      Icons.delete,
-                      color: Colors.white,
+                    direction:
+                        DismissDirection
+                            .endToStart,
+                    background:
+                        Container(
+                      color: Colors.red,
+                      alignment:
+                          Alignment
+                              .centerRight,
+                      padding:
+                          const EdgeInsets
+                              .symmetric(
+                        horizontal: 20,
+                      ),
+                      child: const Icon(
+                        Icons.delete,
+                        color:
+                            Colors.white,
+                      ),
                     ),
-                  ),
-                  confirmDismiss:
-                      (_) async {
-                    await _deleteDriver(
-                      drivers[index],
-                    );
-                    return false;
-                  },
-                  child: DriverCard(
-                    driver: drivers[index],
-                    onTap: () =>
-                        _openDriver(
-                      drivers[index],
+                    confirmDismiss:
+                        (_) async {
+                      await _deleteDriver(
+                        driver,
+                      );
+                      return false;
+                    },
+                    child: DriverCard(
+                      driver: driver,
+                      onTap: () =>
+                          _openDriver(
+                        driver,
+                      ),
                     ),
+                  );
+                }
+
+                return DriverCard(
+                  driver: driver,
+                  onTap: () =>
+                      _openDriver(
+                    driver,
                   ),
                 );
               },

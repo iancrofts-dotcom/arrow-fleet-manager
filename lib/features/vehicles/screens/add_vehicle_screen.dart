@@ -1,23 +1,49 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/services/permission_service.dart';
+
 import '../models/vehicle.dart';
+import '../services/vehicle_service.dart';
 
 class AddVehicleScreen extends StatefulWidget {
-  const AddVehicleScreen({super.key});
+  const AddVehicleScreen({
+    super.key,
+  });
 
   @override
-  State<AddVehicleScreen> createState() => _AddVehicleScreenState();
+  State<AddVehicleScreen> createState() =>
+      _AddVehicleScreenState();
 }
 
-class _AddVehicleScreenState extends State<AddVehicleScreen> {
+class _AddVehicleScreenState
+    extends State<AddVehicleScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final fleetNumberController = TextEditingController();
-  final registrationController = TextEditingController();
-  final makeController = TextEditingController();
-  final modelController = TextEditingController();
-  final yearController = TextEditingController();
-  final vinController = TextEditingController();
+  final PermissionService _permissions =
+      PermissionService.instance;
+
+  final VehicleService _vehicleService =
+      VehicleService();
+
+  bool _saving = false;
+
+  final fleetNumberController =
+      TextEditingController();
+
+  final registrationController =
+      TextEditingController();
+
+  final makeController =
+      TextEditingController();
+
+  final modelController =
+      TextEditingController();
+
+  final yearController =
+      TextEditingController();
+
+  final vinController =
+      TextEditingController();
 
   DateTime? motExpiry;
   DateTime? serviceDue;
@@ -39,7 +65,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   }) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: currentDate ?? DateTime.now(),
+      initialDate:
+          currentDate ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
@@ -51,136 +78,262 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     }
   }
 
-  void saveVehicle() {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> saveVehicle() async {
+    if (_saving) return;
 
-    final vehicle = Vehicle(
-      fleetNumber: fleetNumberController.text.trim(),
-      registration: registrationController.text.trim().toUpperCase(),
-      make: makeController.text.trim(),
-      model: modelController.text.trim(),
-      year: int.tryParse(yearController.text) ?? DateTime.now().year,
-      vin: vinController.text.trim(),
-      motExpiry: motExpiry,
-      serviceDue: serviceDue,
-    );
-
-    Navigator.pop(context, vehicle);
-  }
-
-  InputDecoration decoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      border: const OutlineInputBorder(),
-    );
-  }
-
-  String formatDate(DateTime? date) {
-    if (date == null) {
-      return "Not Selected";
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
 
-    return "${date.day}/${date.month}/${date.year}";
+    setState(() {
+      _saving = true;
+    });
+
+    try {
+      final vehicle = Vehicle(
+        fleetNumber:
+            fleetNumberController.text.trim(),
+        registration:
+            registrationController.text
+                .trim()
+                .toUpperCase(),
+        make: makeController.text.trim(),
+        model: modelController.text.trim(),
+        year:
+            int.tryParse(
+                  yearController.text,
+                ) ??
+                DateTime.now().year,
+        vin: vinController.text.trim(),
+        motExpiry: motExpiry,
+        serviceDue: serviceDue,
+      );
+
+      final savedVehicle =
+          await _vehicleService.addVehicle(
+        vehicle,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(
+        context,
+        savedVehicle,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to save vehicle.\n$e',
+          ),
+        ),
+      );
+
+      setState(() {
+        _saving = false;
+      });
+    }
+  }
+
+  InputDecoration decoration(
+    String label,
+  ) {
+    return InputDecoration(
+      labelText: label,
+      border:
+          const OutlineInputBorder(),
+    );
+  }
+
+  String formatDate(
+    DateTime? date,
+  ) {
+    if (date == null) {
+      return 'Not Selected';
+    }
+
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_permissions.canManageVehicles) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Access Denied',
+          ),
+        ),
+        body: const Center(
+          child: Text(
+            'You do not have permission to add vehicles.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add Vehicle"),
+        title: const Text(
+          'Add Vehicle',
+        ),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            TextFormField(
-              controller: fleetNumberController,
-              decoration: decoration("Fleet Number"),
-              validator: (value) =>
-                  value == null || value.isEmpty ? "Required" : null,
-            ),
-
-            const SizedBox(height: 16),
-
-            TextFormField(
-              controller: registrationController,
-              decoration: decoration("Registration"),
-              validator: (value) =>
-                  value == null || value.isEmpty ? "Required" : null,
-            ),
-
-            const SizedBox(height: 16),
-
-            TextFormField(
-              controller: makeController,
-              decoration: decoration("Make"),
-            ),
-
-            const SizedBox(height: 16),
-
-            TextFormField(
-              controller: modelController,
-              decoration: decoration("Model"),
-            ),
-
-            const SizedBox(height: 16),
-
-            TextFormField(
-              controller: yearController,
-              keyboardType: TextInputType.number,
-              decoration: decoration("Year"),
-            ),
-
-            const SizedBox(height: 16),
-
-            TextFormField(
-              controller: vinController,
-              decoration: decoration("VIN"),
-            ),
-
-            const SizedBox(height: 24),
-
-            OutlinedButton.icon(
-              onPressed: () {
-                selectDate(
-                  currentDate: motExpiry,
-                  onSelected: (date) {
-                    motExpiry = date;
-                  },
-                );
-              },
-              icon: const Icon(Icons.event),
-              label: Text(
-                "MOT Expiry: ${formatDate(motExpiry)}",
+      body: IgnorePointer(
+        ignoring: _saving,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding:
+                const EdgeInsets.all(20),
+            children: [
+              TextFormField(
+                controller:
+                    fleetNumberController,
+                decoration:
+                    decoration(
+                  'Fleet Number',
+                ),
+                validator: (value) =>
+                    value == null ||
+                            value.isEmpty
+                        ? 'Required'
+                        : null,
               ),
-            ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
-            OutlinedButton.icon(
-              onPressed: () {
-                selectDate(
-                  currentDate: serviceDue,
-                  onSelected: (date) {
-                    serviceDue = date;
-                  },
-                );
-              },
-              icon: const Icon(Icons.build),
-              label: Text(
-                "Service Due: ${formatDate(serviceDue)}",
+              TextFormField(
+                controller:
+                    registrationController,
+                decoration:
+                    decoration(
+                  'Registration',
+                ),
+                validator: (value) =>
+                    value == null ||
+                            value.isEmpty
+                        ? 'Required'
+                        : null,
               ),
-            ),
 
-            const SizedBox(height: 30),
+              const SizedBox(height: 16),              TextFormField(
+                controller: makeController,
+                decoration: decoration(
+                  'Make',
+                ),
+              ),
 
-            FilledButton.icon(
-              onPressed: saveVehicle,
-              icon: const Icon(Icons.save),
-              label: const Text("Save Vehicle"),
-            ),
-          ],
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: modelController,
+                decoration: decoration(
+                  'Model',
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: yearController,
+                keyboardType:
+                    TextInputType.number,
+                decoration: decoration(
+                  'Year',
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: vinController,
+                decoration: decoration(
+                  'VIN',
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              OutlinedButton.icon(
+                onPressed: _saving
+                    ? null
+                    : () {
+                        selectDate(
+                          currentDate:
+                              motExpiry,
+                          onSelected:
+                              (date) {
+                            motExpiry =
+                                date;
+                          },
+                        );
+                      },
+                icon: const Icon(
+                  Icons.event,
+                ),
+                label: Text(
+                  'MOT Expiry: ${formatDate(motExpiry)}',
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              OutlinedButton.icon(
+                onPressed: _saving
+                    ? null
+                    : () {
+                        selectDate(
+                          currentDate:
+                              serviceDue,
+                          onSelected:
+                              (date) {
+                            serviceDue =
+                                date;
+                          },
+                        );
+                      },
+                icon: const Icon(
+                  Icons.build,
+                ),
+                label: Text(
+                  'Service Due: ${formatDate(serviceDue)}',
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              FilledButton.icon(
+                onPressed:
+                    _saving
+                        ? null
+                        : saveVehicle,
+                icon: _saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child:
+                            CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.save,
+                      ),
+                label: Text(
+                  _saving
+                      ? 'Saving...'
+                      : 'Save Vehicle',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

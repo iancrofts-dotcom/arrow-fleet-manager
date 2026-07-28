@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/user.dart';
 import '../models/user_role.dart';
-import '../services/auth_service.dart';
+import '../services/permission_service.dart';
 import '../services/user_service.dart';
 import 'add_user_screen.dart';
 import 'edit_user_screen.dart';
@@ -19,10 +19,8 @@ class UserManagementScreen extends StatefulWidget {
 class _UserManagementScreenState
     extends State<UserManagementScreen> {
   final UserService _userService = UserService.instance;
-  final AuthService _authService = AuthService.instance;
-
-  bool get _isAdmin =>
-      _authService.currentUser?.role == UserRole.admin;
+ final PermissionService _permissions =
+    PermissionService.instance;
 
   final TextEditingController _searchController =
       TextEditingController();
@@ -136,7 +134,7 @@ class _UserManagementScreenState
 
   @override
   Widget build(BuildContext context) {
-    if (!_isAdmin) {
+    if (!_permissions.canManageUsers) {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Access Denied'),

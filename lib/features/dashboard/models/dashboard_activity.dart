@@ -4,12 +4,20 @@ class DashboardActivity {
     required this.subtitle,
     required this.date,
     required this.type,
+    this.route,
+    this.entityId,
   });
 
   final String title;
   final String subtitle;
   final DateTime date;
   final DashboardActivityType type;
+
+  /// Optional dashboard navigation route
+  final String? route;
+
+  /// Optional ID of the related record
+  final String? entityId;
 
   String get formattedDate {
     final day = date.day.toString().padLeft(2, '0');
@@ -57,12 +65,16 @@ class DashboardActivity {
     String? subtitle,
     DateTime? date,
     DashboardActivityType? type,
+    String? route,
+    String? entityId,
   }) {
     return DashboardActivity(
       title: title ?? this.title,
       subtitle: subtitle ?? this.subtitle,
       date: date ?? this.date,
       type: type ?? this.type,
+      route: route ?? this.route,
+      entityId: entityId ?? this.entityId,
     );
   }
 }

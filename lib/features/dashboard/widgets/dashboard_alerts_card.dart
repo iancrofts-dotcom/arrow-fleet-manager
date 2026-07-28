@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../../../core/navigation/dashboard_navigation.dart';
 import '../models/dashboard_alert.dart';
 
 class DashboardAlertsCard extends StatelessWidget {
@@ -77,19 +77,23 @@ class DashboardAlertsCard extends StatelessWidget {
           ),
           Expanded(
             child: ListTile(
-              leading: Icon(
-                alert.icon,
-                color: accentColor,
-              ),
-              title: Text(
-                alert.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Text(alert.message),
-              trailing: const Icon(Icons.chevron_right),
-            ),
+  leading: Icon(
+    alert.icon,
+    color: accentColor,
+  ),
+  title: Text(
+    alert.title,
+    style: const TextStyle(
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+  subtitle: Text(alert.message),
+  trailing: const Icon(Icons.chevron_right),
+  onTap: () => DashboardNavigation.openRoute(
+    context,
+    alert.route,
+  ),
+),
           ),
         ],
       ),

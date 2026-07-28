@@ -4,14 +4,29 @@ class Inspection {
   final String inspectionNumber;
   final DateTime inspectionDate;
 
-  /// New for Inspection v2
-  final int? vehicleId;
+  /// Linked Vehicle
+  int? vehicleId;
 
+  /// Temporary until every screen uses Vehicle ID
   String registration;
+
+  /// Driver completing the walkaround
   String driver;
-  String inspector;
+
+  /// Current odometer reading
   int mileage;
+
+  /// Fuel level recorded by the driver
+  String fuelLevel;
+
+  /// Driver comments
   String comments;
+
+  /// Overall inspection result
+  String overallResult;
+
+  /// Inspection status
+  String status;
 
   Inspection({
     this.id,
@@ -20,9 +35,11 @@ class Inspection {
     this.vehicleId,
     this.registration = '',
     this.driver = '',
-    this.inspector = '',
     this.mileage = 0,
+    this.fuelLevel = 'Full',
     this.comments = '',
+    this.overallResult = 'Pending',
+    this.status = 'New',
   });
 
   Map<String, dynamic> toMap() {
@@ -33,9 +50,11 @@ class Inspection {
       'vehicleId': vehicleId,
       'registration': registration,
       'driver': driver,
-      'inspector': inspector,
       'mileage': mileage,
+      'fuelLevel': fuelLevel,
       'comments': comments,
+      'overallResult': overallResult,
+      'status': status,
     };
   }
 
@@ -47,9 +66,11 @@ class Inspection {
       vehicleId: map['vehicleId'] as int?,
       registration: map['registration'] ?? '',
       driver: map['driver'] ?? '',
-      inspector: map['inspector'] ?? '',
       mileage: map['mileage'] ?? 0,
+      fuelLevel: map['fuelLevel'] ?? 'Full',
       comments: map['comments'] ?? '',
+      overallResult: map['overallResult'] ?? 'Pending',
+      status: map['status'] ?? 'New',
     );
   }
 
@@ -60,20 +81,28 @@ class Inspection {
     int? vehicleId,
     String? registration,
     String? driver,
-    String? inspector,
     int? mileage,
+    String? fuelLevel,
     String? comments,
+    String? overallResult,
+    String? status,
   }) {
     return Inspection(
       id: id ?? this.id,
-      inspectionNumber: inspectionNumber ?? this.inspectionNumber,
-      inspectionDate: inspectionDate ?? this.inspectionDate,
+      inspectionNumber:
+          inspectionNumber ?? this.inspectionNumber,
+      inspectionDate:
+          inspectionDate ?? this.inspectionDate,
       vehicleId: vehicleId ?? this.vehicleId,
-      registration: registration ?? this.registration,
+      registration:
+          registration ?? this.registration,
       driver: driver ?? this.driver,
-      inspector: inspector ?? this.inspector,
       mileage: mileage ?? this.mileage,
+      fuelLevel: fuelLevel ?? this.fuelLevel,
       comments: comments ?? this.comments,
+      overallResult:
+          overallResult ?? this.overallResult,
+      status: status ?? this.status,
     );
   }
 }

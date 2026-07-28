@@ -14,7 +14,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 12,
+      version: 15,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON;');
       },
@@ -22,6 +22,7 @@ class AppDatabase {
         await _createTables(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
+
         if (oldVersion < 2) {
           await db.execute('''
             CREATE TABLE IF NOT EXISTS vehicles(
@@ -54,7 +55,8 @@ class AppDatabase {
               title TEXT NOT NULL,
               category TEXT NOT NULL,
               status TEXT NOT NULL,
-              notes TEXT
+              notes TEXT,
+              photoPath TEXT
             )
           ''');
         }
@@ -159,13 +161,58 @@ class AppDatabase {
             )
           ''');
         }
+
+        if (oldVersion < 13) {
+          await db.execute(
+            'ALTER TABLE inspections ADD COLUMN fuelLevel TEXT DEFAULT "Full"',
+          );
+
+          await db.execute(
+            'ALTER TABLE inspections ADD COLUMN overallResult TEXT DEFAULT "Pending"',
+          );
+
+          await db.execute(
+            'ALTER TABLE inspections ADD COLUMN status TEXT DEFAULT "New"',
+          );
+        }
+
+        // Version 14 - Inspection Evidence
+        if (oldVersion < 14) {
+          await db.execute(
+            'ALTER TABLE inspection_results ADD COLUMN photoPath TEXT',
+          );
+        }
+
+        // Version 15 - Workshop Repairs
+        if (oldVersion < 15) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS repairs(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              repairNumber TEXT NOT NULL,
+              inspectionNumber TEXT NOT NULL,
+              registration TEXT NOT NULL,
+              driver TEXT NOT NULL,
+              defect TEXT NOT NULL,
+              defectNotes TEXT,
+              photoPath TEXT,
+              mechanic TEXT NOT NULL,
+              priority TEXT NOT NULL,
+              status TEXT NOT NULL,
+              dateRaised TEXT NOT NULL,
+              dueDate TEXT,
+              completedDate TEXT,
+              repairNotes TEXT
+            )
+          ''');
+        }
       },
     );
 
     return _database!;
   }
-    Future<void> _createTables(Database db) async {
-    await db.execute('''
+
+  Future<void> _createTables(Database db) async {
+        await db.execute('''
       CREATE TABLE inspections(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         inspectionNumber TEXT,
@@ -173,9 +220,11 @@ class AppDatabase {
         vehicleId INTEGER,
         registration TEXT,
         driver TEXT,
-        inspector TEXT,
         mileage INTEGER,
-        comments TEXT
+        fuelLevel TEXT,
+        comments TEXT,
+        overallResult TEXT,
+        status TEXT
       )
     ''');
 
@@ -202,7 +251,8 @@ class AppDatabase {
         title TEXT NOT NULL,
         category TEXT NOT NULL,
         status TEXT NOT NULL,
-        notes TEXT
+        notes TEXT,
+        photoPath TEXT
       )
     ''');
 
@@ -281,6 +331,26 @@ class AppDatabase {
         notes TEXT,
         driverId INTEGER,
         vehicleId INTEGER
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE repairs(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        repairNumber TEXT NOT NULL,
+        inspectionNumber TEXT NOT NULL,
+        registration TEXT NOT NULL,
+        driver TEXT NOT NULL,
+        defect TEXT NOT NULL,
+        defectNotes TEXT,
+        photoPath TEXT,
+        mechanic TEXT NOT NULL,
+        priority TEXT NOT NULL,
+        status TEXT NOT NULL,
+        dateRaised TEXT NOT NULL,
+        dueDate TEXT,
+        completedDate TEXT,
+        repairNotes TEXT
       )
     ''');
   }

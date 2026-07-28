@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/services/permission_service.dart';
+
 import '../models/driver_compliance.dart';
 import '../services/driver_compliance_service.dart';
 
@@ -18,10 +20,13 @@ class DriverComplianceScreen extends StatefulWidget {
 
 class _DriverComplianceScreenState
     extends State<DriverComplianceScreen> {
+
   final DriverComplianceService _service =
       DriverComplianceService();
 
-  
+  final PermissionService _permissions =
+      PermissionService.instance;
+
   bool _loading = true;
   bool _saving = false;
 
@@ -37,12 +42,13 @@ class _DriverComplianceScreenState
 
   Future<void> _loadCompliance() async {
     final record =
-        await _service.getByDriverId(widget.driverId);
+        await _service.getByDriverId(
+      widget.driverId,
+    );
 
     if (!mounted) return;
 
     if (record != null) {
-      
       _licenceExpiry = record.licenceExpiry;
       _cpcExpiry = record.cpcExpiry;
       _medicalExpiry = record.medicalExpiry;
@@ -65,6 +71,11 @@ class _DriverComplianceScreenState
   }
 
   Future<void> _pickLicenceDate() async {
+
+    if (!_permissions.canManageDrivers) {
+      return;
+    }
+
     final picked = await showDatePicker(
       context: context,
       initialDate: _licenceExpiry,
@@ -80,6 +91,11 @@ class _DriverComplianceScreenState
   }
 
   Future<void> _pickCpcDate() async {
+
+    if (!_permissions.canManageDrivers) {
+      return;
+    }
+
     final picked = await showDatePicker(
       context: context,
       initialDate: _cpcExpiry,
@@ -95,6 +111,11 @@ class _DriverComplianceScreenState
   }
 
   Future<void> _pickMedicalDate() async {
+
+    if (!_permissions.canManageDrivers) {
+      return;
+    }
+
     final picked = await showDatePicker(
       context: context,
       initialDate: _medicalExpiry,
@@ -110,17 +131,22 @@ class _DriverComplianceScreenState
   }
 
   Future<void> _save() async {
+
+    if (!_permissions.canManageDrivers) {
+      return;
+    }
+
     setState(() {
       _saving = true;
     });
 
     final compliance = DriverCompliance(
-  driverId: widget.driverId,
-  licenceExpiry: _licenceExpiry,
-  cpcExpiry: _cpcExpiry,
-  medicalExpiry: _medicalExpiry,
-  lastUpdated: DateTime.now(),
-);
+      driverId: widget.driverId,
+      licenceExpiry: _licenceExpiry,
+      cpcExpiry: _cpcExpiry,
+      medicalExpiry: _medicalExpiry,
+      lastUpdated: DateTime.now(),
+    );
 
     await _service.save(compliance);
 
@@ -135,6 +161,22 @@ class _DriverComplianceScreenState
 
   @override
   Widget build(BuildContext context) {
+
+    if (!_permissions.canViewDrivers) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Access Denied'),
+        ),
+        body: const Center(
+          child: Text(
+            'You do not have permission to view driver compliance.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18),
+          ),
+        ),
+      );
+    }
+
     if (_loading) {
       return const Scaffold(
         body: Center(
@@ -151,9 +193,7 @@ class _DriverComplianceScreenState
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-
-          _dateTile(
+        children: [          _dateTile(
             title: 'Licence Expiry',
             date: _licenceExpiry,
             status: _service.status(
@@ -185,23 +225,30 @@ class _DriverComplianceScreenState
           ),
 
           const SizedBox(height: 32),
-                    FilledButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
+
+          if (_permissions.canManageDrivers)
+            FilledButton.icon(
+              onPressed: _saving
+                  ? null
+                  : _save,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child:
+                          CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.save,
                     ),
-                  )
-                : const Icon(Icons.save),
-            label: Text(
-              _saving
-                  ? 'Saving...'
-                  : 'Save Compliance',
+              label: Text(
+                _saving
+                    ? 'Saving...'
+                    : 'Save Compliance',
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -228,14 +275,20 @@ class _DriverComplianceScreenState
         trailing: Chip(
           label: Text(status),
           backgroundColor:
-              color.withValues(alpha: 0.15),
+              color.withValues(
+            alpha: 0.15,
+          ),
         ),
-        onTap: onTap,
+        onTap: _permissions.canManageDrivers
+            ? onTap
+            : null,
       ),
     );
   }
 
-  Color _statusColor(String status) {
+  Color _statusColor(
+    String status,
+  ) {
     switch (status) {
       case 'Expired':
         return Colors.red;
@@ -248,7 +301,9 @@ class _DriverComplianceScreenState
     }
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(
+    DateTime date,
+  ) {
     return '${date.day}/${date.month}/${date.year}';
   }
 }

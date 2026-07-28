@@ -20,12 +20,16 @@ class InspectionItem {
   /// Inspector notes
   String notes;
 
+  /// Optional photo captured during inspection
+  String? photoPath;
+
   InspectionItem({
     required this.id,
     required this.title,
     required this.category,
     this.status = InspectionStatus.pass,
     this.notes = '',
+    this.photoPath,
   });
 
   bool get hasFailed => status == InspectionStatus.fail;
@@ -42,6 +46,7 @@ class InspectionItem {
       'category': category,
       'status': status.name,
       'notes': notes,
+      'photoPath': photoPath,
     };
   }
 
@@ -57,15 +62,15 @@ class InspectionItem {
         orElse: () => InspectionStatus.pass,
       ),
       notes: map['notes'] as String? ?? '',
+      photoPath: map['photoPath'] as String?,
     );
-  }
-
-  InspectionItem copyWith({
+  }  InspectionItem copyWith({
     String? id,
     String? title,
     String? category,
     InspectionStatus? status,
     String? notes,
+    String? photoPath,
   }) {
     return InspectionItem(
       id: id ?? this.id,
@@ -73,6 +78,7 @@ class InspectionItem {
       category: category ?? this.category,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      photoPath: photoPath ?? this.photoPath,
     );
   }
 }

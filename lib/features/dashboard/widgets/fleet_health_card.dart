@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/navigation/dashboard_navigation.dart';
+
 class FleetHealthCard extends StatelessWidget {
   const FleetHealthCard({
     super.key,
@@ -54,13 +56,17 @@ class FleetHealthCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
             ),
+
             const SizedBox(height: 20),
+
             LinearProgressIndicator(
               value: healthScore / 100,
               minHeight: 10,
               borderRadius: BorderRadius.circular(20),
             ),
+
             const SizedBox(height: 16),
+
             Row(
               mainAxisAlignment:
                   MainAxisAlignment.spaceBetween,
@@ -84,7 +90,9 @@ class FleetHealthCard extends StatelessWidget {
                 ),
               ],
             ),
+
             const Divider(height: 32),
+
             ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
@@ -93,13 +101,22 @@ class FleetHealthCard extends StatelessWidget {
                 color: Colors.green,
               ),
               title: const Text('Healthy Vehicles'),
-              trailing: Text(
-                healthyVehicles.toString(),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    healthyVehicles.toString(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right, size: 18),
+                ],
               ),
+              onTap: () => DashboardNavigation.openFleet(context),
             ),
+
             ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
@@ -108,13 +125,25 @@ class FleetHealthCard extends StatelessWidget {
                 color: Colors.orange,
               ),
               title: const Text('Maintenance Overdue'),
-              trailing: Text(
-                maintenanceOverdue.toString(),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    maintenanceOverdue.toString(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right, size: 18),
+                ],
+              ),
+              onTap: () => DashboardNavigation.openRoute(
+                context,
+                '/maintenance',
               ),
             ),
+
             ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
@@ -123,11 +152,22 @@ class FleetHealthCard extends StatelessWidget {
                 color: Colors.red,
               ),
               title: const Text('Compliance Expired'),
-              trailing: Text(
-                complianceExpired.toString(),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    complianceExpired.toString(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right, size: 18),
+                ],
+              ),
+              onTap: () => DashboardNavigation.openRoute(
+                context,
+                '/driver-compliance',
               ),
             ),
           ],

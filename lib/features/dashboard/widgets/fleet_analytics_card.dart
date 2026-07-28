@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/navigation/dashboard_navigation.dart';
+
 class FleetAnalyticsCard extends StatelessWidget {
   final int vehicleCount;
   final int driverCount;
@@ -55,6 +57,7 @@ class FleetAnalyticsCard extends StatelessWidget {
               label: 'Total Fleet Size',
               value: vehicleCount.toString(),
               icon: Icons.local_shipping,
+              onTap: () => DashboardNavigation.openFleet(context),
             ),
 
             const Divider(),
@@ -63,6 +66,7 @@ class FleetAnalyticsCard extends StatelessWidget {
               label: 'Vehicle Utilisation',
               value: '$utilisation%',
               icon: Icons.bar_chart,
+              onTap: () => DashboardNavigation.openFleet(context),
             ),
 
             const Divider(),
@@ -71,26 +75,39 @@ class FleetAnalyticsCard extends StatelessWidget {
               label: 'Driver Coverage',
               value: '$driverCoverage%',
               icon: Icons.people,
+              onTap: () => DashboardNavigation.openDrivers(context),
             ),
 
             const Divider(),
 
-            Row(
-              children: [
-                const Icon(Icons.warning_amber_rounded),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text('Maintenance Risk'),
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => DashboardNavigation.openRoute(
+                context,
+                '/maintenance',
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text('Maintenance Risk'),
+                    ),
+                    Chip(
+                      label: Text(risk),
+                      backgroundColor: riskColor.withValues(alpha: 0.15),
+                      labelStyle: TextStyle(
+                        color: riskColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.chevron_right, size: 18),
+                  ],
                 ),
-                Chip(
-                  label: Text(risk),
-                  backgroundColor: riskColor.withValues(alpha: 0.15),
-                  labelStyle: TextStyle(
-                    color: riskColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
@@ -103,31 +120,44 @@ class _AnalyticsRow extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
+  final VoidCallback? onTap;
 
   const _AnalyticsRow({
     required this.label,
     required this.value,
     required this.icon,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          Icon(icon),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(label),
-          ),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-        ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(label),
+            ),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.chevron_right,
+                size: 18,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

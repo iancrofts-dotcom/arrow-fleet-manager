@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/navigation/dashboard_navigation.dart';
 import '../models/dashboard_activity.dart';
 
 class RecentActivityCard extends StatelessWidget {
@@ -46,7 +47,9 @@ class RecentActivityCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
             ),
+
             const SizedBox(height: 20),
+
             if (activities.isEmpty)
               const ListTile(
                 leading: Icon(Icons.history),
@@ -60,9 +63,25 @@ class RecentActivityCard extends StatelessWidget {
                   ),
                   title: Text(activity.title),
                   subtitle: Text(activity.subtitle),
-                  trailing: Text(
-                    activity.relativeDate,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(activity.relativeDate),
+                      if (activity.route != null) ...[
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                        ),
+                      ],
+                    ],
                   ),
+                  onTap: activity.route == null
+                      ? null
+                      : () => DashboardNavigation.openRoute(
+                            context,
+                            activity.route,
+                          ),
                 ),
               ),
           ],

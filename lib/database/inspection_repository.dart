@@ -26,7 +26,7 @@ class InspectionRepository {
     );
 
     return maps
-        .map((map) => Inspection.fromMap(map))
+        .map(Inspection.fromMap)
         .toList();
   }
 
@@ -45,6 +45,23 @@ class InspectionRepository {
     }
 
     return Inspection.fromMap(maps.first);
+  }
+
+  Future<List<Inspection>> getVehicleInspections(
+    int vehicleId,
+  ) async {
+    final db = await databaseService.database.database();
+
+    final maps = await db.query(
+      'inspections',
+      where: 'vehicleId = ?',
+      whereArgs: [vehicleId],
+      orderBy: 'inspectionDate DESC',
+    );
+
+    return maps
+        .map(Inspection.fromMap)
+        .toList();
   }
 
   Future<int> deleteInspection(int id) async {
@@ -70,7 +87,8 @@ class InspectionRepository {
   Future<int> getTodayInspectionCount() async {
     final db = await databaseService.database.database();
 
-    final today = DateTime.now().toIso8601String().split('T').first;
+    final today =
+        DateTime.now().toIso8601String().split('T').first;
 
     final result = await db.rawQuery(
       '''
@@ -85,7 +103,7 @@ class InspectionRepository {
   }
 
   Future<int> getOpenDefectCount() async {
-    // Placeholder until defects are implemented.
+    // TODO: Replace when defect tracking is implemented.
     return 0;
   }
 
@@ -101,20 +119,19 @@ class InspectionRepository {
     return ((total - defects) / total) * 100;
   }
 
-Future<List<Inspection>> getRecentInspections({
-  int limit = 5,
-}) async {
-  final db = await databaseService.database.database();
+  Future<List<Inspection>> getRecentInspections({
+    int limit = 5,
+  }) async {
+    final db = await databaseService.database.database();
 
-  final maps = await db.query(
-    'inspections',
-    orderBy: 'inspectionDate DESC',
-    limit: limit,
-  );
+    final maps = await db.query(
+      'inspections',
+      orderBy: 'inspectionDate DESC',
+      limit: limit,
+    );
 
-  return maps
-      .map((e) => Inspection.fromMap(e))
-      .toList();
-}
-
+    return maps
+        .map(Inspection.fromMap)
+        .toList();
+  }
 }

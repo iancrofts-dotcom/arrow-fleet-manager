@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/navigation/dashboard_navigation.dart';
+
 class FleetOperationsCard extends StatelessWidget {
   final int assignedVehicles;
   final int totalVehicles;
@@ -46,6 +48,7 @@ class FleetOperationsCard extends StatelessWidget {
               value: '$utilisation%',
               icon: Icons.local_shipping,
               color: Colors.blue,
+              onTap: () => DashboardNavigation.openFleet(context),
             ),
 
             const Divider(),
@@ -55,6 +58,7 @@ class FleetOperationsCard extends StatelessWidget {
               value: '$availability%',
               icon: Icons.person,
               color: Colors.green,
+              onTap: () => DashboardNavigation.openDrivers(context),
             ),
 
             const Divider(),
@@ -64,6 +68,10 @@ class FleetOperationsCard extends StatelessWidget {
               value: '$fleetHealth%',
               icon: Icons.favorite,
               color: Colors.orange,
+              onTap: () => DashboardNavigation.openRoute(
+                context,
+                '/maintenance',
+              ),
             ),
 
             const Divider(),
@@ -73,6 +81,10 @@ class FleetOperationsCard extends StatelessWidget {
               value: '$compliance%',
               icon: Icons.verified,
               color: Colors.teal,
+              onTap: () => DashboardNavigation.openRoute(
+                context,
+                '/driver-compliance',
+              ),
             ),
           ],
         ),
@@ -86,35 +98,48 @@ class _MetricRow extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+  final VoidCallback? onTap;
 
   const _MetricRow({
     required this.label,
     required this.value,
     required this.icon,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyLarge,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
             ),
-          ),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-        ],
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.chevron_right,
+                size: 18,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

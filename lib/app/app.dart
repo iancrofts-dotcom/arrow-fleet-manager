@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../features/auth/widgets/auth_gate.dart';
 import 'constants.dart';
+import 'router.dart';
 import 'theme.dart';
 
 class ArrowFleetManagerApp extends StatelessWidget {
@@ -13,7 +13,14 @@ class ArrowFleetManagerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: AppConstants.appName,
       theme: AppTheme.lightTheme,
-      home: const AuthGate(),
+
+      // Navigation
+      initialRoute: AppRouter.root,
+      routes: AppRouter.routes,
+      onGenerateRoute: AppRouter.onGenerateRoute,
+
+      // Prevent duplicate navigation banner
+      home: null,
     );
   }
 }

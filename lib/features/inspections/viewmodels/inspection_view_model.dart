@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../vehicles/models/vehicle.dart';
 import '../../vehicles/services/vehicle_service.dart';
+
 import '../models/inspection.dart';
 import '../models/inspection_draft.dart';
 import '../services/inspection_service.dart';
@@ -35,58 +36,64 @@ class InspectionViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Currently selected fleet vehicle
+  /// Currently selected vehicle
   Vehicle? get selectedVehicle => draft.vehicle;
 
-  /// Convenience getter for the UI
-  bool get hasSelectedVehicle => draft.vehicle != null;
+  bool get hasSelectedVehicle =>
+      draft.vehicle != null;
 
-  /// Called when the user selects a vehicle
-  void selectVehicle(Vehicle? vehicle) {
+  void selectVehicle(
+    Vehicle? vehicle,
+  ) {
     draft.vehicle = vehicle;
 
     inspection = inspection.copyWith(
       vehicleId: vehicle?.id,
-      registration: vehicle?.registration ?? '',
+      registration:
+          vehicle?.registration ?? '',
     );
 
     notifyListeners();
   }
 
   Future<void> save({
-    required String inspector,
     required String driver,
     required int mileage,
     required String comments,
   }) async {
     inspection = inspection.copyWith(
       driver: driver,
-      inspector: inspector,
       mileage: mileage,
       comments: comments,
       registration:
-          draft.vehicle?.registration ?? inspection.registration,
+          draft.vehicle?.registration ??
+          inspection.registration,
     );
 
-    await inspectionService.saveInspection(inspection);
-  }
-
-  bool validate({
-    required String inspector,
+    await inspectionService.saveInspection(
+      inspection,
+    );
+  }  bool validate({
     required String driver,
   }) {
     inspection = inspection.copyWith(
-      inspector: inspector,
       driver: driver,
+      registration:
+          draft.vehicle?.registration ??
+          inspection.registration,
+      vehicleId: draft.vehicle?.id,
     );
 
-    return inspectionService.validateInspection(inspection);
+    return inspectionService.validateInspection(
+      inspection,
+    );
   }
 
   void clearDraft() {
     draft.clear();
 
-    inspection = inspectionService.createInspection();
+    inspection =
+        inspectionService.createInspection();
 
     notifyListeners();
   }

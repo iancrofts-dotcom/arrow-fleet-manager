@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/services/permission_service.dart';
 import '../models/vehicle.dart';
+import '../models/vehicle_filter.dart';
+import '../models/vehicle_sort.dart';
+import '../services/vehicle_filter_service.dart';
+import '../services/vehicle_search_service.dart';
 import '../services/vehicle_service.dart';
+import '../services/vehicle_sort_service.dart';
+import '../widgets/fleet_filter_bar.dart';
+import '../widgets/fleet_search_bar.dart';
+import '../widgets/fleet_sort_button.dart';
 import '../widgets/vehicle_card.dart';
 import 'add_vehicle_screen.dart';
 import 'vehicle_details_screen.dart';
-import '../services/vehicle_search_service.dart';
-import '../widgets/fleet_search_bar.dart';
-import '../models/vehicle_filter.dart';
-import '../services/vehicle_filter_service.dart';
-import '../widgets/fleet_filter_bar.dart';
-import '../models/vehicle_sort.dart';
-import '../services/vehicle_sort_service.dart';
-import '../widgets/fleet_sort_button.dart';
 
 class VehicleListScreen extends StatefulWidget {
   final VehicleFilter? initialFilter;
@@ -23,197 +24,278 @@ class VehicleListScreen extends StatefulWidget {
   });
 
   @override
-  State<VehicleListScreen> createState() => _VehicleListScreenState();
+  State<VehicleListScreen> createState() =>
+      _VehicleListScreenState();
 }
 
-class _VehicleListScreenState extends State<VehicleListScreen> {
-  final VehicleService _vehicleService = VehicleService();
- final VehicleSearchService _searchService =
-    const VehicleSearchService();
+class _VehicleListScreenState
+    extends State<VehicleListScreen> {
+  final VehicleService _vehicleService =
+      VehicleService();
 
-final VehicleFilterService _filterService =
-    const VehicleFilterService();
+  final PermissionService _permissions =
+      PermissionService.instance;
 
-final VehicleSortService _sortService =
-    const VehicleSortService();
+  final VehicleSearchService _searchService =
+      const VehicleSearchService();
 
-VehicleFilter _selectedFilter = VehicleFilter.all;
-VehicleSort _selectedSort = VehicleSort.registration;
+  final VehicleFilterService _filterService =
+      const VehicleFilterService();
 
+  final VehicleSortService _sortService =
+      const VehicleSortService();
 
-final TextEditingController _searchController =
-    TextEditingController();
+  VehicleFilter _selectedFilter =
+      VehicleFilter.all;
 
-String _searchQuery = '';
+  VehicleSort _selectedSort =
+      VehicleSort.registration;
 
-  late Future<List<Vehicle>> vehiclesFuture;
+  final TextEditingController
+      _searchController =
+      TextEditingController();
+
+  String _searchQuery = '';
+
+  late Future<List<Vehicle>>
+      vehiclesFuture;
 
   @override
   void initState() {
     super.initState();
 
-_selectedFilter =
-    widget.initialFilter ?? VehicleFilter.all;
+    _selectedFilter =
+        widget.initialFilter ??
+            VehicleFilter.all;
 
-loadVehicles();
+    loadVehicles();
   }
+
   @override
-void dispose() {
-  _searchController.dispose();
-  super.dispose();
-}
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void loadVehicles() {
-  vehiclesFuture = _vehicleService.getVehicles();
-}
+    vehiclesFuture =
+        _vehicleService.getVehicles();
+  }
 
-Future<void> refreshVehicles() async {
-  setState(() {
-    loadVehicles();
-  });
-}
+  Future<void> refreshVehicles() async {
+    setState(() {
+      loadVehicles();
+    });
+  }
 
   Future<void> addVehicle() async {
-    final vehicle = await Navigator.push<Vehicle>(
+    final vehicle =
+        await Navigator.push<Vehicle>(
       context,
       MaterialPageRoute(
-        builder: (_) => const AddVehicleScreen(),
+        builder: (_) =>
+            AddVehicleScreen(),
       ),
     );
 
     if (vehicle == null) return;
 
-    await _vehicleService.addVehicle(vehicle);
-
     await refreshVehicles();
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
       SnackBar(
         content: Text(
-          "${vehicle.registration} added successfully.",
+          '${vehicle.registration} added successfully.',
         ),
       ),
     );
   }
 
   Future<void> refresh() async {
-   await refreshVehicles();
+    await refreshVehicles();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_permissions.canViewVehicles) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Access Denied',
+          ),
+        ),
+        body: const Center(
+          child: Text(
+            'You do not have permission to view vehicles.',
+            style: TextStyle(
+              fontSize: 18,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
-     appBar: AppBar(
-  title: const Text("Fleet Vehicles"),
-  actions: [
-    FleetSortButton(
-      selectedSort: _selectedSort,
-      onChanged: (sort) {
-        setState(() {
-          _selectedSort = sort;
-        });
-      },
-    ),
-  ],
-),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: addVehicle,
-        icon: const Icon(Icons.add),
-        label: const Text("Add Vehicle"),
+      appBar: AppBar(
+        title: const Text(
+          'Fleet Vehicles',
+        ),
+        actions: [
+          FleetSortButton(
+            selectedSort:
+                _selectedSort,
+            onChanged: (sort) {
+              setState(() {
+                _selectedSort = sort;
+              });
+            },
+          ),
+        ],
       ),
-      body: FutureBuilder<List<Vehicle>>(
+      floatingActionButton:
+          _permissions.canManageVehicles
+              ? FloatingActionButton.extended(
+                  onPressed:
+                      addVehicle,
+                  icon: const Icon(
+                    Icons.add,
+                  ),
+                  label: const Text(
+                    'Add Vehicle',
+                  ),
+                )
+              : null,
+      body:
+          FutureBuilder<List<Vehicle>>(
         future: vehiclesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+        builder:
+            (context, snapshot) {
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(),
+              child:
+                  CircularProgressIndicator(),
             );
           }
 
           if (snapshot.hasError) {
             return Center(
-              child: Text(snapshot.error.toString()),
+              child: Text(
+                snapshot.error
+                    .toString(),
+              ),
             );
           }
 
-          final searchedVehicles = _searchService.filterVehicles(
-  vehicles: snapshot.data ?? [],
-  query: _searchQuery,
-);
+          final searchedVehicles =
+              _searchService
+                  .filterVehicles(
+            vehicles:
+                snapshot.data ?? [],
+            query: _searchQuery,
+          );
 
-final filteredVehicles = _filterService.filterVehicles(
-  vehicles: searchedVehicles,
-  filter: _selectedFilter,
-);
+          final filteredVehicles =
+              _filterService
+                  .filterVehicles(
+            vehicles:
+                searchedVehicles,
+            filter:
+                _selectedFilter,
+          );
 
-final vehicles = _sortService.sortVehicles(
-  vehicles: filteredVehicles,
-  sort: _selectedSort,
-);
+          final vehicles =
+              _sortService
+                  .sortVehicles(
+            vehicles:
+                filteredVehicles,
+            sort: _selectedSort,
+          );
 
           if (vehicles.isEmpty) {
             return const Center(
               child: Text(
-                "No vehicles found.\nTap Add Vehicle to begin.",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18),
+                'No vehicles found.\nTap Add Vehicle to begin.',
+                textAlign:
+                    TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                ),
               ),
             );
           }
 
           return Column(
-  children: [
-    FleetSearchBar(
-  controller: _searchController,
-  onChanged: (value) {
-    setState(() {
-      _searchQuery = value;
-    });
-  },
-),
+            children: [
+              FleetSearchBar(
+                controller:
+                    _searchController,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery =
+                        value;
+                  });
+                },
+              ),
+              FleetFilterBar(
+                selectedFilter:
+                    _selectedFilter,
+                onChanged:
+                    (filter) {
+                  setState(() {
+                    _selectedFilter =
+                        filter;
+                  });
+                },
+              ),
+              Expanded(
+                child:
+                    RefreshIndicator(
+                  onRefresh: refresh,
+                  child:
+                      ListView.builder(
+                    itemCount:
+                        vehicles.length,
+                    itemBuilder:
+                        (context,
+                            index) {
+                      final vehicle =
+                          vehicles[
+                              index];
 
-FleetFilterBar(
-  selectedFilter: _selectedFilter,
-  onChanged: (filter) {
-    setState(() {
-      _selectedFilter = filter;
-    });
-  },
-),
+                      return VehicleCard(
+                        vehicle:
+                            vehicle,
+                        onTap:
+                            () async {
+                          await Navigator
+                              .push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  VehicleDetailsScreen(
+                                vehicle:
+                                    vehicle,
+                              ),
+                            ),
+                          );
 
-    Expanded(
-      child: RefreshIndicator(
-            onRefresh: refresh,
-            child: ListView.builder(
-              itemCount: vehicles.length,
-              itemBuilder: (context, index) {
-                return VehicleCard(
-  vehicle: vehicles[index],
-  onTap: () async {
-  await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => VehicleDetailsScreen(
-        vehicle: vehicles[index],
-      ),
-    ),
-  );
+                          if (!mounted) {
+                            return;
+                          }
 
-  if (!mounted) return;
-
-  await refreshVehicles();
-},
-);
-
-                
-              },
-            ),
-       ),
-        ),
-      ],
-    );
+                          await refreshVehicles();
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          );
         },
       ),
     );

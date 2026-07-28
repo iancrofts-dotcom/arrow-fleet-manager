@@ -92,4 +92,22 @@ class DriverComplianceRepository {
       whereArgs: [driverId],
     );
   }
+
+  /// Returns the percentage of drivers whose compliance
+  /// documents are all currently valid.
+  Future<int> getCompliancePercentage() async {
+    final records = await getAll();
+
+    if (records.isEmpty) {
+      return 100;
+    }
+
+    final compliant = records.where((record) {
+      return !record.licenceExpired &&
+          !record.cpcExpired &&
+          !record.medicalExpired;
+    }).length;
+
+    return ((compliant / records.length) * 100).round();
+  }
 }

@@ -37,14 +37,15 @@ class DriverService {
     return await getDriverById(id) != null;
   }
 
-  Future<void> addDriver(
+  /// Adds a driver and returns the saved database record,
+  /// including the generated ID.
+  Future<Driver> addDriver(
     Driver driver,
   ) async {
     await _repository.insertDriver(
       DriverEntity.fromDriver(driver),
     );
 
-    // Reload so we have the database-generated ID.
     final drivers = await getDrivers();
 
     final savedDriver = drivers.lastWhere(
@@ -54,7 +55,11 @@ class DriverService {
           d.licenceNumber == driver.licenceNumber,
     );
 
-    await UserSyncService.instance.syncDriver(savedDriver);
+    await UserSyncService.instance.syncDriver(
+      savedDriver,
+    );
+
+    return savedDriver;
   }
 
   Future<void> updateDriver(
@@ -64,7 +69,9 @@ class DriverService {
       DriverEntity.fromDriver(driver),
     );
 
-    await UserSyncService.instance.syncDriver(driver);
+    await UserSyncService.instance.syncDriver(
+      driver,
+    );
   }
 
   Future<void> deleteDriver(
@@ -72,6 +79,8 @@ class DriverService {
   ) async {
     await _repository.deleteDriver(id);
 
-    await UserSyncService.instance.deleteDriverUser(id);
+    await UserSyncService.instance.deleteDriverUser(
+      id,
+    );
   }
 }
