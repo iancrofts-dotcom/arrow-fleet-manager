@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../models/inspection_wizard_data.dart';
 import 'step1_vehicle_details.dart';
 import 'step2_checklist.dart';
+import 'step3_summary.dart';
+import 'step4_repairs.dart';
 
 class InspectionWizardScreen extends StatefulWidget {
   const InspectionWizardScreen({super.key});
@@ -43,27 +45,25 @@ class _InspectionWizardScreenState
           onNext: nextStep,
         );
 
-     case 1:
-  return Step2Checklist(
-    data: wizardData,
-    onNext: nextStep,
-    onPrevious: previousStep,
-  );
+      case 1:
+        return Step2Checklist(
+          data: wizardData,
+          onNext: nextStep,
+          onPrevious: previousStep,
+        );
 
       case 2:
-        return const Center(
-          child: Text(
-            'Step 3 - Summary\n(Coming Next)',
-            textAlign: TextAlign.center,
-          ),
+        return Step3Summary(
+          data: wizardData,
+          onNext: nextStep,
+          onPrevious: previousStep,
         );
 
       case 3:
-        return const Center(
-          child: Text(
-            'Step 4 - Repairs\n(Coming Next)',
-            textAlign: TextAlign.center,
-          ),
+        return Step4Repairs(
+          data: wizardData,
+          onNext: nextStep,
+          onPrevious: previousStep,
         );
 
       case 4:

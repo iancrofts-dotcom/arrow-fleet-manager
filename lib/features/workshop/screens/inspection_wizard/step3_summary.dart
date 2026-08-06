@@ -5,17 +5,18 @@ import '../../models/inspection_wizard_data.dart';
 
 class Step3Summary extends StatelessWidget {
   final InspectionWizardData data;
-  final List<InspectionChecklistItem> items;
   final VoidCallback onNext;
   final VoidCallback onPrevious;
 
   const Step3Summary({
     super.key,
     required this.data,
-    required this.items,
     required this.onNext,
     required this.onPrevious,
   });
+
+  List<InspectionChecklistItem> get items =>
+      data.checklistItems;
 
   int get passed =>
       items.where((i) => i.passed).length;
@@ -38,8 +39,7 @@ class Step3Summary extends StatelessWidget {
     return ((passed / items.length) * 100).round();
   }
 
-  bool get roadworthy =>
-      failed == 0;
+  bool get roadworthy => failed == 0;
 
   @override
   Widget build(BuildContext context) {
@@ -51,8 +51,7 @@ class Step3Summary extends StatelessWidget {
             children: [
               Card(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
                       Text(
@@ -157,7 +156,8 @@ class Step3Summary extends StatelessWidget {
         ),
 
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding:
+              const EdgeInsets.all(16),
           child: Row(
             children: [
               OutlinedButton.icon(
@@ -165,15 +165,20 @@ class Step3Summary extends StatelessWidget {
                 icon: const Icon(
                   Icons.arrow_back,
                 ),
-                label: const Text('Back'),
+                label:
+                    const Text('Back'),
               ),
+
               const Spacer(),
+
               FilledButton.icon(
                 onPressed: onNext,
                 icon: const Icon(
-                  Icons.arrow_forward),
-                label:
-                    const Text('Continue'),
+                  Icons.arrow_forward,
+                ),
+                label: const Text(
+                  'Continue',
+                ),
               ),
             ],
           ),

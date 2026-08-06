@@ -1,4 +1,6 @@
 import 'package:arrow_fleet_manager/features/workshop/models/workshop_inspection.dart';
+import 'inspection_checklist_item.dart';
+import 'repair_job.dart';
 
 /// Temporary model used while completing the Workshop Inspection Wizard.
 ///
@@ -24,6 +26,14 @@ class InspectionWizardData {
   String? technicianName;
 
   String? workshopManager;
+
+// =============================
+// Inspection Data
+// =============================
+
+List<InspectionChecklistItem> checklistItems = [];
+
+List<RepairJob> repairJobs = [];
 
   // =============================
   // Checklist Summary
@@ -94,6 +104,8 @@ class InspectionWizardData {
     technicianName = null;
 
     workshopManager = null;
+    checklistItems.clear();
+    repairJobs.clear();
 
     inspectionScore = 0;
     criticalFailures = 0;

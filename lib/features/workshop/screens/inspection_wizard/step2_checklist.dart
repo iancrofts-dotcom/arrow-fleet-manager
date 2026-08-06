@@ -26,7 +26,8 @@ class _Step2ChecklistState
     extends State<Step2Checklist> {
   late final ChecklistTemplateService _templateService;
 
-  List<InspectionChecklistItem> _items = [];
+  List<InspectionChecklistItem> get _items =>
+    widget.data.checklistItems;
 
   bool _loading = true;
 
@@ -40,12 +41,15 @@ class _Step2ChecklistState
   }
 
   void _loadChecklist() {
-    _items = _templateService.getDefaultTemplate();
-
-    setState(() {
-      _loading = false;
-    });
+  if (widget.data.checklistItems.isEmpty) {
+    widget.data.checklistItems =
+        _templateService.getDefaultTemplate();
   }
+
+  setState(() {
+    _loading = false;
+  });
+}
 
   int get completedItems =>
       _items.where((i) => i.completed).length;
