@@ -24,8 +24,9 @@ class InspectionWizardData {
 
   int? technicianId;
   String? technicianName;
-
+  String? technician;
   String? workshopManager;
+  String? finalNotes;
 
 // =============================
 // Inspection Data
@@ -102,7 +103,8 @@ List<RepairJob> repairJobs = [];
 
     technicianId = null;
     technicianName = null;
-
+    technician = null;
+    finalNotes = null;
     workshopManager = null;
     checklistItems.clear();
     repairJobs.clear();
