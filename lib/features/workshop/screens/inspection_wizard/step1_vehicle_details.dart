@@ -167,35 +167,27 @@ class _Step1VehicleDetailsState
 
           const SizedBox(height: 20),
 
-          DropdownButtonFormField<
-              WorkshopInspectionType>(
-            value: _inspectionType,
-            decoration:
-                const InputDecoration(
-              labelText:
-                  'Inspection Type',
-            ),
-            items:
-                WorkshopInspectionType.values
-                    .map(
-                      (type) =>
-                          DropdownMenuItem(
-                        value: type,
-                        child: Text(type.name),
-                      ),
-                    )
-                    .toList(),
-            onChanged: (value) {
-              setState(() {
-                _inspectionType =
-                    value;
-              });
-            },
-            validator: (value) =>
-                value == null
-                    ? 'Select an inspection type'
-                    : null,
-          ),
+          DropdownButtonFormField<WorkshopInspectionType>(
+  initialValue: _inspectionType,
+  decoration: const InputDecoration(
+    labelText: 'Inspection Type',
+  ),
+  items: WorkshopInspectionType.values
+      .map(
+        (type) => DropdownMenuItem(
+          value: type,
+          child: Text(type.name),
+        ),
+      )
+      .toList(),
+  onChanged: (value) {
+    setState(() {
+      _inspectionType = value;
+    });
+  },
+  validator: (value) =>
+      value == null ? 'Select an inspection type' : null,
+),
 
           const SizedBox(height: 40),
 
