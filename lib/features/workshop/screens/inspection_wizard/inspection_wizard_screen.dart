@@ -19,58 +19,80 @@ class _InspectionWizardScreenState
   final InspectionWizardData wizardData =
       InspectionWizardData();
 
-  int currentStep = 0;
+  int _currentStep = 0;
 
-  void nextStep() {
-    if (currentStep < 4) {
+  static const int _totalSteps = 5;
+
+  void _nextStep() {
+    if (_currentStep < _totalSteps - 1) {
       setState(() {
-        currentStep++;
+        _currentStep++;
       });
     }
   }
 
-  void previousStep() {
-    if (currentStep > 0) {
+  void _previousStep() {
+    if (_currentStep > 0) {
       setState(() {
-        currentStep--;
+        _currentStep--;
       });
     }
   }
 
   Widget _buildStep() {
-    switch (currentStep) {
+    switch (_currentStep) {
       case 0:
         return Step1VehicleDetails(
           data: wizardData,
-          onNext: nextStep,
+          onNext: _nextStep,
         );
 
       case 1:
         return Step2Checklist(
           data: wizardData,
-          onNext: nextStep,
-          onPrevious: previousStep,
+          onNext: _nextStep,
+          onPrevious: _previousStep,
         );
 
       case 2:
         return Step3Summary(
           data: wizardData,
-          onNext: nextStep,
-          onPrevious: previousStep,
+          onNext: _nextStep,
+          onPrevious: _previousStep,
         );
 
       case 3:
         return Step4Repairs(
           data: wizardData,
-          onNext: nextStep,
-          onPrevious: previousStep,
+          onNext: _nextStep,
+          onPrevious: _previousStep,
         );
 
       case 4:
-        return const Center(
-          child: Text(
-            'Step 5 - Sign Off\n(Coming Next)',
-            textAlign: TextAlign.center,
+        return Center(
+          child: Column(
+            mainAxisAlignment:
+                MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.verified,
+                size: 72,
+                color: Colors.green,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Step 5\nSign-off',
+                textAlign: TextAlign.center,
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Coming next',
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         );
 
@@ -79,8 +101,28 @@ class _InspectionWizardScreenState
     }
   }
 
+  String get _stepTitle {
+    switch (_currentStep) {
+      case 0:
+        return 'Vehicle Details';
+      case 1:
+        return 'Inspection Checklist';
+      case 2:
+        return 'Inspection Summary';
+      case 3:
+        return 'Repair Review';
+      case 4:
+        return 'Sign-off';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final progress =
+        (_currentStep + 1) / _totalSteps;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -90,20 +132,39 @@ class _InspectionWizardScreenState
       body: Column(
         children: [
           LinearProgressIndicator(
-            value: (currentStep + 1) / 5,
+            value: progress,
+            minHeight: 6,
           ),
           Padding(
             padding:
                 const EdgeInsets.all(16),
-            child: Text(
-              'Step ${currentStep + 1} of 5',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium,
+            child: Column(
+              children: [
+                Text(
+                  'Step ${_currentStep + 1} of $_totalSteps',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _stepTitle,
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall,
+                ),
+              ],
             ),
           ),
           Expanded(
-            child: _buildStep(),
+            child: AnimatedSwitcher(
+              duration:
+                  const Duration(milliseconds: 250),
+              child: KeyedSubtree(
+                key: ValueKey(_currentStep),
+                child: _buildStep(),
+              ),
+            ),
           ),
         ],
       ),
