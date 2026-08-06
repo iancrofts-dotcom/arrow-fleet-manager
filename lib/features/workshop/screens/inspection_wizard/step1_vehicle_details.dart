@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import '../../models/inspection_wizard_data.dart';
 import '../../models/workshop_inspection.dart';
 
+import 'package:arrow_fleet_manager/features/vehicles/models/vehicle.dart';
+import 'package:arrow_fleet_manager/features/vehicles/widgets/vehicle_selector.dart';
+
+import '../../controllers/inspection_wizard_controller.dart';
+
 class Step1VehicleDetails extends StatefulWidget {
   final InspectionWizardData data;
   final VoidCallback onNext;
@@ -33,6 +38,14 @@ class _Step1VehicleDetailsState
 
   WorkshopInspectionType? _inspectionType;
 
+  late final InspectionWizardController _controller;
+
+List<Vehicle> _vehicles = [];
+
+Vehicle? _selectedVehicle;
+
+bool _loading = true;
+
   @override
   void initState() {
     super.initState();
@@ -50,7 +63,15 @@ class _Step1VehicleDetailsState
 
     _inspectionType =
         widget.data.inspectionType;
+
+        _controller = InspectionWizardController(
+  data: widget.data,
+);
+
+_loadVehicles();
   }
+
+
 
   @override
   void dispose() {
@@ -71,8 +92,32 @@ class _Step1VehicleDetailsState
     widget.data.inspectionType =
         _inspectionType;
 
-    widget.onNext();
+    
+
+    if (_selectedVehicle == null) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Please select a vehicle'),
+    ),
+  );
+  return;
+}
+
+widget.onNext();
+
   }
+
+  Future<void> _loadVehicles() async {
+  final vehicles = await _controller.loadVehicles();
+
+  if (!mounted) return;
+
+  setState(() {
+    _vehicles = vehicles;
+
+    _loading = false;
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -91,54 +136,71 @@ class _Step1VehicleDetailsState
 
           const SizedBox(height: 24),
 
-          Card(
+          
+                  Card(
+  child: Padding(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Vehicle',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+
+        const SizedBox(height: 16),
+
+        if (_loading)
+          const Center(
             child: Padding(
-              padding:
-                  const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const ListTile(
-                    leading:
-                        Icon(Icons.directions_bus),
-                    title: Text(
-                      'Vehicle Selection',
-                    ),
-                    subtitle: Text(
-                      'Vehicle search will be connected in the next step.',
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextFormField(
-                    controller:
-                        _registrationController,
-                    readOnly: true,
-                    decoration:
-                        const InputDecoration(
-                      labelText:
-                          'Registration',
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller:
-                        _fleetNumberController,
-                    readOnly: true,
-                    decoration:
-                        const InputDecoration(
-                      labelText:
-                          'Fleet Number',
-                    ),
-                  ),
-                ],
-              ),
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
             ),
+          )
+        else
+          VehicleSelector(
+            vehicles: _vehicles,
+            selectedVehicle: _selectedVehicle,
+            onChanged: (vehicle) {
+              if (vehicle == null) return;
+
+              setState(() {
+                _selectedVehicle = vehicle;
+
+                _controller.selectVehicle(vehicle);
+
+                _registrationController.text =
+                    vehicle.registration;
+
+                _fleetNumberController.text =
+                    vehicle.fleetNumber;
+              });
+            },
           ),
 
-          const SizedBox(height: 20),
+        const SizedBox(height: 20),
+
+        TextFormField(
+          controller: _registrationController,
+          readOnly: true,
+          decoration: const InputDecoration(
+            labelText: 'Registration',
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        TextFormField(
+          controller: _fleetNumberController,
+          readOnly: true,
+          decoration: const InputDecoration(
+            labelText: 'Fleet Number',
+          ),
+        ),
+      ],
+    ),
+  ),
+),
 
           TextFormField(
             controller:
