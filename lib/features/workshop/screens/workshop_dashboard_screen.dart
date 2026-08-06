@@ -7,7 +7,7 @@ import '../widgets/recent_activity_card.dart';
 import '../widgets/workshop_action_button.dart';
 import '../widgets/workshop_stat_card.dart';
 import 'workshop_inspection_screen.dart';
-import 'new_workshop_inspection_screen.dart';
+import 'inspection_wizard/inspection_wizard_screen.dart';
 
 class WorkshopDashboardScreen extends StatelessWidget {
   const WorkshopDashboardScreen({super.key});
@@ -107,12 +107,12 @@ class WorkshopDashboardScreen extends StatelessWidget {
                   icon: Icons.add_circle_outline,
                   color: Colors.green,
                   onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const NewWorkshopInspectionScreen(),
-                    ),
-                  );
+                 Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (_) => const InspectionWizardScreen(),
+  ),
+);
                 },
                 ),
 
