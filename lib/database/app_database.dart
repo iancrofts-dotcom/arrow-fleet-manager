@@ -524,5 +524,78 @@ CREATE TABLE IF NOT EXISTS inspection_template_items(
   )
 ''');
 
+await db.execute('''
+CREATE TABLE workshop_inspection_items(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  inspectionId INTEGER NOT NULL,
+  category TEXT NOT NULL,
+  title TEXT NOT NULL,
+  status TEXT NOT NULL,
+  mandatory INTEGER NOT NULL DEFAULT 1,
+  repairRequired INTEGER NOT NULL DEFAULT 0,
+  notes TEXT,
+  photoCount INTEGER NOT NULL DEFAULT 0,
+  displayOrder INTEGER NOT NULL,
+  FOREIGN KEY(inspectionId)
+    REFERENCES workshop_inspections(id)
+    ON DELETE CASCADE
+)
+''');
+
+await db.execute('''
+CREATE TABLE workshop_repair_jobs(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  inspectionId INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  priority TEXT NOT NULL,
+  status TEXT NOT NULL,
+  mechanic TEXT,
+  estimatedHours REAL DEFAULT 0,
+  actualHours REAL DEFAULT 0,
+  estimatedCost REAL DEFAULT 0,
+  actualCost REAL DEFAULT 0,
+  createdAt TEXT NOT NULL,
+  completedAt TEXT,
+  FOREIGN KEY(inspectionId)
+    REFERENCES workshop_inspections(id)
+    ON DELETE CASCADE
+)
+''');
+
+await db.execute('''
+CREATE TABLE inspection_templates(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  description TEXT,
+  vehicleType TEXT NOT NULL,
+  isDefault INTEGER NOT NULL DEFAULT 0,
+  isActive INTEGER NOT NULL DEFAULT 1,
+  createdAt TEXT NOT NULL,
+  updatedAt TEXT NOT NULL
+)
+''');
+
+await db.execute('''
+CREATE TABLE inspection_template_items(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  templateId INTEGER NOT NULL,
+  category TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  displayOrder INTEGER NOT NULL,
+  mandatory INTEGER NOT NULL DEFAULT 1,
+  criticalSafetyItem INTEGER NOT NULL DEFAULT 0,
+  autoCreateRepair INTEGER NOT NULL DEFAULT 1,
+  photoRequiredOnFail INTEGER NOT NULL DEFAULT 0,
+  allowNotes INTEGER NOT NULL DEFAULT 1,
+  defaultStatus TEXT NOT NULL,
+  isActive INTEGER NOT NULL DEFAULT 1,
+  FOREIGN KEY(templateId)
+    REFERENCES inspection_templates(id)
+    ON DELETE CASCADE
+)
+''');
+
   }
 }
