@@ -1,3 +1,7 @@
+// ============================================================================
+// Arrow Fleet Manager Workshop Database Baseline
+// Generated from the uploaded app_database.dart.
+// ============================================================================
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -14,7 +18,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 15,
+      version: 16,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON;');
       },
@@ -205,6 +209,129 @@ class AppDatabase {
             )
           ''');
         }
+
+        // ============================================================================
+// Version 16 - Workshop Inspections
+// ============================================================================
+
+if (oldVersion < 16) {
+  await db.execute('''
+    CREATE TABLE IF NOT EXISTS workshop_inspections(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+      inspectionNumber TEXT NOT NULL,
+
+      vehicleId INTEGER NOT NULL,
+      registration TEXT NOT NULL,
+      fleetNumber TEXT NOT NULL,
+
+      technicianId INTEGER,
+      technicianName TEXT NOT NULL,
+      workshopManager TEXT,
+
+      inspectionType TEXT NOT NULL,
+      status TEXT NOT NULL,
+      vehicleStatus TEXT NOT NULL,
+
+      dateStarted TEXT NOT NULL,
+      dateCompleted TEXT,
+
+      mileage INTEGER NOT NULL,
+
+      overallResult TEXT NOT NULL,
+      inspectionScore INTEGER NOT NULL DEFAULT 0,
+
+      criticalFailures INTEGER NOT NULL DEFAULT 0,
+      advisories INTEGER NOT NULL DEFAULT 0,
+      repairsRequired INTEGER NOT NULL DEFAULT 0,
+
+      labourHours REAL NOT NULL DEFAULT 0,
+      totalCost REAL NOT NULL DEFAULT 0,
+
+      notes TEXT,
+
+      technicianSignature TEXT,
+      managerSignature TEXT,
+
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    )
+  ''');
+}
+
+await db.execute('''
+CREATE TABLE IF NOT EXISTS workshop_inspection_items(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  inspectionId INTEGER NOT NULL,
+  category TEXT NOT NULL,
+  title TEXT NOT NULL,
+  status TEXT NOT NULL,
+  mandatory INTEGER NOT NULL DEFAULT 1,
+  repairRequired INTEGER NOT NULL DEFAULT 0,
+  notes TEXT,
+  photoCount INTEGER NOT NULL DEFAULT 0,
+  displayOrder INTEGER NOT NULL,
+  FOREIGN KEY(inspectionId)
+    REFERENCES workshop_inspections(id)
+    ON DELETE CASCADE
+)
+''');
+
+await db.execute('''
+CREATE TABLE IF NOT EXISTS workshop_repair_jobs(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  inspectionId INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  priority TEXT NOT NULL,
+  status TEXT NOT NULL,
+  mechanic TEXT,
+  estimatedHours REAL DEFAULT 0,
+  actualHours REAL DEFAULT 0,
+  estimatedCost REAL DEFAULT 0,
+  actualCost REAL DEFAULT 0,
+  createdAt TEXT NOT NULL,
+  completedAt TEXT,
+  FOREIGN KEY(inspectionId)
+    REFERENCES workshop_inspections(id)
+    ON DELETE CASCADE
+)
+''');
+
+await db.execute('''
+CREATE TABLE IF NOT EXISTS inspection_templates(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  description TEXT,
+  vehicleType TEXT NOT NULL,
+  isDefault INTEGER NOT NULL DEFAULT 0,
+  isActive INTEGER NOT NULL DEFAULT 1,
+  createdAt TEXT NOT NULL,
+  updatedAt TEXT NOT NULL
+)
+''');
+
+await db.execute('''
+CREATE TABLE IF NOT EXISTS inspection_template_items(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  templateId INTEGER NOT NULL,
+  category TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  displayOrder INTEGER NOT NULL,
+  mandatory INTEGER NOT NULL DEFAULT 1,
+  criticalSafetyItem INTEGER NOT NULL DEFAULT 0,
+  autoCreateRepair INTEGER NOT NULL DEFAULT 1,
+  photoRequiredOnFail INTEGER NOT NULL DEFAULT 0,
+  allowNotes INTEGER NOT NULL DEFAULT 1,
+  defaultStatus TEXT NOT NULL,
+  isActive INTEGER NOT NULL DEFAULT 1,
+  FOREIGN KEY(templateId)
+    REFERENCES inspection_templates(id)
+    ON DELETE CASCADE
+)
+''');
+
       },
     );
 
@@ -353,5 +480,49 @@ class AppDatabase {
         repairNotes TEXT
       )
     ''');
+
+  await db.execute('''
+  CREATE TABLE workshop_inspections(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    inspectionNumber TEXT NOT NULL,
+
+    vehicleId INTEGER NOT NULL,
+    registration TEXT NOT NULL,
+    fleetNumber TEXT NOT NULL,
+
+    technicianId INTEGER,
+    technicianName TEXT NOT NULL,
+    workshopManager TEXT,
+
+    inspectionType TEXT NOT NULL,
+    status TEXT NOT NULL,
+    vehicleStatus TEXT NOT NULL,
+
+    dateStarted TEXT NOT NULL,
+    dateCompleted TEXT,
+
+    mileage INTEGER NOT NULL,
+
+    overallResult TEXT NOT NULL,
+    inspectionScore INTEGER NOT NULL DEFAULT 0,
+
+    criticalFailures INTEGER NOT NULL DEFAULT 0,
+    advisories INTEGER NOT NULL DEFAULT 0,
+    repairsRequired INTEGER NOT NULL DEFAULT 0,
+
+    labourHours REAL NOT NULL DEFAULT 0,
+    totalCost REAL NOT NULL DEFAULT 0,
+
+    notes TEXT,
+
+    technicianSignature TEXT,
+    managerSignature TEXT,
+
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  )
+''');
+
   }
 }
