@@ -10,6 +10,7 @@ import '../../inspections/inspection_screen.dart';
 import '../../vehicles/models/vehicle.dart';
 import '../../vehicles/screens/add_vehicle_screen.dart';
 import '../widgets/quick_action_card.dart';
+import '../../workshop/screens/workshop_dashboard_screen.dart';
 
 class QuickActionsSection extends StatelessWidget {
   const QuickActionsSection({
@@ -125,7 +126,21 @@ class QuickActionsSection extends StatelessWidget {
                   );
                 },
               ),
-
+// Workshop
+if (permissions.canManageWorkshop)
+  QuickActionCard(
+    icon: Icons.build,
+    title: 'Workshop',
+    subtitle: 'Workshop inspections & repairs',
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const WorkshopDashboardScreen(),
+        ),
+      );
+    },
+  ),
             // Reports
             if (permissions.canViewReports)
               QuickActionCard(

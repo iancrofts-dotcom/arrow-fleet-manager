@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../auth/models/user_role.dart';
 import '../auth/screens/login_screen.dart';
 import '../auth/services/auth_service.dart';
 
@@ -13,12 +14,10 @@ class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() =>
-      _DashboardScreenState();
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState
-    extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> {
   late final DashboardService _dashboardService;
 
   late Future<DashboardSummary> summaryFuture;
@@ -28,14 +27,12 @@ class _DashboardScreenState
     super.initState();
 
     _dashboardService = DashboardService();
-
     summaryFuture = _dashboardService.loadSummary();
   }
 
   Future<void> _refreshDashboard() async {
     setState(() {
-      summaryFuture =
-          _dashboardService.loadSummary();
+      summaryFuture = _dashboardService.loadSummary();
     });
 
     await summaryFuture;
@@ -54,12 +51,35 @@ class _DashboardScreenState
     );
   }
 
+  DashboardRole _getDashboardRole() {
+    final currentUser = AuthService.instance.currentUser;
+
+    switch (currentUser?.role) {
+      case UserRole.admin:
+        return DashboardRole.administrator;
+
+      case UserRole.manager:
+        return DashboardRole.fleetManager;
+
+      case UserRole.workshop:
+        return DashboardRole.workshopManager;
+
+      case UserRole.driver:
+        return DashboardRole.driver;
+
+      case UserRole.viewer:
+      default:
+        // Viewer currently uses the Fleet Manager dashboard
+        // until a dedicated ViewerDashboard is created.
+        return DashboardRole.fleetManager;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text('Arrow Fleet Manager'),
+        title: const Text('Arrow Fleet Manager'),
         actions: [
           IconButton(
             tooltip: 'Refresh',
@@ -76,23 +96,19 @@ class _DashboardScreenState
       body: FutureBuilder<DashboardSummary>(
         future: summaryFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child:
-                  CircularProgressIndicator(),
+              child: CircularProgressIndicator(),
             );
           }
 
           if (snapshot.hasError) {
             return Center(
               child: Padding(
-                padding:
-                    const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Text(
                   'Error loading dashboard\n\n${snapshot.error}',
-                  textAlign:
-                      TextAlign.center,
+                  textAlign: TextAlign.center,
                 ),
               ),
             );
@@ -100,32 +116,25 @@ class _DashboardScreenState
 
           if (!snapshot.hasData) {
             return const Center(
-              child: Text(
-                'No dashboard data available',
-              ),
+              child: Text('No dashboard data available'),
             );
           }
 
           final summary = snapshot.data!;
 
           final fleetHealth =
-              _dashboardService
-                  .getFleetHealth(summary);
+              _dashboardService.getFleetHealth(summary);
 
-          // Temporary Administrator routing.
-          // In the next commit this will be
-          // replaced with the authenticated
-          // user's role.
-         final dashboardContext = DashboardContext(
-  summary: summary,
-  fleetHealth: fleetHealth,
-  onRefresh: _refreshDashboard,
-);
+          final dashboardContext = DashboardContext(
+            summary: summary,
+            fleetHealth: fleetHealth,
+            onRefresh: _refreshDashboard,
+          );
 
-return DashboardRouter.build(
-  role: DashboardRole.administrator,
-  context: dashboardContext,
-);
+          return DashboardRouter.build(
+            role: _getDashboardRole(),
+            context: dashboardContext,
+          );
         },
       ),
     );

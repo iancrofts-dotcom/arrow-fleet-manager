@@ -14,13 +14,11 @@ class ArrowFleetManagerApp extends StatelessWidget {
       title: AppConstants.appName,
       theme: AppTheme.lightTheme,
 
-      // Navigation
       initialRoute: AppRouter.root,
-      routes: AppRouter.routes,
-      onGenerateRoute: AppRouter.onGenerateRoute,
 
-      // Prevent duplicate navigation banner
-      home: null,
+      routes: AppRouter.routes,
+
+      onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }
