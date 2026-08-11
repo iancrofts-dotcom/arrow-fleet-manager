@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../models/inspection_checklist_item.dart';
 import '../../models/inspection_wizard_data.dart';
@@ -22,12 +26,14 @@ class Step2Checklist extends StatefulWidget {
 
 class _Step2ChecklistState extends State<Step2Checklist> {
   late final ChecklistTemplateService _templateService;
+  late final ImagePicker _imagePicker;
 
   @override
   void initState() {
     super.initState();
 
     _templateService = ChecklistTemplateService();
+    _imagePicker = ImagePicker();
 
     _loadChecklist();
   }
@@ -91,6 +97,105 @@ class _Step2ChecklistState extends State<Step2Checklist> {
     item.notes = notes;
   }
 
+  // =========================================================================
+  // TAKE PHOTO
+  // =========================================================================
+
+  Future<void> _takePhoto(
+    InspectionChecklistItem item,
+  ) async {
+    try {
+      final XFile? photo = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 1920,
+      );
+
+      if (photo == null) {
+        return;
+      }
+
+      setState(() {
+        item.photos.add(photo.path);
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Camera unavailable on this device. '
+            'Please choose a photo instead.',
+          ),
+        ),
+      );
+    }
+  }
+
+  // =========================================================================
+  // CHOOSE PHOTO
+  // =========================================================================
+
+  Future<void> _choosePhoto(
+    InspectionChecklistItem item,
+  ) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: true,
+      );
+
+      if (result == null) {
+        return;
+      }
+
+      final paths = result.files
+          .map((file) => file.path)
+          .whereType<String>()
+          .where((path) => path.isNotEmpty)
+          .toList();
+
+      if (paths.isEmpty) {
+        return;
+      }
+
+      setState(() {
+        item.photos.addAll(paths);
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to select the photo.',
+          ),
+        ),
+      );
+    }
+  }
+
+  // =========================================================================
+  // REMOVE PHOTO
+  // =========================================================================
+
+  void _removePhoto(
+    InspectionChecklistItem item,
+    String path,
+  ) {
+    setState(() {
+      item.photos.remove(path);
+    });
+  }
+
+  // =========================================================================
+  // BUILD
+  // =========================================================================
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -99,14 +204,18 @@ class _Step2ChecklistState extends State<Step2Checklist> {
     final grouped = <String, List<InspectionChecklistItem>>{};
 
     for (final item in widget.data.checklistItems) {
-      grouped.putIfAbsent(item.category, () => []).add(item);
+      grouped.putIfAbsent(
+        item.category,
+        () => [],
+      ).add(item);
     }
 
     return Column(
       children: [
-        // ===============================================================
+        // ===================================================================
         // TOP SUMMARY
-        // ===============================================================
+        // ===================================================================
+
         Container(
           padding: const EdgeInsets.fromLTRB(
             24,
@@ -123,7 +232,8 @@ class _Step2ChecklistState extends State<Step2Checklist> {
             ),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment:
+                CrossAxisAlignment.stretch,
             children: [
               Row(
                 children: [
@@ -140,7 +250,9 @@ class _Step2ChecklistState extends State<Step2Checklist> {
                       color: scheme.primary,
                     ),
                   ),
+
                   const SizedBox(width: 14),
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment:
@@ -156,7 +268,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          'Check each item and record the result.',
+                          'Check each item, add notes and attach photos.',
                           style: theme.textTheme.bodyMedium
                               ?.copyWith(
                             color:
@@ -166,6 +278,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
                       ],
                     ),
                   ),
+
                   Text(
                     '$_completed / '
                     '${widget.data.checklistItems.length}',
@@ -216,9 +329,10 @@ class _Step2ChecklistState extends State<Step2Checklist> {
           ),
         ),
 
-        // ===============================================================
+        // ===================================================================
         // CHECKLIST
-        // ===============================================================
+        // ===================================================================
+
         Expanded(
           child: ListView(
             padding: const EdgeInsets.all(20),
@@ -240,10 +354,28 @@ class _Step2ChecklistState extends State<Step2Checklist> {
                   _ChecklistCard(
                     item: item,
                     onStatusChanged: (status) {
-                      _setStatus(item, status);
+                      _setStatus(
+                        item,
+                        status,
+                      );
                     },
                     onNotesChanged: (notes) {
-                      _setNotes(item, notes);
+                      _setNotes(
+                        item,
+                        notes,
+                      );
+                    },
+                    onTakePhoto: () {
+                      _takePhoto(item);
+                    },
+                    onChoosePhoto: () {
+                      _choosePhoto(item);
+                    },
+                    onRemovePhoto: (path) {
+                      _removePhoto(
+                        item,
+                        path,
+                      );
                     },
                   ),
 
@@ -256,9 +388,10 @@ class _Step2ChecklistState extends State<Step2Checklist> {
           ),
         ),
 
-        // ===============================================================
+        // ===================================================================
         // FOOTER
-        // ===============================================================
+        // ===================================================================
+
         Container(
           padding: const EdgeInsets.symmetric(
             horizontal: 24,
@@ -300,9 +433,9 @@ class _Step2ChecklistState extends State<Step2Checklist> {
   }
 }
 
-// ===========================================================================
+// =============================================================================
 // STATUS SUMMARY
-// ===========================================================================
+// =============================================================================
 
 class _StatusSummary extends StatelessWidget {
   final IconData icon;
@@ -317,7 +450,8 @@ class _StatusSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final scheme =
+        Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -326,7 +460,8 @@ class _StatusSummary extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius:
+            BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -349,20 +484,27 @@ class _StatusSummary extends StatelessWidget {
   }
 }
 
-// ===========================================================================
+// =============================================================================
 // CHECKLIST CARD
-// ===========================================================================
+// =============================================================================
 
 class _ChecklistCard extends StatefulWidget {
   final InspectionChecklistItem item;
   final ValueChanged<ChecklistStatus>
       onStatusChanged;
-  final ValueChanged<String> onNotesChanged;
+  final ValueChanged<String>
+      onNotesChanged;
+  final VoidCallback onTakePhoto;
+  final VoidCallback onChoosePhoto;
+  final ValueChanged<String> onRemovePhoto;
 
   const _ChecklistCard({
     required this.item,
     required this.onStatusChanged,
     required this.onNotesChanged,
+    required this.onTakePhoto,
+    required this.onChoosePhoto,
+    required this.onRemovePhoto,
   });
 
   @override
@@ -372,19 +514,26 @@ class _ChecklistCard extends StatefulWidget {
 
 class _ChecklistCardState
     extends State<_ChecklistCard> {
-  late final TextEditingController _notesController;
+  late final TextEditingController
+      _notesController;
 
   bool _showNotes = false;
+  bool _showPhotos = false;
 
   @override
   void initState() {
     super.initState();
 
-    _notesController = TextEditingController(
+    _notesController =
+        TextEditingController(
       text: widget.item.notes,
     );
 
-    _showNotes = widget.item.notes.trim().isNotEmpty;
+    _showNotes =
+        widget.item.notes.trim().isNotEmpty;
+
+    _showPhotos =
+        widget.item.photos.isNotEmpty;
   }
 
   @override
@@ -393,23 +542,15 @@ class _ChecklistCardState
     super.dispose();
   }
 
-  @override
-  void didUpdateWidget(
-    covariant _ChecklistCard oldWidget,
-  ) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.item.id != widget.item.id) {
-      _notesController.text = widget.item.notes;
-
-      _showNotes =
-          widget.item.notes.trim().isNotEmpty;
-    }
-  }
-
   void _toggleNotes() {
     setState(() {
       _showNotes = !_showNotes;
+    });
+  }
+
+  void _togglePhotos() {
+    setState(() {
+      _showPhotos = !_showPhotos;
     });
   }
 
@@ -422,21 +563,25 @@ class _ChecklistCardState
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: scheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius:
+            BorderRadius.circular(16),
         border: Border.all(
           color: widget.item.completed
-              ? scheme.primary.withValues(alpha: 0.45)
+              ? scheme.primary
+                  .withValues(alpha: 0.45)
               : scheme.outlineVariant,
-          width: widget.item.completed ? 1.5 : 1,
+          width:
+              widget.item.completed ? 1.5 : 1,
         ),
       ),
       child: Column(
         crossAxisAlignment:
             CrossAxisAlignment.stretch,
         children: [
-          // ---------------------------------------------------------------
-          // ITEM HEADER
-          // ---------------------------------------------------------------
+          // =================================================================
+          // HEADER
+          // =================================================================
+
           Row(
             crossAxisAlignment:
                 CrossAxisAlignment.start,
@@ -445,7 +590,8 @@ class _ChecklistCardState
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
+                  color:
+                      scheme.primaryContainer,
                   borderRadius:
                       BorderRadius.circular(12),
                 ),
@@ -469,7 +615,8 @@ class _ChecklistCardState
                       style: theme.textTheme
                           .titleMedium
                           ?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight:
+                            FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -477,7 +624,8 @@ class _ChecklistCardState
                       widget.item.mandatory
                           ? 'Mandatory inspection item'
                           : 'Optional inspection item',
-                      style: theme.textTheme.bodySmall
+                      style: theme.textTheme
+                          .bodySmall
                           ?.copyWith(
                         color:
                             scheme.onSurfaceVariant,
@@ -486,14 +634,50 @@ class _ChecklistCardState
                   ],
                 ),
               ),
+
+              if (widget.item.photos.isNotEmpty)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        scheme.primaryContainer,
+                    borderRadius:
+                        BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize:
+                        MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.photo_outlined,
+                        size: 16,
+                        color: scheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${widget.item.photos.length}',
+                        style: TextStyle(
+                          color: scheme.primary,
+                          fontWeight:
+                              FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
 
           const SizedBox(height: 14),
 
-          // ---------------------------------------------------------------
+          // =================================================================
           // STATUS BUTTONS
-          // ---------------------------------------------------------------
+          // =================================================================
+
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -510,6 +694,7 @@ class _ChecklistCardState
                   );
                 },
               ),
+
               _StatusButton(
                 label: 'ADVISORY',
                 icon: Icons.warning_amber,
@@ -522,6 +707,7 @@ class _ChecklistCardState
                   );
                 },
               ),
+
               _StatusButton(
                 label: 'DEFECT',
                 icon: Icons.close,
@@ -539,71 +725,223 @@ class _ChecklistCardState
 
           const SizedBox(height: 12),
 
-          // ---------------------------------------------------------------
-          // NOTES BUTTON
-          // ---------------------------------------------------------------
-          OutlinedButton.icon(
-            onPressed: _toggleNotes,
-            icon: Icon(
-              _showNotes
-                  ? Icons.expand_less
-                  : Icons.edit_note_outlined,
-            ),
-            label: Text(
-              _showNotes
-                  ? 'Hide technician notes'
-                  : widget.item.notes.trim().isEmpty
-                      ? 'Add technician note'
-                      : 'Edit technician note',
-            ),
+          // =================================================================
+          // NOTES / PHOTO ACTIONS
+          // =================================================================
+
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _toggleNotes,
+                icon: Icon(
+                  _showNotes
+                      ? Icons.expand_less
+                      : Icons.edit_note_outlined,
+                ),
+                label: Text(
+                  _showNotes
+                      ? 'Hide notes'
+                      : widget.item.notes
+                              .trim()
+                              .isEmpty
+                          ? 'Add note'
+                          : 'Edit note',
+                ),
+              ),
+
+              OutlinedButton.icon(
+                onPressed: _togglePhotos,
+                icon: Icon(
+                  _showPhotos
+                      ? Icons.expand_less
+                      : Icons.photo_library_outlined,
+                ),
+                label: Text(
+                  widget.item.photos.isEmpty
+                      ? 'Photos'
+                      : 'Photos (${widget.item.photos.length})',
+                ),
+              ),
+            ],
           ),
 
-          // ---------------------------------------------------------------
-          // NOTES FIELD
-          // ---------------------------------------------------------------
+          // =================================================================
+          // NOTES
+          // =================================================================
+
           if (_showNotes) ...[
             const SizedBox(height: 12),
 
             TextField(
-              controller: _notesController,
+              controller:
+                  _notesController,
               minLines: 3,
               maxLines: 6,
               textCapitalization:
                   TextCapitalization.sentences,
-              decoration: InputDecoration(
-                labelText: 'Technician notes',
+              decoration:
+                  InputDecoration(
+                labelText:
+                    'Technician notes',
                 hintText:
-                    'Enter any observations, measurements '
+                    'Enter observations, measurements '
                     'or additional information...',
-                alignLabelWithHint: true,
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.only(
-                    bottom: 48,
-                  ),
-                  child: Icon(
-                    Icons.notes_outlined,
-                  ),
-                ),
-                border: OutlineInputBorder(
+                alignLabelWithHint:
+                    true,
+                border:
+                    OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(12),
                 ),
               ),
-              onChanged: widget.onNotesChanged,
+              onChanged:
+                  widget.onNotesChanged,
             ),
           ],
 
-          // ---------------------------------------------------------------
+          // =================================================================
+          // PHOTOS
+          // =================================================================
+
+          if (_showPhotos) ...[
+            const SizedBox(height: 12),
+
+            Container(
+              padding:
+                  const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color:
+                    scheme.surfaceContainerLow,
+                borderRadius:
+                    BorderRadius.circular(14),
+                border: Border.all(
+                  color:
+                      scheme.outlineVariant,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.photo_camera_outlined,
+                        color: scheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Inspection photographs',
+                          style: theme
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(
+                            fontWeight:
+                                FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // ---------------------------------------------------------
+                  // PHOTO BUTTONS
+                  // ---------------------------------------------------------
+
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      FilledButton.icon(
+                        onPressed:
+                            widget.onTakePhoto,
+                        icon: const Icon(
+                          Icons.camera_alt_outlined,
+                        ),
+                        label:
+                            const Text(
+                          'Take Photo',
+                        ),
+                      ),
+
+                      OutlinedButton.icon(
+                        onPressed:
+                            widget.onChoosePhoto,
+                        icon: const Icon(
+                          Icons.folder_open_outlined,
+                        ),
+                        label:
+                            const Text(
+                          'Choose Photo',
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // ---------------------------------------------------------
+                  // PHOTO PREVIEW
+                  // ---------------------------------------------------------
+
+                  if (widget.item.photos
+                      .isNotEmpty) ...[
+                    const SizedBox(height: 14),
+
+                    SizedBox(
+                      height: 110,
+                      child: ListView.separated(
+                        scrollDirection:
+                            Axis.horizontal,
+                        itemCount:
+                            widget.item.photos
+                                .length,
+                        separatorBuilder:
+                            (_, _) =>
+                                const SizedBox(
+                          width: 10,
+                        ),
+                        itemBuilder:
+                            (context, index) {
+                          final path =
+                              widget.item.photos[
+                                  index];
+
+                          return _PhotoThumbnail(
+                            path: path,
+                            onRemove: () {
+                              widget
+                                  .onRemovePhoto(
+                                path,
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+
+          // =================================================================
           // DEFECT MESSAGE
-          // ---------------------------------------------------------------
+          // =================================================================
+
           if (widget.item.status ==
               ChecklistStatus.fail) ...[
             const SizedBox(height: 12),
 
             Container(
-              padding: const EdgeInsets.all(12),
+              padding:
+                  const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: scheme.errorContainer,
+                color:
+                    scheme.errorContainer,
                 borderRadius:
                     BorderRadius.circular(12),
               ),
@@ -620,7 +958,9 @@ class _ChecklistCardState
                     child: Text(
                       'Defect recorded. Repair information '
                       'will be available in Step 4.',
-                      style: theme.textTheme.bodySmall
+                      style: theme
+                          .textTheme
+                          .bodySmall
                           ?.copyWith(
                         color:
                             scheme.onErrorContainer,
@@ -644,19 +984,92 @@ class _ChecklistCardState
     switch (priority) {
       case ChecklistPriority.low:
         return Icons.circle_outlined;
+
       case ChecklistPriority.medium:
         return Icons.info_outline;
+
       case ChecklistPriority.high:
         return Icons.priority_high;
+
       case ChecklistPriority.critical:
         return Icons.warning_amber;
     }
   }
 }
 
-// ===========================================================================
+// =============================================================================
+// PHOTO THUMBNAIL
+// =============================================================================
+
+class _PhotoThumbnail extends StatelessWidget {
+  final String path;
+  final VoidCallback onRemove;
+
+  const _PhotoThumbnail({
+    required this.path,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius:
+              BorderRadius.circular(12),
+          child: SizedBox(
+            width: 110,
+            height: 110,
+            child: Image.file(
+              File(path),
+              fit: BoxFit.cover,
+              errorBuilder:
+                  (context, error, stackTrace) {
+                return Container(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest,
+                  child: const Center(
+                    child: Icon(
+                      Icons.broken_image_outlined,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+
+        Positioned(
+          top: 5,
+          right: 5,
+          child: Material(
+            color: Colors.black54,
+            borderRadius:
+                BorderRadius.circular(20),
+            child: InkWell(
+              borderRadius:
+                  BorderRadius.circular(20),
+              onTap: onRemove,
+              child: const Padding(
+                padding: EdgeInsets.all(5),
+                child: Icon(
+                  Icons.close,
+                  size: 18,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// =============================================================================
 // STATUS BUTTON
-// ===========================================================================
+// =============================================================================
 
 class _StatusButton extends StatelessWidget {
   final String label;
