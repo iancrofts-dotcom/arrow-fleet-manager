@@ -46,6 +46,26 @@ Future<User?> login({
   ///
   /// Any supplied parameter is used as a filter.
   /// If multiple parameters are supplied, they must all match.
+  /// Returns active users with the specified role.
+  ///
+  /// This is used by features such as the inspection wizard
+  /// to populate role-specific selectors without exposing
+  /// inactive accounts.
+  Future<List<User>> getUsersByRole(
+    UserRole role, {
+    bool activeOnly = true,
+  }) async {
+    final users = await getUsers();
+
+    return users
+        .where(
+          (user) =>
+              user.role == role &&
+              (!activeOnly || user.isActive),
+        )
+        .toList(growable: false);
+  }
+
   Future<User?> findUser({
     String? id,
     String? username,

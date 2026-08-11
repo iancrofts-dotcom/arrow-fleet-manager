@@ -2,6 +2,7 @@ enum UserRole {
   admin,
   manager,
   workshop,
+  technician,
   driver,
   viewer,
 }
@@ -17,6 +18,9 @@ extension UserRoleExtension on UserRole {
 
       case UserRole.workshop:
         return 'Workshop';
+
+      case UserRole.technician:
+        return 'Technician';
 
       case UserRole.driver:
         return 'Driver';
@@ -37,6 +41,9 @@ extension UserRoleExtension on UserRole {
       case UserRole.workshop:
         return 'workshop';
 
+      case UserRole.technician:
+        return 'technician';
+
       case UserRole.driver:
         return 'driver';
 
@@ -55,6 +62,9 @@ extension UserRoleExtension on UserRole {
 
       case 'workshop':
         return UserRole.workshop;
+
+      case 'technician':
+        return UserRole.technician;
 
       case 'driver':
         return UserRole.driver;

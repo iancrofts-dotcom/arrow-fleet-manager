@@ -7,6 +7,9 @@ import 'package:arrow_fleet_manager/features/vehicles/models/vehicle.dart';
 import 'package:arrow_fleet_manager/features/vehicles/widgets/vehicle_selector.dart';
 
 import '../../controllers/inspection_wizard_controller.dart';
+import '../../../auth/models/user.dart';
+import '../../../auth/models/user_role.dart';
+import '../../../auth/services/user_service.dart';
 
 class Step1VehicleDetails extends StatefulWidget {
   final InspectionWizardData data;
@@ -41,10 +44,13 @@ class _Step1VehicleDetailsState
   late final InspectionWizardController _controller;
 
 List<Vehicle> _vehicles = [];
+List<User> _technicians = [];
 
 Vehicle? _selectedVehicle;
+User? _selectedTechnician;
 
 bool _loading = true;
+bool _loadingTechnicians = true;
 
   @override
   void initState() {
@@ -69,6 +75,7 @@ bool _loading = true;
 );
 
 _loadVehicles();
+    _loadTechnicians();
   }
 
 
@@ -103,6 +110,15 @@ _loadVehicles();
   return;
 }
 
+if (_selectedTechnician == null) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Please select a technician'),
+    ),
+  );
+  return;
+}
+
 widget.onNext();
 
   }
@@ -118,6 +134,85 @@ widget.onNext();
     _loading = false;
   });
 }
+
+  Future<void> _loadTechnicians() async {
+    final users = await UserService.instance.getUsersByRole(
+      UserRole.technician,
+    );
+
+    if (!mounted) return;
+
+    User? selected;
+
+    if (widget.data.technicianId != null) {
+      for (final technician in users) {
+        final technicianId = int.tryParse(technician.id);
+
+        if (technicianId == widget.data.technicianId) {
+          selected = technician;
+          break;
+        }
+      }
+    }
+
+    selected ??= _findTechnicianByName(
+      users,
+      widget.data.technicianName,
+    );
+
+    setState(() {
+      _technicians = users;
+      _selectedTechnician = selected;
+      _loadingTechnicians = false;
+    });
+  }
+
+  User? _findTechnicianByName(
+    List<User> users,
+    String? name,
+  ) {
+    if (name == null || name.trim().isEmpty) {
+      return null;
+    }
+
+    final target = name.trim().toLowerCase();
+
+    for (final technician in users) {
+      if (technician.username.toLowerCase() == target) {
+        return technician;
+      }
+    }
+
+    return null;
+  }
+
+  void _selectTechnician(
+    User technician,
+  ) {
+    final technicianId = int.tryParse(technician.id);
+
+    if (technicianId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This technician account has an invalid ID. '
+            'Please recreate the technician user.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _selectedTechnician = technician;
+
+      widget.data.technicianId = technicianId;
+      widget.data.technicianName =
+          technician.username;
+      widget.data.technician =
+          technician.username;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -201,6 +296,127 @@ widget.onNext();
     ),
   ),
 ),
+
+          const SizedBox(height: 20),
+
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Technician',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Select the technician responsible for this inspection.',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_loadingTechnicians)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child:
+                            CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (_technicians.isEmpty)
+                    Container(
+                      padding:
+                          const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .errorContainer,
+                        borderRadius:
+                            BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_outlined,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .error,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'No active technicians are available. '
+                              'Add an active Technician user before starting an inspection.',
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onErrorContainer,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    DropdownButtonFormField<User>(
+                      initialValue:
+                          _selectedTechnician,
+                      isExpanded: true,
+                      decoration:
+                          const InputDecoration(
+                        labelText:
+                            'Inspection Technician',
+                        prefixIcon:
+                            Icon(Icons.engineering_outlined),
+                        border:
+                            OutlineInputBorder(),
+                      ),
+                      items: _technicians
+                          .map(
+                            (technician) =>
+                                DropdownMenuItem<User>(
+                              value: technician,
+                              child: Text(
+                                technician.username,
+                                overflow:
+                                    TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (technician) {
+                        if (technician == null) {
+                          return;
+                        }
+
+                        _selectTechnician(
+                          technician,
+                        );
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Select a technician';
+                        }
+
+                        return null;
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ),
 
           TextFormField(
             controller:

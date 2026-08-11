@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/inspection_wizard_data.dart';
+import '../../../auth/services/auth_service.dart';
 
 class Step5Signoff extends StatefulWidget {
   final InspectionWizardData data;
@@ -40,12 +41,25 @@ class _Step5SignoffState
 
     _technicianController =
         TextEditingController(
-      text: widget.data.technician ?? '',
+      text: widget.data.technicianName ??
+          widget.data.technician ??
+          '',
     );
+
+    final currentUser =
+        AuthService.instance.currentUser;
+
+    final managerUsername =
+        currentUser?.username ??
+        widget.data.workshopManager ??
+        '';
+
+    widget.data.workshopManager =
+        managerUsername;
 
     _managerController =
         TextEditingController(
-      text: widget.data.workshopManager ?? '',
+      text: managerUsername,
     );
 
     _notesController =
@@ -68,6 +82,9 @@ class _Step5SignoffState
     }
 
     widget.data.technician =
+        _technicianController.text.trim();
+
+    widget.data.technicianName =
         _technicianController.text.trim();
 
     widget.data.workshopManager =
