@@ -80,12 +80,14 @@ class _Step5SignoffState
       _saving = true;
     });
 
-    await widget.onFinish();
-
-    if (mounted) {
-      setState(() {
-        _saving = false;
-      });
+    try {
+      await widget.onFinish();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
     }
   }
 
@@ -97,14 +99,14 @@ class _Step5SignoffState
         children: [
           Expanded(
             child: ListView(
-              padding:
-                  const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               children: [
                 Card(
                   child: Padding(
-                    padding:
-                        const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.stretch,
                       children: [
                         Text(
                           'Inspection Sign-off',
@@ -113,32 +115,27 @@ class _Step5SignoffState
                               .headlineSmall,
                         ),
 
-                        const SizedBox(
-                            height: 24),
+                        const SizedBox(height: 24),
 
                         TextFormField(
                           controller:
                               _technicianController,
                           decoration:
                               const InputDecoration(
-                            labelText:
-                                'Technician',
+                            labelText: 'Technician',
                             border:
                                 OutlineInputBorder(),
                           ),
                           validator: (value) {
                             if (value == null ||
-                                value
-                                    .trim()
-                                    .isEmpty) {
+                                value.trim().isEmpty) {
                               return 'Enter technician name';
                             }
                             return null;
                           },
                         ),
 
-                        const SizedBox(
-                            height: 16),
+                        const SizedBox(height: 16),
 
                         TextFormField(
                           controller:
@@ -152,8 +149,7 @@ class _Step5SignoffState
                           ),
                         ),
 
-                        const SizedBox(
-                            height: 16),
+                        const SizedBox(height: 16),
 
                         TextFormField(
                           controller:
@@ -176,43 +172,47 @@ class _Step5SignoffState
           ),
 
           Padding(
-            padding:
-                const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(
+              16,
+              8,
+              16,
+              16,
+            ),
             child: Row(
               children: [
-                OutlinedButton.icon(
-                  onPressed:
-                      _saving
-                          ? null
-                          : widget.onPrevious,
-                  icon: const Icon(
-                      Icons.arrow_back),
-                  label:
-                      const Text('Back'),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _saving
+                        ? null
+                        : widget.onPrevious,
+                    icon:
+                        const Icon(Icons.arrow_back),
+                    label: const Text('Back'),
+                  ),
                 ),
 
-                const Spacer(),
+                const SizedBox(width: 16),
 
-                FilledButton.icon(
-                  onPressed:
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _saving
+                        ? null
+                        : _finishInspection,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child:
+                                CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.check),
+                    label: Text(
                       _saving
-                          ? null
-                          : _finishInspection,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child:
-                              CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.check),
-                  label: Text(
-                    _saving
-                        ? 'Saving...'
-                        : 'Finish Inspection',
+                          ? 'Saving...'
+                          : 'Finish Inspection',
+                    ),
                   ),
                 ),
               ],

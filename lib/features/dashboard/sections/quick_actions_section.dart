@@ -141,7 +141,8 @@ if (permissions.canManageWorkshop)
       );
     },
   ),
-            // Reports
+
+             // Reports
             if (permissions.canViewReports)
               QuickActionCard(
                 icon: Icons.description,

@@ -19,14 +19,11 @@ class Step4Repairs extends StatefulWidget {
   });
 
   @override
-  State<Step4Repairs> createState() =>
-      _Step4RepairsState();
+  State<Step4Repairs> createState() => _Step4RepairsState();
 }
 
-class _Step4RepairsState
-    extends State<Step4Repairs> {
-  final RepairJobGenerator _generator =
-      RepairJobGenerator();
+class _Step4RepairsState extends State<Step4Repairs> {
+  final RepairJobGenerator _generator = RepairJobGenerator();
 
   List<InspectionChecklistItem> get checklistItems =>
       widget.data.checklistItems;
@@ -68,50 +65,33 @@ class _Step4RepairsState
         Card(
           margin: const EdgeInsets.all(16),
           child: Padding(
-            padding:
-                const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 Text(
                   'Repair Summary',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
 
                 const SizedBox(height: 16),
 
                 ListTile(
-                  leading:
-                      const Icon(Icons.build),
-                  title: const Text(
-                    'Repair Jobs',
-                  ),
+                  leading: const Icon(Icons.build),
+                  title: const Text('Repair Jobs'),
+                  trailing: Text('${repairJobs.length}'),
+                ),
+
+                ListTile(
+                  leading: const Icon(Icons.schedule),
+                  title: const Text('Estimated Hours'),
                   trailing: Text(
-                    '${repairJobs.length}',
+                    totalEstimatedHours.toStringAsFixed(1),
                   ),
                 ),
 
                 ListTile(
-                  leading: const Icon(
-                    Icons.schedule,
-                  ),
-                  title: const Text(
-                    'Estimated Hours',
-                  ),
-                  trailing: Text(
-                    totalEstimatedHours
-                        .toStringAsFixed(1),
-                  ),
-                ),
-
-                ListTile(
-                  leading: const Icon(
-                    Icons.payments,
-                  ),
-                  title: const Text(
-                    'Estimated Cost',
-                  ),
+                  leading: const Icon(Icons.payments),
+                  title: const Text('Estimated Cost'),
                   trailing: Text(
                     '£${totalEstimatedCost.toStringAsFixed(2)}',
                   ),
@@ -129,20 +109,16 @@ class _Step4RepairsState
                   ),
                 )
               : ListView.builder(
-                  padding:
-                      const EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                   ),
                   itemCount: repairJobs.length,
-                  itemBuilder:
-                      (context, index) {
+                  itemBuilder: (context, index) {
                     return RepairJobCard(
-                      repairJob:
-                          repairJobs[index],
+                      repairJob: repairJobs[index],
                       onChanged: (job) {
                         setState(() {
-                          widget.data
-                                  .repairJobs[index] =
+                          widget.data.repairJobs[index] =
                               job;
                         });
                       },
@@ -152,31 +128,29 @@ class _Step4RepairsState
         ),
 
         Padding(
-          padding:
-              const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            8,
+            16,
+            16,
+          ),
           child: Row(
             children: [
-              OutlinedButton.icon(
-                onPressed:
-                    widget.onPrevious,
-                icon: const Icon(
-                  Icons.arrow_back,
-                ),
-                label: const Text(
-                  'Back',
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: widget.onPrevious,
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back'),
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(width: 16),
 
-              FilledButton.icon(
-                onPressed:
-                    widget.onNext,
-                icon: const Icon(
-                  Icons.arrow_forward,
-                ),
-                label: const Text(
-                  'Continue',
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: widget.onNext,
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text('Continue'),
                 ),
               ),
             ],

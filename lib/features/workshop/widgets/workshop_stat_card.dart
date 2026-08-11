@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class WorkshopStatCard extends StatelessWidget {
   final String title;
   final String value;
+  final String? subtitle;
   final IconData icon;
   final Color color;
   final VoidCallback? onTap;
@@ -11,6 +12,7 @@ class WorkshopStatCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.value,
+    this.subtitle,
     required this.icon,
     required this.color,
     this.onTap,
@@ -18,39 +20,74 @@ class WorkshopStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      clipBehavior: Clip.antiAlias,
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
-        child: Padding(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 172),
           padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: colorScheme.outlineVariant),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: color.withValues(alpha: 0.12),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, color: color),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.more_horiz, color: colorScheme.outline),
+                ],
               ),
               const Spacer(),
               Text(
                 value,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
                     ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 title,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[700],
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
               ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
             ],
           ),
         ),

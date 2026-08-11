@@ -15,23 +15,17 @@ class Step3Summary extends StatelessWidget {
     required this.onPrevious,
   });
 
-  List<InspectionChecklistItem> get items =>
-      data.checklistItems;
+  List<InspectionChecklistItem> get items => data.checklistItems;
 
-  int get passed =>
-      items.where((i) => i.passed).length;
+  int get passed => items.where((i) => i.passed).length;
 
-  int get advisory =>
-      items.where((i) => i.advisoryOnly).length;
+  int get advisory => items.where((i) => i.advisoryOnly).length;
 
-  int get failed =>
-      items.where((i) => i.failed).length;
+  int get failed => items.where((i) => i.failed).length;
 
-  int get repairs =>
-      items.where((i) => i.repairRequired).length;
+  int get repairs => items.where((i) => i.repairRequired).length;
 
-  int get completed =>
-      items.where((i) => i.completed).length;
+  int get completed => items.where((i) => i.completed).length;
 
   int get score {
     if (items.isEmpty) return 0;
@@ -56,9 +50,7 @@ class Step3Summary extends StatelessWidget {
                     children: [
                       Text(
                         'Inspection Summary',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall,
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
 
                       const SizedBox(height: 24),
@@ -72,52 +64,33 @@ class Step3Summary extends StatelessWidget {
 
                       Text(
                         '$score%',
-                        style: Theme.of(context)
-                            .textTheme
-                            .displaySmall,
+                        style: Theme.of(context).textTheme.displaySmall,
                       ),
 
                       const SizedBox(height: 24),
 
                       ListTile(
-                        leading:
-                            const Icon(Icons.check),
-                        title:
-                            const Text('Passed'),
-                        trailing:
-                            Text('$passed'),
+                        leading: const Icon(Icons.check),
+                        title: const Text('Passed'),
+                        trailing: Text('$passed'),
                       ),
 
                       ListTile(
-                        leading: const Icon(
-                          Icons.warning,
-                        ),
-                        title: const Text(
-                          'Advisories',
-                        ),
-                        trailing:
-                            Text('$advisory'),
+                        leading: const Icon(Icons.warning),
+                        title: const Text('Advisories'),
+                        trailing: Text('$advisory'),
                       ),
 
                       ListTile(
-                        leading: const Icon(
-                          Icons.cancel,
-                        ),
-                        title:
-                            const Text('Failed'),
-                        trailing:
-                            Text('$failed'),
+                        leading: const Icon(Icons.cancel),
+                        title: const Text('Failed'),
+                        trailing: Text('$failed'),
                       ),
 
                       ListTile(
-                        leading: const Icon(
-                          Icons.build,
-                        ),
-                        title: const Text(
-                          'Repairs Required',
-                        ),
-                        trailing:
-                            Text('$repairs'),
+                        leading: const Icon(Icons.build),
+                        title: const Text('Repairs Required'),
+                        trailing: Text('$repairs'),
                       ),
 
                       const Divider(),
@@ -131,19 +104,14 @@ class Step3Summary extends StatelessWidget {
                               ? Colors.green
                               : Colors.red,
                         ),
-                        title: const Text(
-                          'Roadworthy',
-                        ),
+                        title: const Text('Roadworthy'),
                         trailing: Text(
-                          roadworthy
-                              ? 'YES'
-                              : 'NO',
+                          roadworthy ? 'YES' : 'NO',
                           style: TextStyle(
                             color: roadworthy
                                 ? Colors.green
                                 : Colors.red,
-                            fontWeight:
-                                FontWeight.bold,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -156,28 +124,24 @@ class Step3Summary extends StatelessWidget {
         ),
 
         Padding(
-          padding:
-              const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Row(
             children: [
-              OutlinedButton.icon(
-                onPressed: onPrevious,
-                icon: const Icon(
-                  Icons.arrow_back,
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onPrevious,
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back'),
                 ),
-                label:
-                    const Text('Back'),
               ),
 
-              const Spacer(),
+              const SizedBox(width: 16),
 
-              FilledButton.icon(
-                onPressed: onNext,
-                icon: const Icon(
-                  Icons.arrow_forward,
-                ),
-                label: const Text(
-                  'Continue',
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onNext,
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text('Continue'),
                 ),
               ),
             ],
