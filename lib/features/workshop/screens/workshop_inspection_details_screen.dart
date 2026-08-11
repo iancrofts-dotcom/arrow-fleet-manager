@@ -5,9 +5,11 @@ import 'package:intl/intl.dart';
 
 import '../models/inspection_item.dart';
 import '../models/inspection_photo.dart';
+import '../models/repair_job.dart';
 import '../models/workshop_inspection.dart';
 import '../repositories/inspection_photo_repository.dart';
 import '../repositories/workshop_repository.dart';
+import 'repair_jobs_screen.dart';
 
 class WorkshopInspectionDetailsScreen
     extends StatefulWidget {
@@ -61,10 +63,22 @@ class _WorkshopInspectionDetailsScreenState
       widget.inspectionId,
     );
 
+    final repairJobs =
+        await _repository.getRepairJobs(
+      widget.inspectionId,
+    );
+
+    final repairStatus =
+        await _repository.getRepairCompletionStatus(
+      widget.inspectionId,
+    );
+
     return _InspectionDetailsData(
       inspection: inspection,
       items: items,
       photos: photos,
+      repairJobs: repairJobs,
+      repairStatus: repairStatus,
     );
   }
 
@@ -211,6 +225,12 @@ class _WorkshopInspectionDetailsScreenState
                   context,
                   details.items,
                   details.photos,
+                ),
+                const SizedBox(height: 16),
+                _buildRepairsCard(
+                  context,
+                  details.repairJobs,
+                  details.repairStatus,
                 ),
                 if (details.inspection.notes
                     .trim()
@@ -537,8 +557,7 @@ class _WorkshopInspectionDetailsScreenState
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: Theme.of(context)
-                .dividerColor,
+            color: Theme.of(context).dividerColor,
           ),
         ),
         child: const Icon(
@@ -547,13 +566,343 @@ class _WorkshopInspectionDetailsScreenState
       );
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Image.file(
+    return InkWell(
+      onTap: () => _showPhotoViewer(
+        context,
         file,
-        width: 90,
-        height: 90,
-        fit: BoxFit.cover,
+      ),
+      borderRadius: BorderRadius.circular(8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.file(
+          file,
+          width: 90,
+          height: 90,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showPhotoViewer(
+    BuildContext context,
+    File file,
+  ) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          insetPadding: EdgeInsets.zero,
+          backgroundColor: Colors.black,
+          child: SafeArea(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: InteractiveViewer(
+                    minScale: 0.8,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: Image.file(
+                        file,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Material(
+                    color: Colors.black54,
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      tooltip: 'Close',
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                      },
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRepairsCard(
+    BuildContext context,
+    List<RepairJob> repairJobs,
+    RepairCompletionStatus repairStatus,
+  ) {
+    final totalHours = repairJobs.fold<double>(
+      0,
+      (sum, job) => sum + job.estimatedHours,
+    );
+
+    final totalCost = repairJobs.fold<double>(
+      0,
+      (sum, job) => sum + job.estimatedCost,
+    );
+
+    return _sectionCard(
+      context,
+      title: 'Repairs',
+      icon: Icons.build_outlined,
+      children: [
+        _buildRepairStatusRow(
+          context,
+          repairStatus,
+        ),
+        const SizedBox(height: 12),
+        if (repairJobs.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              'No repair jobs were saved for this inspection.',
+            ),
+          )
+        else ...[
+          Row(
+            children: [
+              Expanded(
+                child: _summaryTile(
+                  context,
+                  label: 'Jobs',
+                  value: '${repairJobs.length}',
+                  icon: Icons.build,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _summaryTile(
+                  context,
+                  label: 'Hours',
+                  value: totalHours.toStringAsFixed(1),
+                  icon: Icons.schedule,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _summaryTile(
+                  context,
+                  label: 'Estimated',
+                  value: '£${totalCost.toStringAsFixed(2)}',
+                  icon: Icons.payments_outlined,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...repairJobs.map(
+            (job) => _buildRepairJob(
+              context,
+              job,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => RepairJobsScreen(
+                      inspectionId: widget.inspectionId,
+                    ),
+                  ),
+                );
+
+                if (mounted) {
+                  await _refresh();
+                }
+              },
+              icon: const Icon(Icons.build_outlined),
+              label: const Text('Open Repair Jobs'),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildRepairStatusRow(
+    BuildContext context,
+    RepairCompletionStatus status,
+  ) {
+    String text;
+    IconData icon;
+    Color color;
+
+    switch (status) {
+      case RepairCompletionStatus.noRepairs:
+        text = 'NO REPAIRS REQUIRED';
+        icon = Icons.check_circle_outline;
+        color = Colors.green;
+      case RepairCompletionStatus.outstanding:
+        text = 'REPAIRS OUTSTANDING';
+        icon = Icons.warning_amber_outlined;
+        color = Colors.orange;
+      case RepairCompletionStatus.complete:
+        text = 'REPAIRS COMPLETE';
+        icon = Icons.task_alt;
+        color = Colors.green;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: color.withValues(alpha: 0.10),
+        border: Border.all(
+          color: color.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: color,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRepairJob(
+    BuildContext context,
+    RepairJob job,
+  ) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.build),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    job.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Chip(
+                  label: Text(job.status.name),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(job.description),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Chip(
+                  avatar: const Icon(
+                    Icons.priority_high,
+                    size: 18,
+                  ),
+                  label: Text(job.priority.name),
+                ),
+                Chip(
+                  avatar: const Icon(
+                    Icons.schedule,
+                    size: 18,
+                  ),
+                  label: Text(
+                    '${job.estimatedHours.toStringAsFixed(1)} hrs',
+                  ),
+                ),
+                Chip(
+                  avatar: const Icon(
+                    Icons.payments_outlined,
+                    size: 18,
+                  ),
+                  label: Text(
+                    '£${job.estimatedCost.toStringAsFixed(2)}',
+                  ),
+                ),
+                if (job.partsRequired)
+                  const Chip(
+                    avatar: Icon(
+                      Icons.inventory_2_outlined,
+                      size: 18,
+                    ),
+                    label: Text('Parts required'),
+                  ),
+              ],
+            ),
+            if (job.technicianName.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Technician: ${job.technicianName}',
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _summaryTile(
+    BuildContext context, {
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest,
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            label,
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall,
+          ),
+        ],
       ),
     );
   }
@@ -639,10 +988,14 @@ class _InspectionDetailsData {
   final WorkshopInspection inspection;
   final List<InspectionItem> items;
   final List<InspectionPhoto> photos;
+  final List<RepairJob> repairJobs;
+  final RepairCompletionStatus repairStatus;
 
   const _InspectionDetailsData({
     required this.inspection,
     required this.items,
     required this.photos,
+    required this.repairJobs,
+    required this.repairStatus,
   });
 }

@@ -14,6 +14,12 @@ import '../models/workshop_inspection.dart';
 /// will be added in later steps.
 /// ============================================================================
 
+enum RepairCompletionStatus {
+  noRepairs,
+  outstanding,
+  complete,
+}
+
 class WorkshopRepository {
   WorkshopRepository({
     AppDatabase? database,
@@ -344,6 +350,27 @@ class WorkshopRepository {
       where: 'id = ?',
       whereArgs: [job.id],
     );
+  }
+
+
+  Future<RepairCompletionStatus> getRepairCompletionStatus(
+    int inspectionId,
+  ) async {
+    final jobs = await getRepairJobs(inspectionId);
+
+    if (jobs.isEmpty) {
+      return RepairCompletionStatus.noRepairs;
+    }
+
+    final allCompleted = jobs.every(
+      (job) => job.status == RepairJobStatus.completed,
+    );
+
+    if (allCompleted) {
+      return RepairCompletionStatus.complete;
+    }
+
+    return RepairCompletionStatus.outstanding;
   }
 
   Future<int> deleteRepairJob(int id) async {
