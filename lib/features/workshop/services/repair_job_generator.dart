@@ -13,9 +13,9 @@ class RepairJobGenerator {
     int sequence = 1;
 
     for (final item in items) {
-      if (!item.repairRequired) {
-        continue;
-      }
+      if (!item.repairRequired && !item.failed) {
+  continue;
+}
 
       repairs.add(
         RepairJob(
