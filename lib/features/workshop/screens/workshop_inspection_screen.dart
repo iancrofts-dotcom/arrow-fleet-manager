@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/workshop_inspection.dart';
 import '../repositories/workshop_repository.dart';
 import 'new_workshop_inspection_screen.dart';
+import 'workshop_inspection_details_screen.dart';
 
 class WorkshopInspectionScreen extends StatefulWidget {
   const WorkshopInspectionScreen({super.key});
@@ -137,8 +138,27 @@ class _WorkshopInspectionScreenState
                       ),
                     ),
                     onTap: () {
-                      // TODO:
-                      // Open inspection details
+                      final inspectionId = inspection.id;
+
+                      if (inspectionId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'This inspection does not have a database ID.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              WorkshopInspectionDetailsScreen(
+                            inspectionId: inspectionId,
+                          ),
+                        ),
+                      );
                     },
                   ),
                 );

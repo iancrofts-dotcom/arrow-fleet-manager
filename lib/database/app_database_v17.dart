@@ -18,7 +18,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 18,
+      version: 17,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON;');
       },
@@ -415,25 +415,6 @@ class AppDatabase {
             await txn.execute('DROP TABLE workshop_repair_jobs_v16');
           });
         }
-
-        // Version 18 - Workshop Inspection Photos
-        if (oldVersion < 18) {
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS workshop_inspection_photos(
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              inspectionId INTEGER NOT NULL,
-              inspectionItemId INTEGER NOT NULL,
-              filePath TEXT NOT NULL,
-              createdAt TEXT NOT NULL,
-              FOREIGN KEY(inspectionId)
-                REFERENCES workshop_inspections(id)
-                ON DELETE CASCADE,
-              FOREIGN KEY(inspectionItemId)
-                REFERENCES workshop_inspection_items(id)
-                ON DELETE CASCADE
-            )
-          ''');
-        }
       },
     );
 
@@ -628,22 +609,6 @@ class AppDatabase {
         displayOrder INTEGER NOT NULL,
         FOREIGN KEY(inspectionId)
           REFERENCES workshop_inspections(id)
-          ON DELETE CASCADE
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE workshop_inspection_photos(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        inspectionId INTEGER NOT NULL,
-        inspectionItemId INTEGER NOT NULL,
-        filePath TEXT NOT NULL,
-        createdAt TEXT NOT NULL,
-        FOREIGN KEY(inspectionId)
-          REFERENCES workshop_inspections(id)
-          ON DELETE CASCADE,
-        FOREIGN KEY(inspectionItemId)
-          REFERENCES workshop_inspection_items(id)
           ON DELETE CASCADE
       )
     ''');
