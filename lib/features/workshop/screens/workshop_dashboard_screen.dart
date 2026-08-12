@@ -5,6 +5,8 @@ import '../repositories/workshop_repository.dart';
 import '../services/workshop_dashboard_service.dart';
 import 'inspection_wizard/inspection_wizard_screen.dart';
 import 'workshop_inspection_screen.dart';
+import '../models/workshop_inspection.dart';
+import 'repair_jobs_screen.dart';
 
 class WorkshopDashboardScreen extends StatefulWidget {
   const WorkshopDashboardScreen({super.key});
@@ -44,6 +46,16 @@ class _WorkshopDashboardScreenState
     final scheme = theme.colorScheme;
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Workshop'),
+        leading: IconButton(
+          tooltip: 'Back to main screen',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).maybePop();
+          },
+        ),
+      ),
       body: FutureBuilder<WorkshopDashboardData>(
         future: _dashboardFuture,
         builder: (context, snapshot) {
@@ -167,14 +179,89 @@ class _WorkshopDashboardScreenState
                               title: 'Repair Jobs',
                               subtitle:
                                   'View and manage workshop repair jobs',
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Open an inspection first to view its repair jobs.',
+                              onTap: () async {
+                                final inspections =
+                                    await WorkshopRepository().getAllInspections();
+
+                                if (!context.mounted) return;
+
+                                if (inspections.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'No workshop inspections are available.',
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                WorkshopInspection? selectedInspection;
+
+                                if (inspections.length == 1) {
+                                  selectedInspection = inspections.first;
+                                } else {
+                                  selectedInspection =
+                                      await showDialog<WorkshopInspection>(
+                                    context: context,
+                                    builder: (dialogContext) {
+                                      return SimpleDialog(
+                                        title: const Text('Select Inspection'),
+                                        children: inspections.map((inspection) {
+                                          return SimpleDialogOption(
+                                            onPressed: () {
+                                              Navigator.of(dialogContext)
+                                                  .pop(inspection);
+                                            },
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 8,
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    inspection.registration,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 3),
+                                                  Text(
+                                                    '${inspection.inspectionNumber} • '
+                                                    '${inspection.inspectionType.name}',
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      );
+                                    },
+                                  );
+                                }
+
+                                if (!context.mounted ||
+                                    selectedInspection == null ||
+                                    selectedInspection.id == null) {
+                                  return;
+                                }
+
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => RepairJobsScreen(
+                                      inspectionId: selectedInspection!.id!,
                                     ),
                                   ),
                                 );
+
+                                if (context.mounted) {
+                                  _refreshDashboard();
+                                }
                               },
                             ),
                           ),
