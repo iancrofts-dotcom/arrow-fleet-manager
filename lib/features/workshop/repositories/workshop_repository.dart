@@ -147,7 +147,7 @@ class WorkshopRepository {
         FROM $_table
         WHERE status = ?
         ''',
-        ['Open'],
+        ['draft'],
       ),
     );
 
@@ -164,42 +164,50 @@ class WorkshopRepository {
         FROM $_table
         WHERE status = ?
         ''',
-        ['Completed'],
+        ['completed'],
       ),
     );
 
     return result ?? 0;
   }
 
-  Future<int> getCriticalFailureCount() async {
-    final db = await _db;
+Future<int> getCriticalFailureCount() async {
+  final db = await _db;
 
-    final result = Sqflite.firstIntValue(
-      await db.rawQuery(
-        '''
-        SELECT COALESCE(SUM(criticalFailures), 0)
-        FROM $_table
-        ''',
-      ),
-    );
+  final result = Sqflite.firstIntValue(
+    await db.rawQuery(
+      '''
+      SELECT COUNT(*)
+      FROM workshop_inspection_items
+      WHERE status = ?
+      ''',
+      ['fail'],
+    ),
+  );
 
-    return result ?? 0;
-  }
+  return result ?? 0;
+}
 
-  Future<int> getRepairRequiredCount() async {
-    final db = await _db;
+Future<int> getRepairRequiredCount() async {
+  final db = await _db;
 
-    final result = Sqflite.firstIntValue(
-      await db.rawQuery(
-        '''
-        SELECT COALESCE(SUM(repairsRequired), 0)
-        FROM $_table
-        ''',
-      ),
-    );
+  final result = Sqflite.firstIntValue(
+    await db.rawQuery(
+      '''
+      SELECT COUNT(*)
+      FROM workshop_repair_jobs
+      WHERE status != ?
+      AND status != ?
+      ''',
+      [
+        'completed',
+        'cancelled',
+      ],
+    ),
+  );
 
-    return result ?? 0;
-  }
+  return result ?? 0;
+}
 
   // ==========================================================================
   // INSPECTION ITEMS
@@ -314,6 +322,22 @@ class WorkshopRepository {
       'workshop_repair_jobs',
       where: 'inspectionId = ?',
       whereArgs: [inspectionId],
+      orderBy: 'createdAt DESC',
+    );
+
+    return result
+        .map((map) => RepairJob.fromMap(map))
+        .toList();
+  }
+
+
+  /// Returns every repair job in the workshop, regardless of inspection.
+  /// Jobs are returned newest first.
+  Future<List<RepairJob>> getAllRepairJobs() async {
+    final db = await _db;
+
+    final result = await db.query(
+      'workshop_repair_jobs',
       orderBy: 'createdAt DESC',
     );
 
