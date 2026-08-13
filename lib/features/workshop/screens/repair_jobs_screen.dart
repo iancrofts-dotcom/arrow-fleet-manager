@@ -131,6 +131,184 @@ class _RepairJobsScreenState
     await _refresh();
   }
 
+  Future<void> _advanceJob(RepairJob job) async {
+    if (job.id == null) {
+      _showMessage('This repair job has no database ID.');
+      return;
+    }
+
+    RepairJobStatus? nextStatus;
+    switch (job.status) {
+      case RepairJobStatus.open:
+        nextStatus = RepairJobStatus.assigned;
+        break;
+      case RepairJobStatus.assigned:
+        nextStatus = RepairJobStatus.inProgress;
+        break;
+      case RepairJobStatus.inProgress:
+        nextStatus = RepairJobStatus.awaitingInspection;
+        break;
+      case RepairJobStatus.awaitingParts:
+        nextStatus = RepairJobStatus.inProgress;
+        break;
+      case RepairJobStatus.awaitingInspection:
+      case RepairJobStatus.completed:
+      case RepairJobStatus.cancelled:
+        nextStatus = null;
+        break;
+    }
+
+    if (nextStatus == null) return;
+
+    final now = DateTime.now();
+    final updatedJob = job.copyWith(
+      status: nextStatus,
+      startedAt: nextStatus == RepairJobStatus.inProgress
+          ? (job.startedAt ?? now)
+          : job.startedAt,
+    );
+
+    await _repository.updateRepairJob(updatedJob);
+
+    if (!mounted) return;
+    _showMessage(
+      'Job status changed to ${_statusText(nextStatus)}.',
+    );
+    await _refresh();
+  }
+
+  Future<void> _sendToParts(RepairJob job) async {
+    if (job.id == null) {
+      _showMessage('This repair job has no database ID.');
+      return;
+    }
+
+    final updatedJob = job.copyWith(
+      status: RepairJobStatus.awaitingParts,
+    );
+
+    await _repository.updateRepairJob(updatedJob);
+
+    if (!mounted) return;
+    _showMessage('Job marked as awaiting parts.');
+    await _refresh();
+  }
+
+  Future<void> _cancelJob(RepairJob job) async {
+    if (job.id == null) {
+      _showMessage('This repair job has no database ID.');
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Repair Job?'),
+        content: const Text(
+          'This will mark the repair job as cancelled. '
+          'You can still view its history afterwards.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep Job'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Cancel Job'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    await _repository.updateRepairJob(
+      job.copyWith(status: RepairJobStatus.cancelled),
+    );
+
+    if (!mounted) return;
+    _showMessage('Repair job cancelled.');
+    await _refresh();
+  }
+
+  String _primaryActionLabel(RepairJobStatus status) {
+    switch (status) {
+      case RepairJobStatus.open:
+        return 'Assign Job';
+      case RepairJobStatus.assigned:
+        return 'Start Job';
+      case RepairJobStatus.inProgress:
+        return 'Send for Inspection';
+      case RepairJobStatus.awaitingParts:
+        return 'Resume Job';
+      case RepairJobStatus.awaitingInspection:
+        return 'Complete Job';
+      case RepairJobStatus.completed:
+      case RepairJobStatus.cancelled:
+        return '';
+    }
+  }
+
+  Widget _workflowActions(
+    BuildContext context,
+    RepairJob job,
+  ) {
+    if (job.status == RepairJobStatus.completed ||
+        job.status == RepairJobStatus.cancelled) {
+      return const SizedBox.shrink();
+    }
+
+    final primaryLabel = _primaryActionLabel(job.status);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Divider(height: 28),
+        Text(
+          'Job Workflow',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: job.status == RepairJobStatus.awaitingInspection
+                    ? () => _completeJob(job)
+                    : () => _advanceJob(job),
+                icon: Icon(
+                  job.status == RepairJobStatus.awaitingInspection
+                      ? Icons.check_circle_outline
+                      : job.status == RepairJobStatus.open
+                          ? Icons.person_add_alt_1
+                          : Icons.arrow_forward,
+                ),
+                label: Text(primaryLabel),
+              ),
+            ),
+          ],
+        ),
+        if (job.status == RepairJobStatus.inProgress) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => _sendToParts(job),
+            icon: const Icon(Icons.inventory_2_outlined),
+            label: const Text('Await Parts'),
+          ),
+        ],
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: () => _cancelJob(job),
+          icon: const Icon(Icons.cancel_outlined),
+          label: const Text('Cancel Job'),
+        ),
+      ],
+    );
+  }
+
   void _showMessage(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -140,18 +318,30 @@ class _RepairJobsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Repair Jobs'),
+        leading: IconButton(
+          tooltip: 'Back',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Refresh',
+            onPressed: _refresh,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
       ),
       body: FutureBuilder<List<RepairJob>>(
         future: _future,
         builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
@@ -161,16 +351,17 @@ class _RepairJobsScreenState
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 12),
+                    Icon(Icons.error_outline, size: 52, color: scheme.error),
+                    const SizedBox(height: 14),
                     Text(
-                      snapshot.error.toString(),
-                      textAlign: TextAlign.center,
+                      'Unable to load repair jobs',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
+                    Text(snapshot.error.toString(), textAlign: TextAlign.center),
+                    const SizedBox(height: 18),
                     FilledButton.icon(
                       onPressed: _refresh,
                       icon: const Icon(Icons.refresh),
@@ -188,32 +379,42 @@ class _RepairJobsScreenState
             return RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
-                physics:
-                    const AlwaysScrollableScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
                 children: [
-                  SizedBox(
-                    height:
-                        MediaQuery.of(context).size.height *
-                            0.28,
-                  ),
-                  const Icon(
-                    Icons.build_circle_outlined,
-                    size: 72,
-                  ),
-                  const SizedBox(height: 16),
-                  const Center(
-                    child: Text(
-                      'No repair jobs recorded',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  _repairHeader(context, 0, 0, 0),
+                  const SizedBox(height: 18),
+                  _workflowProgress(context, 0, 0),
+                  const SizedBox(height: 18),
+                  Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(color: scheme.outlineVariant),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Text(
-                      'Inspection ID: ${widget.inspectionId}',
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        children: [
+                          Icon(Icons.build_circle_outlined,
+                              size: 72, color: scheme.primary),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No repair jobs recorded',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Repair jobs generated from failed inspection items '
+                            'will appear here.',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          Text('Inspection ID: ${widget.inspectionId}'),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -221,36 +422,38 @@ class _RepairJobsScreenState
             );
           }
 
-          final totalHours = jobs.fold<double>(
-            0,
-            (sum, job) => sum + job.estimatedHours,
-          );
-
-          final totalCost = jobs.fold<double>(
-            0,
-            (sum, job) => sum + job.estimatedCost,
-          );
+          final totalHours =
+              jobs.fold<double>(0, (sum, job) => sum + job.estimatedHours);
+          final totalCost =
+              jobs.fold<double>(0, (sum, job) => sum + job.estimatedCost);
+          final completed = jobs
+              .where((job) => job.status == RepairJobStatus.completed)
+              .length;
+          final outstanding = jobs.length - completed;
 
           return RefreshIndicator(
             onRefresh: _refresh,
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
               children: [
+                _repairHeader(context, jobs.length, outstanding, totalCost),
+                const SizedBox(height: 18),
+                _workflowProgress(context, outstanding, completed),
+                const SizedBox(height: 18),
                 _summaryCard(
                   context,
                   jobs.length,
                   totalHours,
                   totalCost,
+                  completed,
+                  outstanding,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 ...jobs.map(
                   (job) => Padding(
-                    padding:
-                        const EdgeInsets.only(bottom: 12),
-                    child: _repairCard(
-                      context,
-                      job,
-                    ),
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: _repairCard(context, job),
                   ),
                 ),
               ],
@@ -261,262 +464,427 @@ class _RepairJobsScreenState
     );
   }
 
-  Widget _summaryCard(
+  Widget _repairHeader(
     BuildContext context,
-    int count,
-    double hours,
-    double cost,
+    int jobCount,
+    int outstanding,
+    double totalCost,
   ) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Repair Summary',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge,
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: _summaryValue(
-                    'Jobs',
-                    '$count',
-                    Icons.build_outlined,
-                  ),
-                ),
-                Expanded(
-                  child: _summaryValue(
-                    'Hours',
-                    hours.toStringAsFixed(1),
-                    Icons.schedule_outlined,
-                  ),
-                ),
-                Expanded(
-                  child: _summaryValue(
-                    'Estimated',
-                    '£${cost.toStringAsFixed(2)}',
-                    Icons.payments_outlined,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(24),
       ),
-    );
-  }
-
-  Widget _summaryValue(
-    String label,
-    String value,
-    IconData icon,
-  ) {
-    return Column(
-      children: [
-        Icon(icon),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  Widget _repairCard(
-    BuildContext context,
-    RepairJob job,
-  ) {
-    final statusColor = _statusColor(job.status);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.build_outlined),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    job.title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: scheme.primary,
+                  borderRadius: BorderRadius.circular(15),
                 ),
-                Chip(
-                  label: Text(
-                    _statusText(job.status),
-                  ),
-                  backgroundColor:
-                      statusColor.withValues(alpha: 0.12),
-                  side: BorderSide(
-                    color: statusColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            if (job.jobNumber.trim().isNotEmpty)
-              _detailRow(
-                'Job Number',
-                job.jobNumber,
+                child: Icon(Icons.build_circle_outlined,
+                    color: scheme.onPrimary, size: 28),
               ),
-            _detailRow(
-              'Description',
-              job.description,
-            ),
-            _detailRow(
-              'Priority',
-              _priorityText(job.priority),
-            ),
-            _detailRow(
-              'Technician',
-              job.technicianName.trim().isEmpty
-                  ? 'Not assigned'
-                  : job.technicianName,
-            ),
-            _detailRow(
-              'Parts Required',
-              job.partsRequired ? 'Yes' : 'No',
-            ),
-            const Divider(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _costValue(
-                    'Estimated Hours',
-                    '${job.estimatedHours.toStringAsFixed(1)} hrs',
-                  ),
-                ),
-                Expanded(
-                  child: _costValue(
-                    'Estimated Cost',
-                    '£${job.estimatedCost.toStringAsFixed(2)}',
-                  ),
-                ),
-              ],
-            ),
-            if (job.actualHours > 0 ||
-                job.actualCost > 0) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _costValue(
-                      'Actual Hours',
-                      '${job.actualHours.toStringAsFixed(1)} hrs',
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Repair Management',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: _costValue(
-                      'Actual Cost',
-                      '£${job.actualCost.toStringAsFixed(2)}',
-                    ),
-                  ),
-                ],
+                    const SizedBox(height: 3),
+                    Text('Inspection ID: ${widget.inspectionId}'),
+                  ],
+                ),
               ),
             ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _editJob(job),
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Edit Job'),
-                  ),
-                ),
-                if (job.status != RepairJobStatus.completed) ...[
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => _completeJob(job),
-                      icon: const Icon(Icons.check_circle_outline),
-                      label: const Text('Complete'),
-                    ),
-                  ),
-                ],
-              ],
+          ),
+          const SizedBox(height: 18),
+          Text(
+            outstanding > 0
+                ? '$outstanding repair ${outstanding == 1 ? 'job' : 'jobs'} require workshop attention'
+                : jobCount > 0
+                    ? 'All repair jobs are completed'
+                    : 'No repair jobs have been recorded',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
             ),
+          ),
+          if (jobCount > 0) ...[
+            const SizedBox(height: 5),
+            Text('Estimated repair value: £${totalCost.toStringAsFixed(2)}'),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _detailRow(
-    String label,
-    String value,
-  ) {
-    return Padding(
-      padding:
-          const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 130,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(value),
-          ),
         ],
       ),
     );
   }
 
-  Widget _costValue(
-    String label,
-    String value,
+  Widget _workflowProgress(
+    BuildContext context,
+    int outstanding,
+    int completed,
   ) {
-    return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    Widget step(
+      IconData icon,
+      String title,
+      String subtitle,
+      bool active,
+    ) {
+      return Expanded(
+        child: Column(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: active
+                    ? scheme.primaryContainer
+                    : scheme.surfaceContainerHighest,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 21,
+                color: active
+                    ? scheme.onPrimaryContainer
+                    : scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(title,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                )),
+            const SizedBox(height: 2),
+            Text(subtitle,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(value),
-      ],
+      );
+    }
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: scheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+        child: Row(
+          children: [
+            step(Icons.assignment_outlined, 'Inspection', 'Source', true),
+            Expanded(child: Divider(color: scheme.outlineVariant)),
+            step(Icons.build_outlined, 'Repairs',
+                outstanding > 0 ? 'Outstanding' : 'Clear', outstanding > 0),
+            Expanded(child: Divider(color: scheme.outlineVariant)),
+            step(Icons.check_circle_outline, 'Complete',
+                '$completed done', completed > 0),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _summaryCard(
+    BuildContext context,
+    int count,
+    double hours,
+    double cost,
+    int completed,
+    int outstanding,
+  ) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: scheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Repair Summary',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth >= 650 ? 4 : 2;
+                final spacing = 10.0;
+                final itemWidth = columns == 4
+                    ? (constraints.maxWidth - spacing * 3) / 4
+                    : (constraints.maxWidth - spacing) / 2;
+
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: [
+                    SizedBox(
+                      width: itemWidth,
+                      child: _summaryValue('Jobs', '$count',
+                          Icons.build_outlined),
+                    ),
+                    SizedBox(
+                      width: itemWidth,
+                      child: _summaryValue('Outstanding', '$outstanding',
+                          Icons.pending_actions_outlined),
+                    ),
+                    SizedBox(
+                      width: itemWidth,
+                      child: _summaryValue('Completed', '$completed',
+                          Icons.check_circle_outline),
+                    ),
+                    SizedBox(
+                      width: itemWidth,
+                      child: _summaryValue('Estimated',
+                          '£${cost.toStringAsFixed(2)}', Icons.payments_outlined),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Estimated labour: ${hours.toStringAsFixed(1)} hours',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _summaryValue(String label, String value, IconData icon) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 22),
+          const SizedBox(height: 6),
+          Text(value,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w900, fontSize: 17),
+              textAlign: TextAlign.center),
+          const SizedBox(height: 2),
+          Text(label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _repairCard(BuildContext context, RepairJob job) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final statusColor = _statusColor(job.status);
+
+    return Card(
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: job.status == RepairJobStatus.completed
+              ? scheme.outlineVariant
+              : statusColor.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(Icons.build_outlined, color: statusColor),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(job.title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          )),
+                      if (job.jobNumber.trim().isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(job.jobNumber,
+                            style: theme.textTheme.bodySmall),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Chip(
+                  label: Text(_statusText(job.status)),
+                  backgroundColor: statusColor.withValues(alpha: 0.12),
+                  side: BorderSide(color: statusColor),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(job.description, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _infoChip(context, Icons.priority_high_outlined,
+                    _priorityText(job.priority)),
+                _infoChip(
+                  context,
+                  Icons.person_outline,
+                  job.technicianName.trim().isEmpty
+                      ? 'Not assigned'
+                      : job.technicianName,
+                ),
+                _infoChip(
+                  context,
+                  Icons.inventory_2_outlined,
+                  job.partsRequired
+                      ? 'Parts required'
+                      : 'No parts required',
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final itemWidth = constraints.maxWidth >= 600
+                    ? (constraints.maxWidth - 10) / 2
+                    : constraints.maxWidth;
+
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    SizedBox(
+                      width: itemWidth,
+                      child: _costValue('Estimated Hours',
+                          '${job.estimatedHours.toStringAsFixed(1)} hrs'),
+                    ),
+                    SizedBox(
+                      width: itemWidth,
+                      child: _costValue('Estimated Cost',
+                          '£${job.estimatedCost.toStringAsFixed(2)}'),
+                    ),
+                    if (job.actualHours > 0 || job.actualCost > 0) ...[
+                      SizedBox(
+                        width: itemWidth,
+                        child: _costValue('Actual Hours',
+                            '${job.actualHours.toStringAsFixed(1)} hrs'),
+                      ),
+                      SizedBox(
+                        width: itemWidth,
+                        child: _costValue('Actual Cost',
+                            '£${job.actualCost.toStringAsFixed(2)}'),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () => _editJob(job),
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text('Edit Job'),
+            ),
+            _workflowActions(context, job),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoChip(BuildContext context, IconData icon, String label) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16),
+          const SizedBox(width: 6),
+          Text(label),
+        ],
+      ),
+    );
+  }
+
+  Widget _costValue(String label, String value) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: const TextStyle(fontWeight: FontWeight.w800)),
+        ],
+      ),
     );
   }
 }
-
 
 class _RepairJobEditDialog extends StatefulWidget {
   final RepairJob job;
