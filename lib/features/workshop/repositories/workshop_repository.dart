@@ -145,9 +145,13 @@ class WorkshopRepository {
         '''
         SELECT COUNT(*)
         FROM $_table
-        WHERE status = ?
+        WHERE status IN (?, ?, ?)
         ''',
-        ['draft'],
+        [
+          'draft',
+          'inProgress',
+          'awaitingRepair',
+        ],
       ),
     );
 

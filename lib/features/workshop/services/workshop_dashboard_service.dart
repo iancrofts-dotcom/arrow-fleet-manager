@@ -1,4 +1,5 @@
 import '../models/workshop_dashboard_data.dart';
+import '../models/workshop_inspection.dart';
 import '../repositories/workshop_repository.dart';
 
 class WorkshopDashboardService {
@@ -7,10 +8,52 @@ class WorkshopDashboardService {
   WorkshopDashboardService(this._repository);
 
   Future<WorkshopDashboardData> loadDashboard() async {
-    final openInspections = await _repository.getOpenInspectionCount();
-    final completedToday = await _repository.getCompletedInspectionCount();
-    final criticalFailures = await _repository.getCriticalFailureCount();
-    final repairsRequired = await _repository.getRepairRequiredCount();
+    final inspections = await _repository.getAllInspections();
+
+    // Open means the inspection still requires workshop/manager action.
+    // A completed inspection remains open until it is signed off.
+    final openInspections = inspections.where((inspection) {
+      if (inspection.status == WorkshopInspectionStatus.signedOff) {
+        return false;
+      }
+
+      if (inspection.status == WorkshopInspectionStatus.cancelled) {
+        return false;
+      }
+
+      if (inspection.status == WorkshopInspectionStatus.completed) {
+        final signature = inspection.managerSignature;
+        return signature == null || signature.trim().isEmpty;
+      }
+
+      return true;
+    }).length;
+
+    // Completed Today is independent of the current status.
+    // Once an inspection has a completion timestamp, it remains part of
+    // today's productivity figure even if it has subsequently been signed off.
+    final now = DateTime.now();
+    final dayStart = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    );
+    final dayEnd = dayStart.add(const Duration(days: 1));
+
+    final completedToday = inspections.where((inspection) {
+      final completedAt = inspection.dateCompleted;
+      if (completedAt == null) {
+        return false;
+      }
+
+      return !completedAt.isBefore(dayStart) &&
+          completedAt.isBefore(dayEnd);
+    }).length;
+
+    final criticalFailures =
+        await _repository.getCriticalFailureCount();
+    final repairsRequired =
+        await _repository.getRepairRequiredCount();
 
     return WorkshopDashboardData(
       openInspections: openInspections,

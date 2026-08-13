@@ -23,8 +23,9 @@ class InspectionMapper {
           data.inspectionType ??
               WorkshopInspectionType.defectInspection,
 
-      status:
-          WorkshopInspectionStatus.completed,
+      status: data.repairsRequired > 0
+          ? WorkshopInspectionStatus.awaitingRepair
+          : WorkshopInspectionStatus.completed,
 
       vehicleStatus:
           data.vehicleStatus,

@@ -259,55 +259,161 @@ class _RepairJobsScreenState
       return const SizedBox.shrink();
     }
 
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final primaryLabel = _primaryActionLabel(job.status);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Divider(height: 28),
-        Text(
-          'Job Workflow',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: job.status == RepairJobStatus.awaitingInspection
-                    ? () => _completeJob(job)
-                    : () => _advanceJob(job),
-                icon: Icon(
-                  job.status == RepairJobStatus.awaitingInspection
-                      ? Icons.check_circle_outline
-                      : job.status == RepairJobStatus.open
-                          ? Icons.person_add_alt_1
-                          : Icons.arrow_forward,
+    String currentStage;
+    String stageDescription;
+    IconData stageIcon;
+
+    switch (job.status) {
+      case RepairJobStatus.open:
+        currentStage = 'Ready to assign';
+        stageDescription =
+            'Assign this repair job to the workshop workflow to begin work.';
+        stageIcon = Icons.person_add_alt_1;
+        break;
+      case RepairJobStatus.assigned:
+        currentStage = 'Assigned';
+        stageDescription =
+            'The job is assigned and ready for the technician to start.';
+        stageIcon = Icons.assignment_ind_outlined;
+        break;
+      case RepairJobStatus.inProgress:
+        currentStage = 'Work in progress';
+        stageDescription =
+            'The repair is currently being carried out by the workshop.';
+        stageIcon = Icons.build_circle_outlined;
+        break;
+      case RepairJobStatus.awaitingParts:
+        currentStage = 'Awaiting parts';
+        stageDescription =
+            'Parts are required before the technician can continue.';
+        stageIcon = Icons.inventory_2_outlined;
+        break;
+      case RepairJobStatus.awaitingInspection:
+        currentStage = 'Awaiting inspection';
+        stageDescription =
+            'Repair work is ready for inspection before the job is closed.';
+        stageIcon = Icons.fact_check_outlined;
+        break;
+      case RepairJobStatus.completed:
+      case RepairJobStatus.cancelled:
+        currentStage = _statusText(job.status);
+        stageDescription = '';
+        stageIcon = Icons.check_circle_outline;
+        break;
+    }
+
+    final isInspectionStage =
+        job.status == RepairJobStatus.awaitingInspection;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 18),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                label: Text(primaryLabel),
+                child: Icon(
+                  stageIcon,
+                  color: scheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Job Workflow',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      currentStage,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (stageDescription.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        stageDescription,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: isInspectionStage
+                  ? () => _completeJob(job)
+                  : () => _advanceJob(job),
+              icon: Icon(
+                isInspectionStage
+                    ? Icons.check_circle_outline
+                    : job.status == RepairJobStatus.open
+                        ? Icons.person_add_alt_1
+                        : Icons.arrow_forward,
+              ),
+              label: Text(primaryLabel),
+            ),
+          ),
+          if (job.status == RepairJobStatus.inProgress) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _sendToParts(job),
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('Await Parts'),
               ),
             ),
           ],
-        ),
-        if (job.status == RepairJobStatus.inProgress) ...[
+          if (job.status == RepairJobStatus.awaitingParts) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Once the required parts arrive, resume the repair.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
           const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () => _sendToParts(job),
-            icon: const Icon(Icons.inventory_2_outlined),
-            label: const Text('Await Parts'),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              onPressed: () => _cancelJob(job),
+              icon: const Icon(Icons.cancel_outlined),
+              label: const Text('Cancel Job'),
+            ),
           ),
         ],
-        const SizedBox(height: 8),
-        TextButton.icon(
-          onPressed: () => _cancelJob(job),
-          icon: const Icon(Icons.cancel_outlined),
-          label: const Text('Cancel Job'),
-        ),
-      ],
+      ),
     );
   }
+
 
   void _showMessage(String message) {
     if (!mounted) return;

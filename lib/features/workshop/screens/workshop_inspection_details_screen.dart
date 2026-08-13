@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../auth/models/user_role.dart';
+import '../../auth/services/auth_service.dart';
+
 import '../models/inspection_item.dart';
 import '../models/inspection_photo.dart';
 import '../models/repair_job.dart';
@@ -340,10 +343,148 @@ class _WorkshopInspectionDetailsScreenState
     );
   }
 
+  bool get _canSignOff {
+    final role = AuthService.instance.currentRole;
+
+    return role == UserRole.admin ||
+        role == UserRole.manager ||
+        role == UserRole.workshop;
+  }
+
+  bool _hasManagerSignOff(
+    WorkshopInspection inspection,
+  ) {
+    return inspection.status ==
+            WorkshopInspectionStatus.signedOff ||
+        (inspection.managerSignature != null &&
+            inspection.managerSignature!.trim().isNotEmpty);
+  }
+
+  Future<void> _signOffInspection(
+    WorkshopInspection inspection,
+  ) async {
+    if (!_canSignOff) {
+      return;
+    }
+
+    if (inspection.status !=
+        WorkshopInspectionStatus.completed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This inspection can only be signed off after it has been completed.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_hasManagerSignOff(inspection)) {
+      return;
+    }
+
+    final currentUser =
+        AuthService.instance.currentUser;
+
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'You must be logged in to sign off an inspection.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Sign Off Inspection'),
+          content: Text(
+            'Are you sure you want to sign off inspection '
+            '${inspection.inspectionNumber}?\\n\\n'
+            'This will mark the inspection as signed off by '
+            '${currentUser.username}.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(true),
+              icon: const Icon(Icons.verified_outlined),
+              label: const Text('Sign Off'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    try {
+      final updatedInspection = inspection.copyWith(
+        status: WorkshopInspectionStatus.signedOff,
+        managerSignature: currentUser.username,
+        updatedAt: DateTime.now(),
+      );
+
+      final updatedRows =
+          await _repository.updateInspection(
+        updatedInspection,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (updatedRows == 0) {
+        throw Exception(
+          'The inspection could not be updated.',
+        );
+      }
+
+      await _refresh();
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Inspection signed off by ${currentUser.username}.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to sign off inspection: $e',
+          ),
+        ),
+      );
+    }
+  }
+
   Widget _buildSignOffCard(
     BuildContext context,
     WorkshopInspection inspection,
   ) {
+    final signedOff = _hasManagerSignOff(inspection);
+
     return _sectionCard(
       context,
       title: 'Sign-Off',
@@ -357,6 +498,80 @@ class _WorkshopInspectionDetailsScreenState
           'Workshop Manager',
           inspection.workshopManager ?? 'Not recorded',
         ),
+        if (signedOff) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Colors.green.withValues(alpha: 0.45),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.verified_outlined,
+                  color: Colors.green,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Signed off by ${inspection.managerSignature ?? inspection.workshopManager ?? 'Manager'}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else if (inspection.status ==
+            WorkshopInspectionStatus.completed) ...[
+          const SizedBox(height: 12),
+          if (_canSignOff)
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () =>
+                    _signOffInspection(inspection),
+                icon: const Icon(
+                  Icons.verified_outlined,
+                ),
+                label: const Text('Sign Off Inspection'),
+              ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.lock_outline),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Sign-off is restricted to an Administrator, Fleet Manager or Workshop Manager.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ] else ...[
+          const SizedBox(height: 12),
+          Text(
+            'Sign-off becomes available when the inspection is completed.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
       ],
     );
   }
