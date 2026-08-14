@@ -370,7 +370,7 @@ Future<int> getRepairRequiredCount() async {
 
   /// Returns repair jobs assigned to a specific technician user ID.
   Future<List<RepairJob>> getRepairJobsForTechnician(
-    int technicianId,
+    String technicianId,
   ) async {
     final db = await _db;
 

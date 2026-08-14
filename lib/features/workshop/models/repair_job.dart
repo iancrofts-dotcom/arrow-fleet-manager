@@ -50,7 +50,7 @@ class RepairJob {
 
   final RepairJobStatus status;
 
-  final int? technicianId;
+  final String? technicianId;
 
   final String technicianName;
 
@@ -107,7 +107,7 @@ class RepairJob {
     String? description,
     RepairPriority? priority,
     RepairJobStatus? status,
-    int? technicianId,
+    String? technicianId,
     String? technicianName,
     bool? partsRequired,
     double? estimatedHours,
@@ -187,7 +187,7 @@ class RepairJob {
       status: RepairJobStatus.values.firstWhere(
         (e) => e.name == map['status'],
       ),
-      technicianId: map['technicianId'],
+      technicianId: map['technicianId']?.toString(),
       technicianName: map['technicianName'] ?? '',
       partsRequired: map['partsRequired'] == 1,
       estimatedHours: (map['estimatedHours'] as num).toDouble(),

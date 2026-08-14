@@ -43,7 +43,7 @@ class InspectionWizardData {
   // Personnel
   // ==========================================================================
 
-  int? technicianId;
+  String? technicianId;
 
   String? technicianName;
 

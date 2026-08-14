@@ -656,9 +656,7 @@ class _TechnicianWorkshopLanding extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final technicianId = int.tryParse(
-      AuthService.instance.currentUserId ?? '',
-    );
+    final technicianId = AuthService.instance.currentUserId;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Workshop')),
@@ -677,8 +675,8 @@ class _TechnicianWorkshopLanding extends StatelessWidget {
               SizedBox(height: 8),
               Text(
                 technicianId == null
-                    ? 'Your technician account does not have a valid numeric ID. '
-                        'Please contact an administrator.'
+                    ? 'Your technician account is not available. '
+                        'Please sign in again or contact an administrator.'
                     : 'View and update repair jobs assigned to you.',
                 textAlign: TextAlign.center,
               ),

@@ -15,7 +15,7 @@ import '../repositories/workshop_repository.dart';
 
 class RepairJobsScreen extends StatefulWidget {
   final int? inspectionId;
-  final int? technicianId;
+  final String? technicianId;
 
   const RepairJobsScreen({
     super.key,
@@ -45,8 +45,7 @@ class _RepairJobsScreenState
       widget.technicianId != null;
 
   bool _isAssignedToCurrentTechnician(RepairJob job) {
-    final currentTechnicianId =
-        int.tryParse(AuthService.instance.currentUserId ?? '');
+    final currentTechnicianId = AuthService.instance.currentUserId;
 
     return _isTechnicianView &&
         currentTechnicianId != null &&
@@ -61,8 +60,7 @@ class _RepairJobsScreenState
 
   Future<List<RepairJob>> _loadJobs() {
     if (_isTechnicianView) {
-      final technicianId =
-          int.tryParse(AuthService.instance.currentUserId ?? '');
+      final technicianId = AuthService.instance.currentUserId;
       if (technicianId == null) {
         return Future<List<RepairJob>>.value(const []);
       }
@@ -1738,7 +1736,7 @@ class _RepairJobEditDialogState
   late RepairJobStatus _status;
   late bool _partsRequired;
   List<User> _technicians = const [];
-  int? _technicianId;
+  String? _technicianId;
   bool _loadingTechnicians = true;
   String? _technicianLoadError;
 
@@ -1769,32 +1767,13 @@ class _RepairJobEditDialogState
       final technicians = await UserService.instance.getUsersByRole(
         UserRole.technician,
       );
-      User? invalidTechnician;
-      for (final technician in technicians) {
-        if (int.tryParse(technician.id) == null) {
-          invalidTechnician = technician;
-          break;
-        }
-      }
-
       if (!mounted) return;
-
-      final invalidTechnicianName = invalidTechnician?.username;
-      if (invalidTechnicianName != null) {
-        setState(() {
-          _loadingTechnicians = false;
-          _technicianLoadError =
-              'Technician account $invalidTechnicianName has a '
-              'non-numeric user ID and cannot be assigned to repair jobs.';
-        });
-        return;
-      }
 
       setState(() {
         _technicians = technicians;
         for (final technician in technicians) {
-          if (int.parse(technician.id) == widget.job.technicianId) {
-            _technicianId = int.parse(technician.id);
+          if (technician.id == widget.job.technicianId) {
+            _technicianId = technician.id;
             break;
           }
         }
@@ -1867,7 +1846,7 @@ class _RepairJobEditDialogState
 
     User? selectedTechnician;
     for (final technician in _technicians) {
-      if (int.parse(technician.id) == _technicianId) {
+      if (technician.id == _technicianId) {
         selectedTechnician = technician;
         break;
       }
@@ -1890,7 +1869,7 @@ class _RepairJobEditDialogState
         description: _descriptionController.text.trim(),
         technicianId: selectedTechnician == null
             ? widget.job.technicianId
-            : int.parse(selectedTechnician.id),
+            : selectedTechnician.id,
         technicianName: selectedTechnician?.username ?? widget.job.technicianName,
         priority: _priority,
         status: _status,
@@ -1939,7 +1918,7 @@ class _RepairJobEditDialogState
                   ),
                 )
               else
-                DropdownButtonFormField<int>(
+                DropdownButtonFormField<String>(
                   initialValue: _technicianId,
                   isExpanded: true,
                   decoration: const InputDecoration(
@@ -1948,8 +1927,8 @@ class _RepairJobEditDialogState
                   hint: const Text('Select an active technician'),
                   items: _technicians
                       .map(
-                        (technician) => DropdownMenuItem<int>(
-                          value: int.parse(technician.id),
+                        (technician) => DropdownMenuItem<String>(
+                          value: technician.id,
                           child: Text(technician.username),
                         ),
                       )

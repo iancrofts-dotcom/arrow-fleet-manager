@@ -66,7 +66,7 @@ class WorkshopInspection {
   final int? templateId;
   final String? templateName;
 
-  final int? technicianId;
+  final String? technicianId;
   final String technicianName;
 
   final int? driverId;
@@ -150,7 +150,7 @@ class WorkshopInspection {
     String? fleetNumber,
     int? templateId,
     String? templateName,
-    int? technicianId,
+    String? technicianId,
     String? technicianName,
     int? driverId,
     String? driverName,
@@ -253,7 +253,7 @@ class WorkshopInspection {
       fleetNumber: map['fleetNumber'],
       templateId: map['templateId'],
       templateName: map['templateName'],
-      technicianId: map['technicianId'],
+      technicianId: map['technicianId']?.toString(),
       technicianName: map['technicianName'],
       driverId: map['driverId'],
       driverName: map['driverName'],

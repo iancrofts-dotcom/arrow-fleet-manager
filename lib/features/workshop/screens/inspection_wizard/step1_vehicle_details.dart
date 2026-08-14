@@ -152,19 +152,12 @@ widget.onNext();
 
     if (widget.data.technicianId != null) {
       for (final technician in users) {
-        final technicianId = int.tryParse(technician.id);
-
-        if (technicianId == widget.data.technicianId) {
+        if (technician.id == widget.data.technicianId) {
           selected = technician;
           break;
         }
       }
     }
-
-    selected ??= _findTechnicianByName(
-      users,
-      widget.data.technicianName,
-    );
 
     setState(() {
       _technicians = users;
@@ -208,46 +201,13 @@ widget.onNext();
     return null;
   }
 
-  User? _findTechnicianByName(
-    List<User> users,
-    String? name,
-  ) {
-    if (name == null || name.trim().isEmpty) {
-      return null;
-    }
-
-    final target = name.trim().toLowerCase();
-
-    for (final technician in users) {
-      if (technician.username.toLowerCase() == target) {
-        return technician;
-      }
-    }
-
-    return null;
-  }
-
   void _selectTechnician(
     User technician,
   ) {
-    final technicianId = int.tryParse(technician.id);
-
-    if (technicianId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'This technician account has an invalid ID. '
-            'Please recreate the technician user.',
-          ),
-        ),
-      );
-      return;
-    }
-
     setState(() {
       _selectedTechnician = technician;
 
-      widget.data.technicianId = technicianId;
+      widget.data.technicianId = technician.id;
       widget.data.technicianName =
           technician.username;
       widget.data.technician =

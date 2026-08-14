@@ -7,7 +7,7 @@ class RepairJobGenerator {
     required int vehicleId,
     required String vehicleRegistration,
     required List<InspectionChecklistItem> items,
-    int? technicianId,
+    String? technicianId,
     String technicianName = '',
   }) {
     final repairs = <RepairJob>[];

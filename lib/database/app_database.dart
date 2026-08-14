@@ -18,7 +18,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 20,
+      version: 21,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON;');
       },
@@ -486,10 +486,202 @@ class AppDatabase {
             'ALTER TABLE workshop_inspection_items ADD COLUMN responseValue TEXT',
           );
         }
+
+        // Version 21 - Technician user IDs are text values, matching users.id.
+        if (oldVersion < 21) {
+          await _migrateTechnicianIdsToText(db);
+        }
       },
     );
 
     return _database!;
+  }
+
+  Future<void> _migrateTechnicianIdsToText(Database db) async {
+    await db.execute('PRAGMA foreign_keys = OFF');
+
+    try {
+      await db.transaction((txn) async {
+        await txn.execute('''
+          CREATE TABLE workshop_inspections_v20_copy AS
+          SELECT *, CAST(technicianId AS TEXT) AS technicianIdText
+          FROM workshop_inspections
+        ''');
+        await txn.execute('''
+          CREATE TABLE workshop_inspection_items_v20_copy AS
+          SELECT * FROM workshop_inspection_items
+        ''');
+        await txn.execute('''
+          CREATE TABLE workshop_inspection_photos_v20_copy AS
+          SELECT * FROM workshop_inspection_photos
+        ''');
+        await txn.execute('''
+          CREATE TABLE workshop_repair_jobs_v20_copy AS
+          SELECT *, CAST(technicianId AS TEXT) AS technicianIdText
+          FROM workshop_repair_jobs
+        ''');
+
+        await txn.execute('DROP TABLE workshop_inspection_photos');
+        await txn.execute('DROP TABLE workshop_repair_jobs');
+        await txn.execute('DROP TABLE workshop_inspection_items');
+        await txn.execute('DROP TABLE workshop_inspections');
+
+        await _createWorkshopInspectionTables(txn);
+
+        await txn.execute('''
+          INSERT INTO workshop_inspections(
+            id, inspectionNumber, vehicleId, registration, fleetNumber,
+            templateId, templateName, technicianId, technicianName, driverId,
+            driverName, workshopManager, inspectionType, status, vehicleStatus,
+            dateStarted, dateCompleted, mileage, overallResult, inspectionScore,
+            criticalFailures, advisories, repairsRequired, labourHours, totalCost,
+            notes, technicianSignature, managerSignature, createdAt, updatedAt
+          )
+          SELECT
+            id, inspectionNumber, vehicleId, registration, fleetNumber,
+            templateId, templateName, technicianIdText, technicianName, driverId,
+            driverName, workshopManager, inspectionType, status, vehicleStatus,
+            dateStarted, dateCompleted, mileage, overallResult, inspectionScore,
+            criticalFailures, advisories, repairsRequired, labourHours, totalCost,
+            notes, technicianSignature, managerSignature, createdAt, updatedAt
+          FROM workshop_inspections_v20_copy
+        ''');
+        await txn.execute('''
+          INSERT INTO workshop_inspection_items(
+            id, inspectionId, category, sectionTitle, title, responseType,
+            responseValue, status, mandatory, repairRequired, notes, photoCount,
+            displayOrder
+          )
+          SELECT
+            id, inspectionId, category, sectionTitle, title, responseType,
+            responseValue, status, mandatory, repairRequired, notes, photoCount,
+            displayOrder
+          FROM workshop_inspection_items_v20_copy
+        ''');
+        await txn.execute('''
+          INSERT INTO workshop_inspection_photos(
+            id, inspectionId, inspectionItemId, filePath, createdAt
+          )
+          SELECT id, inspectionId, inspectionItemId, filePath, createdAt
+          FROM workshop_inspection_photos_v20_copy
+        ''');
+        await txn.execute('''
+          INSERT INTO workshop_repair_jobs(
+            id, jobNumber, inspectionId, inspectionItemId, vehicleId,
+            vehicleRegistration, title, description, priority, status,
+            technicianId, technicianName, partsRequired, estimatedHours,
+            actualHours, estimatedCost, actualCost, roadworthy, createdAt,
+            startedAt, completedAt
+          )
+          SELECT
+            id, jobNumber, inspectionId, inspectionItemId, vehicleId,
+            vehicleRegistration, title, description, priority, status,
+            technicianIdText, technicianName, partsRequired, estimatedHours,
+            actualHours, estimatedCost, actualCost, roadworthy, createdAt,
+            startedAt, completedAt
+          FROM workshop_repair_jobs_v20_copy
+        ''');
+
+        await txn.execute('DROP TABLE workshop_inspection_photos_v20_copy');
+        await txn.execute('DROP TABLE workshop_repair_jobs_v20_copy');
+        await txn.execute('DROP TABLE workshop_inspection_items_v20_copy');
+        await txn.execute('DROP TABLE workshop_inspections_v20_copy');
+      });
+    } finally {
+      await db.execute('PRAGMA foreign_keys = ON');
+    }
+  }
+
+  Future<void> _createWorkshopInspectionTables(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE workshop_inspections(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        inspectionNumber TEXT NOT NULL,
+        vehicleId INTEGER NOT NULL,
+        registration TEXT NOT NULL,
+        fleetNumber TEXT NOT NULL,
+        templateId INTEGER,
+        templateName TEXT,
+        technicianId TEXT,
+        technicianName TEXT NOT NULL,
+        driverId INTEGER,
+        driverName TEXT,
+        workshopManager TEXT,
+        inspectionType TEXT NOT NULL,
+        status TEXT NOT NULL,
+        vehicleStatus TEXT NOT NULL,
+        dateStarted TEXT NOT NULL,
+        dateCompleted TEXT,
+        mileage INTEGER NOT NULL,
+        overallResult TEXT NOT NULL,
+        inspectionScore INTEGER NOT NULL DEFAULT 0,
+        criticalFailures INTEGER NOT NULL DEFAULT 0,
+        advisories INTEGER NOT NULL DEFAULT 0,
+        repairsRequired INTEGER NOT NULL DEFAULT 0,
+        labourHours REAL NOT NULL DEFAULT 0,
+        totalCost REAL NOT NULL DEFAULT 0,
+        notes TEXT,
+        technicianSignature TEXT,
+        managerSignature TEXT,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE workshop_inspection_items(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        inspectionId INTEGER NOT NULL,
+        category TEXT NOT NULL,
+        sectionTitle TEXT,
+        title TEXT NOT NULL,
+        responseType TEXT NOT NULL DEFAULT 'passFailNotApplicable',
+        responseValue TEXT,
+        status TEXT NOT NULL,
+        mandatory INTEGER NOT NULL DEFAULT 1,
+        repairRequired INTEGER NOT NULL DEFAULT 0,
+        notes TEXT,
+        photoCount INTEGER NOT NULL DEFAULT 0,
+        displayOrder INTEGER NOT NULL,
+        FOREIGN KEY(inspectionId) REFERENCES workshop_inspections(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE workshop_inspection_photos(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        inspectionId INTEGER NOT NULL,
+        inspectionItemId INTEGER NOT NULL,
+        filePath TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        FOREIGN KEY(inspectionId) REFERENCES workshop_inspections(id) ON DELETE CASCADE,
+        FOREIGN KEY(inspectionItemId) REFERENCES workshop_inspection_items(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE workshop_repair_jobs(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        jobNumber TEXT NOT NULL,
+        inspectionId INTEGER NOT NULL,
+        inspectionItemId INTEGER,
+        vehicleId INTEGER NOT NULL,
+        vehicleRegistration TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        priority TEXT NOT NULL,
+        status TEXT NOT NULL,
+        technicianId TEXT,
+        technicianName TEXT NOT NULL DEFAULT '',
+        partsRequired INTEGER NOT NULL DEFAULT 0,
+        estimatedHours REAL NOT NULL DEFAULT 0,
+        actualHours REAL NOT NULL DEFAULT 0,
+        estimatedCost REAL NOT NULL DEFAULT 0,
+        actualCost REAL NOT NULL DEFAULT 0,
+        roadworthy INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        startedAt TEXT,
+        completedAt TEXT,
+        FOREIGN KEY(inspectionId) REFERENCES workshop_inspections(id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   Future<void> _createTables(Database db) async {
@@ -644,7 +836,7 @@ class AppDatabase {
         fleetNumber TEXT NOT NULL,
         templateId INTEGER,
         templateName TEXT,
-        technicianId INTEGER,
+        technicianId TEXT,
         technicianName TEXT NOT NULL,
         driverId INTEGER,
         driverName TEXT,
@@ -719,7 +911,7 @@ class AppDatabase {
         description TEXT NOT NULL,
         priority TEXT NOT NULL,
         status TEXT NOT NULL,
-        technicianId INTEGER,
+        technicianId TEXT,
         technicianName TEXT NOT NULL DEFAULT '',
         partsRequired INTEGER NOT NULL DEFAULT 0,
         estimatedHours REAL NOT NULL DEFAULT 0,
