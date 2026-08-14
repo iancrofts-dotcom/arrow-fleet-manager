@@ -1,7 +1,9 @@
 import 'app_database.dart';
 
 class DatabaseService {
-  final AppDatabase _database = AppDatabase();
+  DatabaseService({AppDatabase? database}) : _database = database ?? AppDatabase();
+
+  final AppDatabase _database;
 
   Future<AppDatabase> initialize() async {
     await _database.database();

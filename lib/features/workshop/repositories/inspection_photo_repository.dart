@@ -30,11 +30,12 @@ class InspectionPhotoRepository {
   }
 
   Future<void> createPhotos(
-    List<InspectionPhoto> photos,
-  ) async {
+    List<InspectionPhoto> photos, {
+    DatabaseExecutor? executor,
+  }) async {
     if (photos.isEmpty) return;
 
-    final db = await _db;
+    final db = executor ?? await _db;
     final batch = db.batch();
 
     for (final photo in photos) {

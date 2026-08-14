@@ -36,9 +36,10 @@ class WorkshopRepository {
   // ==========================================================================
 
   Future<int> createInspection(
-    WorkshopInspection inspection,
-  ) async {
-    final db = await _db;
+    WorkshopInspection inspection, {
+    DatabaseExecutor? executor,
+  }) async {
+    final db = executor ?? await _db;
 
     return db.insert(
       _table,
@@ -68,9 +69,10 @@ class WorkshopRepository {
   }
 
   Future<WorkshopInspection?> getInspectionByNumber(
-    String inspectionNumber,
-  ) async {
-    final db = await _db;
+    String inspectionNumber, {
+    DatabaseExecutor? executor,
+  }) async {
+    final db = executor ?? await _db;
 
     final result = await db.query(
       _table,
@@ -248,9 +250,10 @@ Future<int> getRepairRequiredCount() async {
   }
 
   Future<void> addInspectionItems(
-    List<InspectionItem> items,
-  ) async {
-    final db = await _db;
+    List<InspectionItem> items, {
+    DatabaseExecutor? executor,
+  }) async {
+    final db = executor ?? await _db;
 
     final batch = db.batch();
 
@@ -268,9 +271,10 @@ Future<int> getRepairRequiredCount() async {
   }
 
   Future<List<InspectionItem>> getInspectionItems(
-    int inspectionId,
-  ) async {
-    final db = await _db;
+    int inspectionId, {
+    DatabaseExecutor? executor,
+  }) async {
+    final db = executor ?? await _db;
 
     final result = await db.query(
       'workshop_inspection_items',
@@ -324,9 +328,10 @@ Future<int> getRepairRequiredCount() async {
   // ==========================================================================
 
   Future<int> createRepairJob(
-    RepairJob job,
-  ) async {
-    final db = await _db;
+    RepairJob job, {
+    DatabaseExecutor? executor,
+  }) async {
+    final db = executor ?? await _db;
 
     return db.insert(
       'workshop_repair_jobs',

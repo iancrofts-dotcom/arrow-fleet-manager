@@ -1,17 +1,19 @@
 import '../../../database/database_service.dart';
 import '../../../database/inspection_repository.dart';
+import '../../../database/app_database.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../models/inspection.dart';
 import '../models/inspection_item.dart';
 import '../repositories/inspection_results_repository.dart';
 
 class InspectionService {
-  InspectionService()
+  InspectionService({AppDatabase? database})
       : _repository = InspectionRepository(
-          databaseService: DatabaseService(),
+          databaseService: DatabaseService(database: database),
         ),
         _resultsRepository = InspectionResultsRepository(
-          appDatabase: DatabaseService().database,
+          appDatabase: database ?? DatabaseService().database,
         );
 
   final InspectionRepository _repository;
@@ -50,10 +52,12 @@ class InspectionService {
   /// Saves only the inspection header.
   /// Used by the ViewModel and any legacy code.
   Future<void> saveInspection(
-    Inspection inspection,
-  ) async {
+    Inspection inspection, {
+    DatabaseExecutor? executor,
+  }) async {
     await _repository.saveInspection(
       inspection,
+      executor: executor,
     );
   }
 
@@ -61,15 +65,18 @@ class InspectionService {
   /// Used by the Driver Daily Walkaround screen.
   Future<void> saveInspectionWithResults(
     Inspection inspection,
-    List<InspectionItem> items,
-  ) async {
+    List<InspectionItem> items, {
+    DatabaseExecutor? executor,
+  }) async {
     await _repository.saveInspection(
       inspection,
+      executor: executor,
     );
 
     await _resultsRepository.saveItems(
       inspectionNumber: inspection.inspectionNumber,
       items: items,
+      executor: executor,
     );
   }
 
@@ -90,7 +97,9 @@ class InspectionService {
     } catch (_) {
       return null;
     }
-  }  Future<List<Inspection>> getVehicleInspections(
+  }
+
+  Future<List<Inspection>> getVehicleInspections(
     int vehicleId,
   ) async {
     final inspections =
@@ -105,9 +114,13 @@ class InspectionService {
   }
 
   Future<Inspection?> getInspectionByNumber(
-    String inspectionNumber,
-  ) {
-    return _repository.getInspectionByNumber(inspectionNumber);
+    String inspectionNumber, {
+    DatabaseExecutor? executor,
+  }) {
+    return _repository.getInspectionByNumber(
+      inspectionNumber,
+      executor: executor,
+    );
   }
 
   Future<List<InspectionItem>>

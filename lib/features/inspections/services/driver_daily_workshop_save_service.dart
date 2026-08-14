@@ -1,4 +1,5 @@
 import '../../vehicles/models/vehicle.dart';
+import '../../../database/app_database.dart';
 import '../../workshop/models/inspection_checklist_item.dart';
 import '../../workshop/models/inspection_photo.dart';
 import '../../workshop/models/inspection_item.dart' as workshop_item;
@@ -14,20 +15,26 @@ import 'inspection_service.dart';
 /// the Workshop inspection workflow until legacy history consumers migrate.
 class DriverDailyWorkshopSaveService {
   DriverDailyWorkshopSaveService({
+    AppDatabase? database,
     InspectionService? legacyInspectionService,
     WorkshopRepository? workshopRepository,
     RepairJobGenerator? repairJobGenerator,
     InspectionPhotoRepository? photoRepository,
-  })  : _legacyInspectionService =
-            legacyInspectionService ?? InspectionService(),
-        _workshopRepository = workshopRepository ?? WorkshopRepository(),
-        _repairJobGenerator = repairJobGenerator ?? RepairJobGenerator(),
-        _photoRepository = photoRepository ?? InspectionPhotoRepository();
+  }) : _database = database ?? AppDatabase() {
+    _legacyInspectionService =
+        legacyInspectionService ?? InspectionService(database: _database);
+    _workshopRepository =
+        workshopRepository ?? WorkshopRepository(database: _database);
+    _repairJobGenerator = repairJobGenerator ?? RepairJobGenerator();
+    _photoRepository =
+        photoRepository ?? InspectionPhotoRepository(database: _database);
+  }
 
-  final InspectionService _legacyInspectionService;
-  final WorkshopRepository _workshopRepository;
-  final RepairJobGenerator _repairJobGenerator;
-  final InspectionPhotoRepository _photoRepository;
+  final AppDatabase _database;
+  late final InspectionService _legacyInspectionService;
+  late final WorkshopRepository _workshopRepository;
+  late final RepairJobGenerator _repairJobGenerator;
+  late final InspectionPhotoRepository _photoRepository;
 
   Future<int> save({
     required Inspection inspection,
@@ -39,26 +46,6 @@ class DriverDailyWorkshopSaveService {
     final vehicleId = vehicle.id;
     if (vehicleId == null) {
       throw ArgumentError('Assigned vehicle must have a database ID.');
-    }
-
-    final existingWorkshopInspection =
-        await _workshopRepository.getInspectionByNumber(
-      inspection.inspectionNumber,
-    );
-    final existingWorkshopInspectionId = existingWorkshopInspection?.id;
-    if (existingWorkshopInspectionId != null) {
-      return existingWorkshopInspectionId;
-    }
-
-    final existingLegacyInspection =
-        await _legacyInspectionService.getInspectionByNumber(
-      inspection.inspectionNumber,
-    );
-    if (existingLegacyInspection == null) {
-      await _legacyInspectionService.saveInspectionWithResults(
-        inspection,
-        items,
-      );
     }
 
     final workshopChecklistItems = _mapChecklistItems(items);
@@ -104,64 +91,102 @@ class DriverDailyWorkshopSaveService {
       updatedAt: now,
     );
 
-    final workshopInspectionId =
-        await _workshopRepository.createInspection(workshopInspection);
-    final savedItems = _mapWorkshopItems(
-      inspectionId: workshopInspectionId,
-      items: workshopChecklistItems,
-    );
-    await _workshopRepository.addInspectionItems(savedItems);
+    final db = await _database.database();
+    return db.transaction((txn) async {
+      final existingLegacyInspection =
+          await _legacyInspectionService.getInspectionByNumber(
+        inspection.inspectionNumber,
+        executor: txn,
+      );
+      final existingWorkshopInspection =
+          await _workshopRepository.getInspectionByNumber(
+        inspection.inspectionNumber,
+        executor: txn,
+      );
 
-    final generatedJobs = _repairJobGenerator.generate(
-      inspectionId: workshopInspectionId,
-      vehicleId: vehicleId,
-      vehicleRegistration: vehicle.registration,
-      items: workshopChecklistItems,
-    );
-    final persistedItems = await _workshopRepository.getInspectionItems(
-      workshopInspectionId,
-    );
-
-    final photos = <InspectionPhoto>[];
-    for (var index = 0;
-        index < workshopChecklistItems.length && index < persistedItems.length;
-        index++) {
-      final inspectionItemId = persistedItems[index].id;
-      if (inspectionItemId == null) {
-        throw StateError('Saved workshop inspection item has no database ID.');
+      if (existingLegacyInspection != null &&
+          existingWorkshopInspection != null) {
+        final existingWorkshopInspectionId = existingWorkshopInspection.id;
+        if (existingWorkshopInspectionId == null) {
+          throw StateError('Existing workshop inspection has no database ID.');
+        }
+        return existingWorkshopInspectionId;
       }
 
-      for (final filePath in workshopChecklistItems[index].photos) {
-        if (filePath.trim().isEmpty) {
-          continue;
-        }
-
-        photos.add(
-          InspectionPhoto(
-            inspectionId: workshopInspectionId,
-            inspectionItemId: inspectionItemId,
-            filePath: filePath,
-            createdAt: now,
-          ),
+      if (existingLegacyInspection != null ||
+          existingWorkshopInspection != null) {
+        throw StateError(
+          'An incomplete previous submission exists for this inspection number.',
         );
       }
-    }
-    await _photoRepository.createPhotos(photos);
 
-    for (var index = 0; index < generatedJobs.length; index++) {
-      final sourceIndex = repairSourceIndexes[index];
-      final inspectionItemId = persistedItems[sourceIndex].id;
-      if (inspectionItemId == null) {
-        throw StateError('Saved workshop inspection item has no database ID.');
-      }
-      await _workshopRepository.createRepairJob(
-        generatedJobs[index].copyWith(
-          inspectionItemId: inspectionItemId,
-        ),
+      await _legacyInspectionService.saveInspectionWithResults(
+        inspection,
+        items,
+        executor: txn,
       );
-    }
 
-    return workshopInspectionId;
+      final workshopInspectionId = await _workshopRepository.createInspection(
+        workshopInspection,
+        executor: txn,
+      );
+      final savedItems = _mapWorkshopItems(
+        inspectionId: workshopInspectionId,
+        items: workshopChecklistItems,
+      );
+      await _workshopRepository.addInspectionItems(
+        savedItems,
+        executor: txn,
+      );
+
+      final generatedJobs = _repairJobGenerator.generate(
+        inspectionId: workshopInspectionId,
+        vehicleId: vehicleId,
+        vehicleRegistration: vehicle.registration,
+        items: workshopChecklistItems,
+      );
+      final persistedItems = await _workshopRepository.getInspectionItems(
+        workshopInspectionId,
+        executor: txn,
+      );
+      if (persistedItems.length != workshopChecklistItems.length) {
+        throw StateError('Workshop inspection items were not saved completely.');
+      }
+
+      final photos = <InspectionPhoto>[];
+      for (var index = 0; index < workshopChecklistItems.length; index++) {
+        final inspectionItemId = persistedItems[index].id;
+        if (inspectionItemId == null) {
+          throw StateError('Saved workshop inspection item has no database ID.');
+        }
+
+        for (final filePath in workshopChecklistItems[index].photos) {
+          if (filePath.trim().isEmpty) continue;
+          photos.add(
+            InspectionPhoto(
+              inspectionId: workshopInspectionId,
+              inspectionItemId: inspectionItemId,
+              filePath: filePath,
+              createdAt: now,
+            ),
+          );
+        }
+      }
+      await _photoRepository.createPhotos(photos, executor: txn);
+
+      for (var index = 0; index < generatedJobs.length; index++) {
+        final inspectionItemId = persistedItems[repairSourceIndexes[index]].id;
+        if (inspectionItemId == null) {
+          throw StateError('Saved workshop inspection item has no database ID.');
+        }
+        await _workshopRepository.createRepairJob(
+          generatedJobs[index].copyWith(inspectionItemId: inspectionItemId),
+          executor: txn,
+        );
+      }
+
+      return workshopInspectionId;
+    });
   }
 
   List<InspectionChecklistItem> _mapChecklistItems(

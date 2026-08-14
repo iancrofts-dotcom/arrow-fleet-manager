@@ -16,8 +16,9 @@ class InspectionResultsRepository {
   Future<void> saveItems({
     required String inspectionNumber,
     required List<InspectionItem> items,
+    DatabaseExecutor? executor,
   }) async {
-    final db = await _db;
+    final db = executor ?? await _db;
 
     final batch = db.batch();
 

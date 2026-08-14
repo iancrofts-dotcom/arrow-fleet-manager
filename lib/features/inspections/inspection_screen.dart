@@ -237,7 +237,9 @@ class _InspectionScreenState
           .showSnackBar(
         SnackBar(
           content: Text(
-            'Failed to save inspection\n$e',
+            isDriverDailyInspection
+                ? 'Unable to save the daily inspection. Please try again.'
+                : 'Failed to save inspection\n$e',
           ),
         ),
       );

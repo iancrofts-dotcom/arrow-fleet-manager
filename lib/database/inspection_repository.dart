@@ -1,5 +1,6 @@
 import '../features/inspections/models/inspection.dart';
 import 'database_service.dart';
+import 'package:sqflite/sqflite.dart';
 
 class InspectionRepository {
   final DatabaseService databaseService;
@@ -8,8 +9,11 @@ class InspectionRepository {
     required this.databaseService,
   });
 
-  Future<void> saveInspection(Inspection inspection) async {
-    final db = await databaseService.database.database();
+  Future<void> saveInspection(
+    Inspection inspection, {
+    DatabaseExecutor? executor,
+  }) async {
+    final db = executor ?? await databaseService.database.database();
 
     await db.insert(
       'inspections',
@@ -48,9 +52,10 @@ class InspectionRepository {
   }
 
   Future<Inspection?> getInspectionByNumber(
-    String inspectionNumber,
-  ) async {
-    final db = await databaseService.database.database();
+    String inspectionNumber, {
+    DatabaseExecutor? executor,
+  }) async {
+    final db = executor ?? await databaseService.database.database();
 
     final maps = await db.query(
       'inspections',
