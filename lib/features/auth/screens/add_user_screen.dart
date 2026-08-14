@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/user.dart';
 import '../models/user_role.dart';
+import '../services/permission_service.dart';
 import '../services/user_service.dart';
 import '../widgets/user_form.dart';
 
@@ -48,6 +49,15 @@ class AddUserScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionService.instance.canManageUsers) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Access Denied')),
+        body: const Center(
+          child: Text('You do not have permission to create user accounts.'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add User'),

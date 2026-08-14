@@ -5,6 +5,7 @@ import '../auth/screens/login_screen.dart';
 import '../auth/services/auth_service.dart';
 
 import 'builders/dashboard_router.dart';
+import 'sections/role_sections/driver_dashboard.dart';
 
 import 'models/dashboard_summary.dart';
 import 'models/dashboard_context.dart';
@@ -20,17 +21,24 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   late final DashboardService _dashboardService;
 
-  late Future<DashboardSummary> summaryFuture;
+  Future<DashboardSummary>? summaryFuture;
 
   @override
   void initState() {
     super.initState();
 
     _dashboardService = DashboardService();
-    summaryFuture = _dashboardService.loadSummary();
+
+    if (AuthService.instance.currentRole != UserRole.driver) {
+      summaryFuture = _dashboardService.loadSummary();
+    }
   }
 
   Future<void> _refreshDashboard() async {
+    if (AuthService.instance.currentRole == UserRole.driver) {
+      return;
+    }
+
     setState(() {
       summaryFuture = _dashboardService.loadSummary();
     });
@@ -64,19 +72,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case UserRole.workshop:
         return DashboardRole.workshopManager;
 
+      case UserRole.technician:
+        return DashboardRole.technician;
+
       case UserRole.driver:
         return DashboardRole.driver;
 
-      case UserRole.viewer:
-      default:
-        // Viewer currently uses the Fleet Manager dashboard
-        // until a dedicated ViewerDashboard is created.
-        return DashboardRole.fleetManager;
+      case null:
+        return DashboardRole.driver;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final dashboardRole = _getDashboardRole();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Arrow Fleet Manager'),
@@ -93,8 +103,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<DashboardSummary>(
-        future: summaryFuture,
+      body: dashboardRole == DashboardRole.driver
+          ? const DriverDashboard()
+          : FutureBuilder<DashboardSummary>(
+        future: summaryFuture!,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -132,7 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
 
           return DashboardRouter.build(
-            role: _getDashboardRole(),
+            role: dashboardRole,
             context: dashboardContext,
           );
         },

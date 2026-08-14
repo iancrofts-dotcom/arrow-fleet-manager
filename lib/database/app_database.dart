@@ -18,7 +18,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 18,
+      version: 19,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON;');
       },
@@ -434,6 +434,16 @@ class AppDatabase {
             )
           ''');
         }
+
+        // Version 19 - Driver Daily Workshop Inspection Link
+        if (oldVersion < 19) {
+          await db.execute(
+            'ALTER TABLE workshop_inspections ADD COLUMN driverId INTEGER',
+          );
+          await db.execute(
+            'ALTER TABLE workshop_inspections ADD COLUMN driverName TEXT',
+          );
+        }
       },
     );
 
@@ -592,6 +602,8 @@ class AppDatabase {
         fleetNumber TEXT NOT NULL,
         technicianId INTEGER,
         technicianName TEXT NOT NULL,
+        driverId INTEGER,
+        driverName TEXT,
         workshopManager TEXT,
         inspectionType TEXT NOT NULL,
         status TEXT NOT NULL,

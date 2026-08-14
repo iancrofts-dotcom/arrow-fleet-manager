@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/models/user.dart';
+import '../../auth/models/user_role.dart';
+import '../../auth/services/auth_service.dart';
+import '../../auth/services/permission_service.dart';
+import '../../auth/services/user_service.dart';
 import '../models/repair_job.dart';
 import '../repositories/workshop_repository.dart';
 
 class RepairJobsScreen extends StatefulWidget {
-  final int inspectionId;
+  final int? inspectionId;
+  final int? technicianId;
 
   const RepairJobsScreen({
     super.key,
-    required this.inspectionId,
-  });
+    this.inspectionId,
+    this.technicianId,
+  }) : assert(
+          (inspectionId == null) != (technicianId == null),
+          'Provide either inspectionId or technicianId.',
+        );
 
   @override
   State<RepairJobsScreen> createState() =>
@@ -23,6 +33,19 @@ class _RepairJobsScreenState
 
   late Future<List<RepairJob>> _future;
 
+  bool get _isTechnicianView =>
+      PermissionService.instance.isTechnician &&
+      widget.technicianId != null;
+
+  bool _isAssignedToCurrentTechnician(RepairJob job) {
+    final currentTechnicianId =
+        int.tryParse(AuthService.instance.currentUserId ?? '');
+
+    return _isTechnicianView &&
+        currentTechnicianId != null &&
+        job.technicianId == currentTechnicianId;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -30,8 +53,18 @@ class _RepairJobsScreenState
   }
 
   Future<List<RepairJob>> _loadJobs() {
+    if (_isTechnicianView) {
+      final technicianId =
+          int.tryParse(AuthService.instance.currentUserId ?? '');
+      if (technicianId == null) {
+        return Future<List<RepairJob>>.value(const []);
+      }
+
+      return _repository.getRepairJobsForTechnician(technicianId);
+    }
+
     return _repository.getRepairJobs(
-      widget.inspectionId,
+      widget.inspectionId!,
     );
   }
 
@@ -96,6 +129,11 @@ class _RepairJobsScreenState
 
 
   Future<void> _editJob(RepairJob job) async {
+    if (!PermissionService.instance.canManageWorkshop) {
+      _showMessage('Only Workshop management can edit repair job assignments.');
+      return;
+    }
+
     if (job.id == null) {
       _showMessage('This repair job has no database ID.');
       return;
@@ -114,6 +152,11 @@ class _RepairJobsScreenState
   }
 
   Future<void> _completeJob(RepairJob job) async {
+    if (!PermissionService.instance.canSignOffInspection) {
+      _showMessage('Only an authorised manager can approve a repair job.');
+      return;
+    }
+
     if (job.id == null) {
       _showMessage('This repair job has no database ID.');
       return;
@@ -127,7 +170,44 @@ class _RepairJobsScreenState
     if (result == null) return;
 
     await _repository.updateRepairJob(result);
-    _showMessage('Repair job marked as completed.');
+    await _repository.completeInspectionWhenRepairsResolved(
+      result.inspectionId,
+    );
+    _showMessage('Repair job approved and completed.');
+    await _refresh();
+  }
+
+  Future<void> _returnRepairToTechnician(RepairJob job) async {
+    if (!PermissionService.instance.canSignOffInspection) {
+      _showMessage('Only an authorised manager can return a repair job.');
+      return;
+    }
+
+    if (job.id == null ||
+        job.status != RepairJobStatus.awaitingInspection) {
+      return;
+    }
+
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (context) => const _ReturnRepairDialog(),
+    );
+
+    if (reason == null) return;
+
+    final reviewNote = reason.trim();
+    final description = reviewNote.isEmpty
+        ? job.description
+        : '${job.description}\n\nManager review: $reviewNote';
+
+    await _repository.updateRepairJob(
+      job.copyWith(
+        status: RepairJobStatus.inProgress,
+        description: description,
+      ),
+    );
+
+    _showMessage('Repair job returned to the technician.');
     await _refresh();
   }
 
@@ -138,24 +218,59 @@ class _RepairJobsScreenState
     }
 
     RepairJobStatus? nextStatus;
-    switch (job.status) {
-      case RepairJobStatus.open:
-        nextStatus = RepairJobStatus.assigned;
-        break;
-      case RepairJobStatus.assigned:
-        nextStatus = RepairJobStatus.inProgress;
-        break;
-      case RepairJobStatus.inProgress:
-        nextStatus = RepairJobStatus.awaitingInspection;
-        break;
-      case RepairJobStatus.awaitingParts:
-        nextStatus = RepairJobStatus.inProgress;
-        break;
-      case RepairJobStatus.awaitingInspection:
-      case RepairJobStatus.completed:
-      case RepairJobStatus.cancelled:
-        nextStatus = null;
-        break;
+
+    if (_isTechnicianView) {
+      if (!_isAssignedToCurrentTechnician(job)) {
+        _showMessage('This repair job is not assigned to you.');
+        return;
+      }
+
+      switch (job.status) {
+        case RepairJobStatus.assigned:
+          nextStatus = RepairJobStatus.inProgress;
+          break;
+        case RepairJobStatus.inProgress:
+          nextStatus = RepairJobStatus.awaitingInspection;
+          break;
+        case RepairJobStatus.awaitingParts:
+          nextStatus = RepairJobStatus.inProgress;
+          break;
+        case RepairJobStatus.open:
+        case RepairJobStatus.awaitingInspection:
+        case RepairJobStatus.completed:
+        case RepairJobStatus.cancelled:
+          nextStatus = null;
+          break;
+      }
+    } else {
+      if (!PermissionService.instance.canManageWorkshop) {
+        _showMessage('Only Workshop management can update this repair job.');
+        return;
+      }
+
+      switch (job.status) {
+        case RepairJobStatus.open:
+          if (job.technicianId == null) {
+            _showMessage('Assign an active technician before assigning this job.');
+            return;
+          }
+          nextStatus = RepairJobStatus.assigned;
+          break;
+        case RepairJobStatus.assigned:
+          nextStatus = RepairJobStatus.inProgress;
+          break;
+        case RepairJobStatus.inProgress:
+          nextStatus = RepairJobStatus.awaitingInspection;
+          break;
+        case RepairJobStatus.awaitingParts:
+          nextStatus = RepairJobStatus.inProgress;
+          break;
+        case RepairJobStatus.awaitingInspection:
+        case RepairJobStatus.completed:
+        case RepairJobStatus.cancelled:
+          nextStatus = null;
+          break;
+      }
     }
 
     if (nextStatus == null) return;
@@ -183,6 +298,18 @@ class _RepairJobsScreenState
       return;
     }
 
+    if (_isTechnicianView &&
+        (!_isAssignedToCurrentTechnician(job) ||
+            job.status != RepairJobStatus.inProgress)) {
+      _showMessage('Only your in-progress jobs can await parts.');
+      return;
+    }
+
+    if (!_isTechnicianView && !PermissionService.instance.canManageWorkshop) {
+      _showMessage('Only Workshop management can update this repair job.');
+      return;
+    }
+
     final updatedJob = job.copyWith(
       status: RepairJobStatus.awaitingParts,
     );
@@ -195,6 +322,11 @@ class _RepairJobsScreenState
   }
 
   Future<void> _cancelJob(RepairJob job) async {
+    if (!PermissionService.instance.canManageWorkshop) {
+      _showMessage('Only Workshop management can cancel repair jobs.');
+      return;
+    }
+
     if (job.id == null) {
       _showMessage('This repair job has no database ID.');
       return;
@@ -226,6 +358,9 @@ class _RepairJobsScreenState
     await _repository.updateRepairJob(
       job.copyWith(status: RepairJobStatus.cancelled),
     );
+    await _repository.completeInspectionWhenRepairsResolved(
+      job.inspectionId,
+    );
 
     if (!mounted) return;
     _showMessage('Repair job cancelled.');
@@ -243,11 +378,59 @@ class _RepairJobsScreenState
       case RepairJobStatus.awaitingParts:
         return 'Resume Job';
       case RepairJobStatus.awaitingInspection:
-        return 'Complete Job';
+        return 'Approve Repair';
       case RepairJobStatus.completed:
       case RepairJobStatus.cancelled:
         return '';
     }
+  }
+
+  String _technicianActionLabel(RepairJobStatus status) {
+    switch (status) {
+      case RepairJobStatus.assigned:
+        return 'Start Job';
+      case RepairJobStatus.inProgress:
+        return 'Submit for Review';
+      case RepairJobStatus.awaitingParts:
+        return 'Resume Job';
+      case RepairJobStatus.open:
+      case RepairJobStatus.awaitingInspection:
+      case RepairJobStatus.completed:
+      case RepairJobStatus.cancelled:
+        return '';
+    }
+  }
+
+  Future<void> _updateOperationalWork(RepairJob job) async {
+    if (!_isAssignedToCurrentTechnician(job)) {
+      _showMessage('This repair job is not assigned to you.');
+      return;
+    }
+
+    if (job.status != RepairJobStatus.assigned &&
+        job.status != RepairJobStatus.inProgress &&
+        job.status != RepairJobStatus.awaitingParts) {
+      _showMessage('Work can no longer be updated for this repair job.');
+      return;
+    }
+
+    final result = await showDialog<RepairJob>(
+      context: context,
+      builder: (context) => _TechnicianWorkUpdateDialog(job: job),
+    );
+
+    if (result == null) return;
+
+    final workNote = result.description.trim();
+    await _repository.updateRepairJob(
+      result.copyWith(
+        description: workNote.isEmpty
+            ? job.description
+            : '${job.description}\n\nTechnician update: $workNote',
+      ),
+    );
+    _showMessage('Actual work recorded.');
+    await _refresh();
   }
 
   Widget _workflowActions(
@@ -261,7 +444,9 @@ class _RepairJobsScreenState
 
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final primaryLabel = _primaryActionLabel(job.status);
+    final primaryLabel = _isTechnicianView
+        ? _technicianActionLabel(job.status)
+        : _primaryActionLabel(job.status);
 
     String currentStage;
     String stageDescription;
@@ -308,6 +493,9 @@ class _RepairJobsScreenState
 
     final isInspectionStage =
         job.status == RepairJobStatus.awaitingInspection;
+    final canReview =
+        PermissionService.instance.canSignOffInspection &&
+        !_isTechnicianView;
 
     return Container(
       margin: const EdgeInsets.only(top: 18),
@@ -366,22 +554,24 @@ class _RepairJobsScreenState
             ],
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: isInspectionStage
-                  ? () => _completeJob(job)
-                  : () => _advanceJob(job),
-              icon: Icon(
-                isInspectionStage
-                    ? Icons.check_circle_outline
-                    : job.status == RepairJobStatus.open
-                        ? Icons.person_add_alt_1
-                        : Icons.arrow_forward,
+          if (primaryLabel.isNotEmpty &&
+              (!isInspectionStage || canReview))
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: isInspectionStage && !_isTechnicianView
+                    ? () => _completeJob(job)
+                    : () => _advanceJob(job),
+                icon: Icon(
+                  isInspectionStage
+                      ? Icons.check_circle_outline
+                      : job.status == RepairJobStatus.open
+                          ? Icons.person_add_alt_1
+                          : Icons.arrow_forward,
+                ),
+                label: Text(primaryLabel),
               ),
-              label: Text(primaryLabel),
             ),
-          ),
           if (job.status == RepairJobStatus.inProgress) ...[
             const SizedBox(height: 8),
             SizedBox(
@@ -400,15 +590,28 @@ class _RepairJobsScreenState
               style: theme.textTheme.bodySmall,
             ),
           ],
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton.icon(
-              onPressed: () => _cancelJob(job),
-              icon: const Icon(Icons.cancel_outlined),
-              label: const Text('Cancel Job'),
+          if (!_isTechnicianView) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
+                onPressed: () => _cancelJob(job),
+                icon: const Icon(Icons.cancel_outlined),
+                label: const Text('Cancel Job'),
+              ),
             ),
-          ),
+          ],
+          if (isInspectionStage && canReview) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _returnRepairToTechnician(job),
+                icon: const Icon(Icons.assignment_return_outlined),
+                label: const Text('Return to Technician'),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -424,12 +627,24 @@ class _RepairJobsScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (PermissionService.instance.isDriver) {
+      return const _RepairJobsAccessDenied();
+    }
+
+    if (PermissionService.instance.isTechnician && !_isTechnicianView) {
+      return const _RepairJobsAccessDenied(
+        message: 'Technicians can access only their assigned repair jobs.',
+      );
+    }
+
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Repair Jobs'),
+        title: Text(
+          _isTechnicianView ? 'My Repair Jobs' : 'Repair Jobs',
+        ),
         leading: IconButton(
           tooltip: 'Back',
           icon: const Icon(Icons.arrow_back),
@@ -480,6 +695,10 @@ class _RepairJobsScreenState
           }
 
           final jobs = snapshot.data ?? [];
+
+          if (_isTechnicianView) {
+            return _technicianJobsBody(context, jobs);
+          }
 
           if (jobs.isEmpty) {
             return RefreshIndicator(
@@ -566,6 +785,63 @@ class _RepairJobsScreenState
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _technicianJobsBody(
+    BuildContext context,
+    List<RepairJob> jobs,
+  ) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        children: [
+          Text(
+            'Assigned Repair Jobs',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Update work on jobs assigned to your technician account.',
+          ),
+          const SizedBox(height: 18),
+          if (jobs.isEmpty)
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: scheme.outlineVariant),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(28),
+                child: Column(
+                  children: [
+                    Icon(Icons.assignment_turned_in_outlined, size: 64),
+                    SizedBox(height: 16),
+                    Text(
+                      'No repair jobs are currently assigned to you.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ...jobs.map(
+              (job) => Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: _repairCard(context, job),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -885,9 +1161,21 @@ class _RepairJobsScreenState
                 _infoChip(
                   context,
                   Icons.person_outline,
-                  job.technicianName.trim().isEmpty
-                      ? 'Not assigned'
-                      : job.technicianName,
+                  job.technicianId == null
+                      ? 'Unassigned'
+                      : job.technicianName.trim().isEmpty
+                          ? 'Assigned technician'
+                          : job.technicianName,
+                ),
+                _infoChip(
+                  context,
+                  Icons.local_shipping_outlined,
+                  job.vehicleRegistration,
+                ),
+                _infoChip(
+                  context,
+                  Icons.assignment_outlined,
+                  'Inspection ${job.inspectionId}',
                 ),
                 _infoChip(
                   context,
@@ -898,6 +1186,16 @@ class _RepairJobsScreenState
                 ),
               ],
             ),
+            if (!_isTechnicianView &&
+                job.technicianId == null &&
+                job.technicianName.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Legacy technician name: ${job.technicianName}. '
+                'Reassign this job to an active technician.',
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
             const SizedBox(height: 16),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -937,9 +1235,13 @@ class _RepairJobsScreenState
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
-              onPressed: () => _editJob(job),
+              onPressed: _isTechnicianView
+                  ? () => _updateOperationalWork(job)
+                  : () => _editJob(job),
               icon: const Icon(Icons.edit_outlined),
-              label: const Text('Edit Job'),
+              label: Text(
+                _isTechnicianView ? 'Record Actual Work' : 'Edit Job',
+              ),
             ),
             _workflowActions(context, job),
           ],
@@ -992,6 +1294,179 @@ class _RepairJobsScreenState
   }
 }
 
+class _RepairJobsAccessDenied extends StatelessWidget {
+  const _RepairJobsAccessDenied({
+    this.message = 'Drivers do not have access to repair jobs.',
+  });
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Access Denied')),
+      body: Center(
+        child: Text(message),
+      ),
+    );
+  }
+}
+
+class _ReturnRepairDialog extends StatefulWidget {
+  const _ReturnRepairDialog();
+
+  @override
+  State<_ReturnRepairDialog> createState() => _ReturnRepairDialogState();
+}
+
+class _ReturnRepairDialogState extends State<_ReturnRepairDialog> {
+  final TextEditingController _reasonController = TextEditingController();
+
+  @override
+  void dispose() {
+    _reasonController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Return Repair to Technician'),
+      content: TextField(
+        controller: _reasonController,
+        maxLines: 4,
+        decoration: const InputDecoration(
+          labelText: 'Review reason (optional)',
+          hintText: 'Describe the further work required.',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.icon(
+          onPressed: () => Navigator.of(context).pop(
+            _reasonController.text,
+          ),
+          icon: const Icon(Icons.assignment_return_outlined),
+          label: const Text('Return Job'),
+        ),
+      ],
+    );
+  }
+}
+
+class _TechnicianWorkUpdateDialog extends StatefulWidget {
+  final RepairJob job;
+
+  const _TechnicianWorkUpdateDialog({
+    required this.job,
+  });
+
+  @override
+  State<_TechnicianWorkUpdateDialog> createState() =>
+      _TechnicianWorkUpdateDialogState();
+}
+
+class _TechnicianWorkUpdateDialogState
+    extends State<_TechnicianWorkUpdateDialog> {
+  late final TextEditingController _notesController;
+  late final TextEditingController _hoursController;
+  late final TextEditingController _costController;
+
+  @override
+  void initState() {
+    super.initState();
+    _notesController = TextEditingController();
+    _hoursController = TextEditingController(
+      text: widget.job.actualHours.toString(),
+    );
+    _costController = TextEditingController(
+      text: widget.job.actualCost.toString(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    _hoursController.dispose();
+    _costController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final hours = double.tryParse(_hoursController.text.trim());
+    final cost = double.tryParse(_costController.text.trim());
+
+    if (hours == null || hours < 0 || cost == null || cost < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter valid actual hours and cost.'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).pop(
+      widget.job.copyWith(
+        description: _notesController.text.trim(),
+        actualHours: hours,
+        actualCost: cost,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Record Actual Work'),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _notesController,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Work Notes (appended)',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _hoursController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(labelText: 'Actual Hours'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _costController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(labelText: 'Actual Cost (£)'),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.icon(
+          onPressed: _save,
+          icon: const Icon(Icons.save_outlined),
+          label: const Text('Save Work'),
+        ),
+      ],
+    );
+  }
+}
+
 class _RepairJobEditDialog extends StatefulWidget {
   final RepairJob job;
 
@@ -1008,13 +1483,16 @@ class _RepairJobEditDialogState
     extends State<_RepairJobEditDialog> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _technicianController;
   late final TextEditingController _hoursController;
   late final TextEditingController _costController;
 
   late RepairPriority _priority;
   late RepairJobStatus _status;
   late bool _partsRequired;
+  List<User> _technicians = const [];
+  int? _technicianId;
+  bool _loadingTechnicians = true;
+  String? _technicianLoadError;
 
   @override
   void initState() {
@@ -1025,8 +1503,6 @@ class _RepairJobEditDialogState
     _titleController = TextEditingController(text: job.title);
     _descriptionController =
         TextEditingController(text: job.description);
-    _technicianController =
-        TextEditingController(text: job.technicianName);
     _hoursController = TextEditingController(
       text: job.estimatedHours.toString(),
     );
@@ -1037,13 +1513,59 @@ class _RepairJobEditDialogState
     _priority = job.priority;
     _status = job.status;
     _partsRequired = job.partsRequired;
+    _loadTechnicians();
+  }
+
+  Future<void> _loadTechnicians() async {
+    try {
+      final technicians = await UserService.instance.getUsersByRole(
+        UserRole.technician,
+      );
+      User? invalidTechnician;
+      for (final technician in technicians) {
+        if (int.tryParse(technician.id) == null) {
+          invalidTechnician = technician;
+          break;
+        }
+      }
+
+      if (!mounted) return;
+
+      final invalidTechnicianName = invalidTechnician?.username;
+      if (invalidTechnicianName != null) {
+        setState(() {
+          _loadingTechnicians = false;
+          _technicianLoadError =
+              'Technician account $invalidTechnicianName has a '
+              'non-numeric user ID and cannot be assigned to repair jobs.';
+        });
+        return;
+      }
+
+      setState(() {
+        _technicians = technicians;
+        for (final technician in technicians) {
+          if (int.parse(technician.id) == widget.job.technicianId) {
+            _technicianId = int.parse(technician.id);
+            break;
+          }
+        }
+        _loadingTechnicians = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingTechnicians = false;
+        _technicianLoadError = 'Unable to load active technician accounts.';
+      });
+    }
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _technicianController.dispose();
     _hoursController.dispose();
     _costController.dispose();
     super.dispose();
@@ -1086,11 +1608,42 @@ class _RepairJobEditDialogState
       return;
     }
 
+    if (_loadingTechnicians || _technicianLoadError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Active technician accounts must load before saving.'),
+        ),
+      );
+      return;
+    }
+
+    User? selectedTechnician;
+    for (final technician in _technicians) {
+      if (int.parse(technician.id) == _technicianId) {
+        selectedTechnician = technician;
+        break;
+      }
+    }
+
+    if (_status == RepairJobStatus.assigned &&
+        selectedTechnician == null &&
+        widget.job.technicianId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Select an active technician before assigning this job.'),
+        ),
+      );
+      return;
+    }
+
     Navigator.of(context).pop(
       widget.job.copyWith(
         title: title,
         description: _descriptionController.text.trim(),
-        technicianName: _technicianController.text.trim(),
+        technicianId: selectedTechnician == null
+            ? widget.job.technicianId
+            : int.parse(selectedTechnician.id),
+        technicianName: selectedTechnician?.username ?? widget.job.technicianName,
         priority: _priority,
         status: _status,
         partsRequired: _partsRequired,
@@ -1125,12 +1678,40 @@ class _RepairJobEditDialogState
                 ),
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: _technicianController,
-                decoration: const InputDecoration(
-                  labelText: 'Technician',
+              if (_loadingTechnicians)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: CircularProgressIndicator(),
+                )
+              else if (_technicianLoadError != null)
+                Text(
+                  _technicianLoadError!,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                )
+              else
+                DropdownButtonFormField<int>(
+                  initialValue: _technicianId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Assigned Technician',
+                  ),
+                  hint: const Text('Select an active technician'),
+                  items: _technicians
+                      .map(
+                        (technician) => DropdownMenuItem<int>(
+                          value: int.parse(technician.id),
+                          child: Text(technician.username),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _technicianId = value;
+                    });
+                  },
                 ),
-              ),
               const SizedBox(height: 12),
               DropdownButtonFormField<RepairPriority>(
                 initialValue: _priority,

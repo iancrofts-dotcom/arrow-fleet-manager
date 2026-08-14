@@ -47,6 +47,25 @@ class InspectionRepository {
     return Inspection.fromMap(maps.first);
   }
 
+  Future<Inspection?> getInspectionByNumber(
+    String inspectionNumber,
+  ) async {
+    final db = await databaseService.database.database();
+
+    final maps = await db.query(
+      'inspections',
+      where: 'inspectionNumber = ?',
+      whereArgs: [inspectionNumber],
+      limit: 1,
+    );
+
+    if (maps.isEmpty) {
+      return null;
+    }
+
+    return Inspection.fromMap(maps.first);
+  }
+
   Future<List<Inspection>> getVehicleInspections(
     int vehicleId,
   ) async {

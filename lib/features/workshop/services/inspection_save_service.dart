@@ -95,6 +95,8 @@ class InspectionSaveService {
       await _repository.createRepairJob(
         repair.copyWith(
           inspectionId: inspectionId,
+          technicianId: data.technicianId,
+          technicianName: data.technicianName ?? '',
         ),
       );
     }

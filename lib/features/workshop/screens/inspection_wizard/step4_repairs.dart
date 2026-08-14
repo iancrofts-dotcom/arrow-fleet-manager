@@ -47,6 +47,8 @@ class _Step4RepairsState extends State<Step4Repairs> {
         vehicleRegistration:
             widget.data.registration ?? '',
         items: checklistItems,
+        technicianId: widget.data.technicianId,
+        technicianName: widget.data.technicianName ?? '',
       );
     }
   }

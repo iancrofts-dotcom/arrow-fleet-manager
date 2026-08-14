@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 
-import '../../models/dashboard_context.dart';
-import '../../widgets/dashboard_content.dart';
+import '../../../workshop/screens/workshop_dashboard_screen.dart';
 
 class TechnicianDashboard extends StatelessWidget {
-  const TechnicianDashboard({
-    super.key,
-    required this.context,
-  });
-
-  final DashboardContext context;
+  const TechnicianDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return DashboardContent(
-      context: this.context,
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: FilledButton.icon(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const WorkshopDashboardScreen(),
+            ),
+          ),
+          icon: const Icon(Icons.handyman_outlined),
+          label: const Text('Open My Repair Jobs'),
+        ),
+      ),
     );
   }
 }

@@ -105,6 +105,12 @@ class InspectionService {
         .toList();
   }
 
+  Future<Inspection?> getInspectionByNumber(
+    String inspectionNumber,
+  ) {
+    return _repository.getInspectionByNumber(inspectionNumber);
+  }
+
   Future<List<InspectionItem>>
       getInspectionResults(
     String inspectionNumber,

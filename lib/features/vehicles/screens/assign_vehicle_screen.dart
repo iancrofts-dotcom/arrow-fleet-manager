@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/services/permission_service.dart';
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
 
@@ -62,6 +63,15 @@ class _AssignVehicleScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionService.instance.canViewVehicles) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Access Denied')),
+        body: const Center(
+          child: Text('You do not have permission to select fleet vehicles.'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Assign Vehicle'),

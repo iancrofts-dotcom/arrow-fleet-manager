@@ -13,12 +13,17 @@ class InspectionDetailsSection extends StatefulWidget {
   /// Callback when the fuel level changes
   final ValueChanged<String>? onFuelLevelChanged;
 
+  final Vehicle? lockedVehicle;
+  final bool lockDriver;
+
   const InspectionDetailsSection({
     super.key,
     required this.driverController,
     required this.mileageController,
     this.onVehicleChanged,
     this.onFuelLevelChanged,
+    this.lockedVehicle,
+    this.lockDriver = false,
   });
 
   @override
@@ -33,6 +38,9 @@ class _InspectionDetailsSectionState
   String _fuelLevel = 'Full';
 
   Future<void> _selectVehicle() async {
+    if (widget.lockedVehicle != null) {
+      return;
+    }
     final vehicle = await Navigator.push<Vehicle>(
       context,
       MaterialPageRoute(
@@ -51,6 +59,8 @@ class _InspectionDetailsSectionState
 
   @override
   Widget build(BuildContext context) {
+    final selectedVehicle = widget.lockedVehicle ?? _selectedVehicle;
+
     return Card(
       elevation: 4,
       child: Padding(
@@ -70,6 +80,7 @@ class _InspectionDetailsSectionState
 
             TextField(
               controller: widget.driverController,
+              readOnly: widget.lockDriver,
               decoration: const InputDecoration(
                 labelText: 'Driver',
                 prefixIcon: Icon(Icons.person),
@@ -89,7 +100,7 @@ class _InspectionDetailsSectionState
             const SizedBox(height: 8),
 
             InkWell(
-              onTap: _selectVehicle,
+              onTap: widget.lockedVehicle == null ? _selectVehicle : null,
               borderRadius:
                   BorderRadius.circular(12),
               child: Container(
@@ -103,7 +114,7 @@ class _InspectionDetailsSectionState
                   borderRadius:
                       BorderRadius.circular(12),
                 ),
-                child: _selectedVehicle == null
+                child: selectedVehicle == null
                     ? const Row(
                         children: [
                           Icon(
@@ -123,7 +134,7 @@ class _InspectionDetailsSectionState
                             CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _selectedVehicle!.registration,
+                            selectedVehicle.registration,
                             style: const TextStyle(
                               fontWeight:
                                   FontWeight.bold,
@@ -134,11 +145,11 @@ class _InspectionDetailsSectionState
                           const SizedBox(height: 6),
 
                           Text(
-                            'Fleet: ${_selectedVehicle!.fleetNumber}',
+                            'Fleet: ${selectedVehicle.fleetNumber}',
                           ),
 
                           Text(
-                            '${_selectedVehicle!.make} ${_selectedVehicle!.model}',
+                            '${selectedVehicle.make} ${selectedVehicle.model}',
                           ),
                         ],
                       ),

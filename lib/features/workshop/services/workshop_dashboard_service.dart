@@ -1,3 +1,4 @@
+import '../models/repair_job.dart';
 import '../models/workshop_dashboard_data.dart';
 import '../models/workshop_inspection.dart';
 import '../repositories/workshop_repository.dart';
@@ -9,6 +10,7 @@ class WorkshopDashboardService {
 
   Future<WorkshopDashboardData> loadDashboard() async {
     final inspections = await _repository.getAllInspections();
+    final repairJobs = await _repository.getAllRepairJobs();
 
     // Open means the inspection still requires workshop/manager action.
     // A completed inspection remains open until it is signed off.
@@ -50,6 +52,21 @@ class WorkshopDashboardService {
           completedAt.isBefore(dayEnd);
     }).length;
 
+    final repairsOutstanding = repairJobs.where((job) {
+      return job.status != RepairJobStatus.completed &&
+          job.status != RepairJobStatus.cancelled;
+    }).length;
+
+    final awaitingParts = repairJobs.where((job) {
+      return job.status == RepairJobStatus.awaitingParts;
+    }).length;
+
+    final awaitingSignOff = inspections.where((inspection) {
+      final signature = inspection.managerSignature;
+      return inspection.status == WorkshopInspectionStatus.completed &&
+          (signature == null || signature.trim().isEmpty);
+    }).length;
+
     final criticalFailures =
         await _repository.getCriticalFailureCount();
     final repairsRequired =
@@ -60,6 +77,9 @@ class WorkshopDashboardService {
       completedToday: completedToday,
       criticalFailures: criticalFailures,
       repairsRequired: repairsRequired,
+      repairsOutstanding: repairsOutstanding,
+      awaitingParts: awaitingParts,
+      awaitingSignOff: awaitingSignOff,
     );
   }
 }

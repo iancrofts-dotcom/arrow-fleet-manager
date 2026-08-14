@@ -32,11 +32,13 @@ class DashboardHeader extends StatelessWidget {
       case UserRole.workshop:
         return Icons.build;
 
+      case UserRole.technician:
+        return Icons.handyman_outlined;
+
       case UserRole.driver:
         return Icons.drive_eta;
 
-      case UserRole.viewer:
-        return Icons.visibility;
+     
 
       default:
         return Icons.person;

@@ -13,11 +13,13 @@ class Permissions {
   static bool isWorkshop(User? user) =>
       user?.role == UserRole.workshop;
 
+  static bool isTechnician(User? user) =>
+      user?.role == UserRole.technician;
+
   static bool isDriver(User? user) =>
       user?.role == UserRole.driver;
 
-  static bool isViewer(User? user) =>
-      user?.role == UserRole.viewer;
+  
 
   static bool canManageUsers(User? user) =>
       isAdmin(user);
@@ -29,14 +31,24 @@ class Permissions {
       isAdmin(user) || isManager(user);
 
   static bool canManageRepairs(User? user) =>
-      isAdmin(user) || isWorkshop(user);
+      isAdmin(user) || isManager(user) || isWorkshop(user);
 
   static bool canViewReports(User? user) =>
-      !isDriver(user);
+      isAdmin(user) || isManager(user) || isWorkshop(user);
 
   static bool canCreateInspections(User? user) =>
       isAdmin(user) ||
-      isDriver(user);
+      isManager(user) ||
+      isWorkshop(user);
+
+  static bool canAccessWorkshop(User? user) =>
+      isAdmin(user) ||
+      isManager(user) ||
+      isWorkshop(user) ||
+      isTechnician(user);
+
+  static bool canSignOffInspection(User? user) =>
+      isAdmin(user) || isManager(user) || isWorkshop(user);
 
   static bool canEditVehicles(User? user) =>
       isAdmin(user) ||

@@ -47,6 +47,7 @@ enum WorkshopInspectionType {
   motPreparation,
   repairInspection,
   returnToService,
+  driverDailyInspection,
 }
 
 /// ============================================================================
@@ -64,6 +65,9 @@ class WorkshopInspection {
 
   final int? technicianId;
   final String technicianName;
+
+  final int? driverId;
+  final String? driverName;
 
   final String? workshopManager;
 
@@ -110,6 +114,8 @@ class WorkshopInspection {
     required this.fleetNumber,
     this.technicianId,
     required this.technicianName,
+    this.driverId,
+    this.driverName,
     this.workshopManager,
     required this.inspectionType,
     required this.status,
@@ -139,6 +145,8 @@ class WorkshopInspection {
     String? fleetNumber,
     int? technicianId,
     String? technicianName,
+    int? driverId,
+    String? driverName,
     String? workshopManager,
     WorkshopInspectionType? inspectionType,
     WorkshopInspectionStatus? status,
@@ -167,6 +175,8 @@ class WorkshopInspection {
       fleetNumber: fleetNumber ?? this.fleetNumber,
       technicianId: technicianId ?? this.technicianId,
       technicianName: technicianName ?? this.technicianName,
+      driverId: driverId ?? this.driverId,
+      driverName: driverName ?? this.driverName,
       workshopManager: workshopManager ?? this.workshopManager,
       inspectionType: inspectionType ?? this.inspectionType,
       status: status ?? this.status,
@@ -199,6 +209,8 @@ class WorkshopInspection {
       'fleetNumber': fleetNumber,
       'technicianId': technicianId,
       'technicianName': technicianName,
+      'driverId': driverId,
+      'driverName': driverName,
       'workshopManager': workshopManager,
       'inspectionType': inspectionType.name,
       'status': status.name,
@@ -230,6 +242,8 @@ class WorkshopInspection {
       fleetNumber: map['fleetNumber'],
       technicianId: map['technicianId'],
       technicianName: map['technicianName'],
+      driverId: map['driverId'],
+      driverName: map['driverName'],
       workshopManager: map['workshopManager'],
       inspectionType: WorkshopInspectionType.values.firstWhere(
         (e) => e.name == map['inspectionType'],

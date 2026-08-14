@@ -40,14 +40,10 @@ class DashboardRouter {
         );
 
       case DashboardRole.technician:
-        return TechnicianDashboard(
-          context: context,
-        );
+        return const TechnicianDashboard();
 
       case DashboardRole.driver:
-        return DriverDashboard(
-          context: context,
-        );
+        return const DriverDashboard();
     }
   }
 }

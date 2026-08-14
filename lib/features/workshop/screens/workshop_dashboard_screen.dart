@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/services/auth_service.dart';
+import '../../auth/services/permission_service.dart';
 import '../models/workshop_dashboard_data.dart';
 import '../repositories/workshop_repository.dart';
 import '../services/workshop_dashboard_service.dart';
@@ -42,6 +44,16 @@ class _WorkshopDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
+    final permissions = PermissionService.instance;
+
+    if (!permissions.canAccessWorkshop) {
+      return const _WorkshopAccessDenied();
+    }
+
+    if (!permissions.canViewKpis) {
+      return const _TechnicianWorkshopLanding();
+    }
+
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
@@ -82,6 +94,12 @@ class _WorkshopDashboardScreenState
 
           final hasCriticalIssues = dashboard.criticalFailures > 0;
           final hasRepairs = dashboard.repairsRequired > 0;
+          final hasOutstandingRepairs =
+              dashboard.repairsOutstanding > 0;
+          final hasAwaitingParts =
+              dashboard.awaitingParts > 0;
+          final hasAwaitingSignOff =
+              dashboard.awaitingSignOff > 0;
 
           return RefreshIndicator(
             onRefresh: _refreshDashboard,
@@ -353,6 +371,73 @@ class _WorkshopDashboardScreenState
                   const SizedBox(height: 30),
 
                   Text(
+                    'Workshop Operations',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth;
+                      final columns = width >= 760 ? 2 : 1;
+                      final spacing = 12.0;
+                      final itemWidth = columns == 1
+                          ? width
+                          : (width - spacing) / 2;
+
+                      return Wrap(
+                        spacing: spacing,
+                        runSpacing: spacing,
+                        children: [
+                          SizedBox(
+                            width: itemWidth,
+                            child: _KpiCard(
+                              title: 'Repairs Outstanding',
+                              value:
+                                  dashboard.repairsOutstanding.toString(),
+                              icon: Icons.build_circle_outlined,
+                              description: hasOutstandingRepairs
+                                  ? 'Repair jobs require action'
+                                  : 'No outstanding repair jobs',
+                              alert: hasOutstandingRepairs,
+                            ),
+                          ),
+                          SizedBox(
+                            width: itemWidth,
+                            child: _KpiCard(
+                              title: 'Awaiting Parts',
+                              value: dashboard.awaitingParts.toString(),
+                              icon: Icons.inventory_2_outlined,
+                              description: hasAwaitingParts
+                                  ? 'Jobs waiting for parts'
+                                  : 'No jobs awaiting parts',
+                              alert: hasAwaitingParts,
+                            ),
+                          ),
+                          SizedBox(
+                            width: itemWidth,
+                            child: _KpiCard(
+                              title: 'Awaiting Sign-off',
+                              value:
+                                  dashboard.awaitingSignOff.toString(),
+                              icon: Icons.fact_check_outlined,
+                              description: hasAwaitingSignOff
+                                  ? 'Completed inspections need approval'
+                                  : 'No inspections awaiting sign-off',
+                              alert: hasAwaitingSignOff,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  Text(
                     'Workshop Status',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -465,6 +550,81 @@ class _WorkshopDashboardScreenState
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _WorkshopAccessDenied extends StatelessWidget {
+  const _WorkshopAccessDenied();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Access Denied')),
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'You do not have permission to access Workshop.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TechnicianWorkshopLanding extends StatelessWidget {
+  const _TechnicianWorkshopLanding();
+
+  @override
+  Widget build(BuildContext context) {
+    final technicianId = int.tryParse(
+      AuthService.instance.currentUserId ?? '',
+    );
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Workshop')),
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.handyman_outlined, size: 64),
+              SizedBox(height: 16),
+              Text(
+                'Technician Workshop',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              SizedBox(height: 8),
+              Text(
+                technicianId == null
+                    ? 'Your technician account does not have a valid numeric ID. '
+                        'Please contact an administrator.'
+                    : 'View and update repair jobs assigned to you.',
+                textAlign: TextAlign.center,
+              ),
+              if (technicianId != null) ...[
+                SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => RepairJobsScreen(
+                          technicianId: technicianId,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.assignment_turned_in_outlined),
+                  label: Text('My Repair Jobs'),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

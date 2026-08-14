@@ -7,6 +7,8 @@ class RepairJobGenerator {
     required int vehicleId,
     required String vehicleRegistration,
     required List<InspectionChecklistItem> items,
+    int? technicianId,
+    String technicianName = '',
   }) {
     final repairs = <RepairJob>[];
 
@@ -31,6 +33,11 @@ class RepairJobGenerator {
           description: item.notes.isEmpty
               ? '${item.category} requires repair.'
               : item.notes,
+          technicianId: technicianId,
+          technicianName: technicianName,
+          status: technicianId == null
+              ? RepairJobStatus.open
+              : RepairJobStatus.assigned,
           priority: _priorityFromChecklist(
             item.priority,
           ),

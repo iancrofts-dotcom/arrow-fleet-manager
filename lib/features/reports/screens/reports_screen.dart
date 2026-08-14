@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
+import '../../auth/services/permission_service.dart';
 import '../models/fleet_report.dart';
 import '../services/fleet_report_service.dart';
 import '../services/pdf_report_service.dart';
@@ -98,6 +99,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionService.instance.canViewReports) {
+      return const _ReportsAccessDenied();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fleet Reports'),
@@ -172,6 +177,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _ReportsAccessDenied extends StatelessWidget {
+  const _ReportsAccessDenied();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Access Denied')),
+      body: const Center(
+        child: Text('You do not have permission to view fleet reports.'),
       ),
     );
   }

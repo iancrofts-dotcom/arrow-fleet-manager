@@ -80,7 +80,7 @@ class QuickActionsSection extends StatelessWidget {
               ),
 
             // Calendar
-            if (permissions.canManageVehicles)
+            if (permissions.canAccessCalendar)
               QuickActionCard(
                 icon: Icons.calendar_month,
                 title: 'Calendar',
@@ -127,7 +127,7 @@ class QuickActionsSection extends StatelessWidget {
                 },
               ),
 // Workshop
-if (permissions.canManageWorkshop)
+if (permissions.canAccessWorkshop)
   QuickActionCard(
     icon: Icons.build,
     title: 'Workshop',
@@ -141,8 +141,7 @@ if (permissions.canManageWorkshop)
       );
     },
   ),
-
-             // Reports
+            // Reports
             if (permissions.canViewReports)
               QuickActionCard(
                 icon: Icons.description,

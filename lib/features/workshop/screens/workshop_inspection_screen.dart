@@ -114,6 +114,11 @@ class _WorkshopInspectionScreenState
               separatorBuilder: (context, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final inspection = inspections[index];
+                final driverName = inspection.driverName;
+                final submittedBy = driverName != null &&
+                        driverName.trim().isNotEmpty
+                    ? 'Driver: $driverName'
+                    : 'Technician: ${inspection.technicianName}';
 
                 return Card(
                   elevation: 2,
@@ -129,9 +134,12 @@ class _WorkshopInspectionScreenState
                     ),
                     subtitle: Text(
                       '${inspection.inspectionNumber}\n'
-                      '${inspection.inspectionType.name}',
+                      '${_inspectionTypeLabel(inspection.inspectionType)}\n'
+                      '$submittedBy\n'
+                      'Submitted: ${_dateTimeLabel(inspection.dateStarted)}\n'
+                      'Result: ${inspection.overallResult.name} • Repairs: ${inspection.repairsRequired}',
                     ),
-                    isThreeLine: true,
+                    isThreeLine: false,
                     trailing: Chip(
                       label: Text(
                         inspection.status.name,
@@ -168,5 +176,21 @@ class _WorkshopInspectionScreenState
         },
       ),
     );
+  }
+
+  String _inspectionTypeLabel(WorkshopInspectionType type) {
+    if (type == WorkshopInspectionType.driverDailyInspection) {
+      return 'Driver Daily Inspection';
+    }
+
+    return type.name;
+  }
+
+  String _dateTimeLabel(DateTime value) {
+    return '${value.day.toString().padLeft(2, '0')}/'
+        '${value.month.toString().padLeft(2, '0')}/'
+        '${value.year} '
+        '${value.hour.toString().padLeft(2, '0')}:'
+        '${value.minute.toString().padLeft(2, '0')}';
   }
 }

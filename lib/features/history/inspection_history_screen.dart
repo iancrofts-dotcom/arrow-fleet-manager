@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../auth/services/permission_service.dart';
+
 import '../../database/database_service.dart';
 import '../../database/inspection_repository.dart';
 
@@ -76,6 +78,15 @@ class _InspectionHistoryScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (PermissionService.instance.isDriver) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Access Denied')),
+        body: const Center(
+          child: Text('Drivers cannot access fleet inspection history.'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title:

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/services/permission_service.dart';
 import '../models/calendar_event.dart';
 import '../models/calendar_filter.dart';
 import '../services/calendar_service.dart';
@@ -40,6 +41,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionService.instance.canAccessCalendar) {
+      return const _CalendarAccessDenied();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fleet Calendar'),
@@ -95,6 +100,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _CalendarAccessDenied extends StatelessWidget {
+  const _CalendarAccessDenied();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Access Denied')),
+      body: const Center(
+        child: Text('You do not have permission to view the fleet calendar.'),
       ),
     );
   }

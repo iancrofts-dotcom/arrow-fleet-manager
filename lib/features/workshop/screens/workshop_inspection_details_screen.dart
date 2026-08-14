@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../auth/models/user_role.dart';
 import '../../auth/services/auth_service.dart';
+import '../../auth/services/permission_service.dart';
 
 import '../models/inspection_item.dart';
 import '../models/inspection_photo.dart';
@@ -217,6 +217,7 @@ class _WorkshopInspectionDetailsScreenState
                 _buildSignOffCard(
                   context,
                   details.inspection,
+                  details.repairStatus,
                 ),
                 const SizedBox(height: 16),
                 _buildResultCard(
@@ -337,18 +338,22 @@ class _WorkshopInspectionDetailsScreenState
         ),
         _detailRow(
           'Inspection Type',
-          inspection.inspectionType.name,
+          _inspectionTypeLabel(inspection.inspectionType),
         ),
       ],
     );
   }
 
   bool get _canSignOff {
-    final role = AuthService.instance.currentRole;
+    return PermissionService.instance.canSignOffInspection;
+  }
 
-    return role == UserRole.admin ||
-        role == UserRole.manager ||
-        role == UserRole.workshop;
+  String _inspectionTypeLabel(WorkshopInspectionType type) {
+    if (type == WorkshopInspectionType.driverDailyInspection) {
+      return 'Driver Daily Inspection';
+    }
+
+    return type.name;
   }
 
   bool _hasManagerSignOff(
@@ -380,6 +385,23 @@ class _WorkshopInspectionDetailsScreenState
     }
 
     if (_hasManagerSignOff(inspection)) {
+      return;
+    }
+
+    final repairStatus = await _repository.getRepairCompletionStatus(
+      inspection.id!,
+    );
+
+    if (!mounted) return;
+
+    if (repairStatus == RepairCompletionStatus.outstanding) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Complete or cancel all repair jobs before signing off this inspection.',
+          ),
+        ),
+      );
       return;
     }
 
@@ -482,8 +504,10 @@ class _WorkshopInspectionDetailsScreenState
   Widget _buildSignOffCard(
     BuildContext context,
     WorkshopInspection inspection,
+    RepairCompletionStatus repairStatus,
   ) {
     final signedOff = _hasManagerSignOff(inspection);
+    final driverName = inspection.driverName;
 
     return _sectionCard(
       context,
@@ -494,6 +518,11 @@ class _WorkshopInspectionDetailsScreenState
           'Technician',
           inspection.technicianName,
         ),
+        if (driverName != null && driverName.trim().isNotEmpty)
+          _detailRow(
+            'Driver',
+            driverName,
+          ),
         _detailRow(
           'Workshop Manager',
           inspection.workshopManager ?? 'Not recorded',
@@ -531,7 +560,29 @@ class _WorkshopInspectionDetailsScreenState
         ] else if (inspection.status ==
             WorkshopInspectionStatus.completed) ...[
           const SizedBox(height: 12),
-          if (_canSignOff)
+          if (repairStatus == RepairCompletionStatus.outstanding)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.pending_actions_outlined),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Sign-off is blocked until all repair jobs are completed or cancelled.',
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (_canSignOff)
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(

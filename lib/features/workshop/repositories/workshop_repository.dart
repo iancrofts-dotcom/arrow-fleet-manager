@@ -68,6 +68,25 @@ class WorkshopRepository {
     return WorkshopInspection.fromMap(result.first);
   }
 
+  Future<WorkshopInspection?> getInspectionByNumber(
+    String inspectionNumber,
+  ) async {
+    final db = await _db;
+
+    final result = await db.query(
+      _table,
+      where: 'inspectionNumber = ?',
+      whereArgs: [inspectionNumber],
+      limit: 1,
+    );
+
+    if (result.isEmpty) {
+      return null;
+    }
+
+    return WorkshopInspection.fromMap(result.first);
+  }
+
   Future<List<WorkshopInspection>> getAllInspections() async {
     final db = await _db;
 
@@ -350,6 +369,24 @@ Future<int> getRepairRequiredCount() async {
         .toList();
   }
 
+  /// Returns repair jobs assigned to a specific technician user ID.
+  Future<List<RepairJob>> getRepairJobsForTechnician(
+    int technicianId,
+  ) async {
+    final db = await _db;
+
+    final result = await db.query(
+      'workshop_repair_jobs',
+      where: 'technicianId = ?',
+      whereArgs: [technicianId],
+      orderBy: 'createdAt DESC',
+    );
+
+    return result
+        .map((map) => RepairJob.fromMap(map))
+        .toList();
+  }
+
   Future<RepairJob?> getRepairJob(int id) async {
     final db = await _db;
 
@@ -390,7 +427,11 @@ Future<int> getRepairRequiredCount() async {
       return RepairCompletionStatus.noRepairs;
     }
 
-    final allCompleted = jobs.every(
+    final nonCancelledJobs = jobs.where(
+      (job) => job.status != RepairJobStatus.cancelled,
+    );
+
+    final allCompleted = nonCancelledJobs.every(
       (job) => job.status == RepairJobStatus.completed,
     );
 
@@ -399,6 +440,36 @@ Future<int> getRepairRequiredCount() async {
     }
 
     return RepairCompletionStatus.outstanding;
+  }
+
+  /// Completes an inspection once all of its non-cancelled repair jobs have
+  /// been resolved. Final manager sign-off remains a separate action.
+  Future<bool> completeInspectionWhenRepairsResolved(
+    int inspectionId,
+  ) async {
+    final repairStatus = await getRepairCompletionStatus(inspectionId);
+
+    if (repairStatus == RepairCompletionStatus.outstanding) {
+      return false;
+    }
+
+    final inspection = await getInspection(inspectionId);
+
+    if (inspection == null ||
+        inspection.status != WorkshopInspectionStatus.awaitingRepair) {
+      return false;
+    }
+
+    final now = DateTime.now();
+    await updateInspection(
+      inspection.copyWith(
+        status: WorkshopInspectionStatus.completed,
+        dateCompleted: inspection.dateCompleted ?? now,
+        updatedAt: now,
+      ),
+    );
+
+    return true;
   }
 
   Future<int> deleteRepairJob(int id) async {

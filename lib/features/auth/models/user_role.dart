@@ -4,7 +4,6 @@ enum UserRole {
   workshop,
   technician,
   driver,
-  viewer,
 }
 
 extension UserRoleExtension on UserRole {
@@ -17,16 +16,13 @@ extension UserRoleExtension on UserRole {
         return 'Fleet Manager';
 
       case UserRole.workshop:
-        return 'Workshop';
+        return 'Workshop Manager';
 
       case UserRole.technician:
         return 'Technician';
 
       case UserRole.driver:
         return 'Driver';
-
-      case UserRole.viewer:
-        return 'Viewer';
     }
   }
 
@@ -46,9 +42,6 @@ extension UserRoleExtension on UserRole {
 
       case UserRole.driver:
         return 'driver';
-
-      case UserRole.viewer:
-        return 'viewer';
     }
   }
 
@@ -69,11 +62,8 @@ extension UserRoleExtension on UserRole {
       case 'driver':
         return UserRole.driver;
 
-      case 'viewer':
-        return UserRole.viewer;
-
       default:
-        return UserRole.viewer;
+        return UserRole.driver;
     }
   }
 }
