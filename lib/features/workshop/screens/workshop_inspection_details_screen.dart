@@ -153,6 +153,17 @@ class _WorkshopInspectionDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionService.instance.canManageWorkshop) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Access Denied')),
+        body: const Center(
+          child: Text(
+            'You do not have permission to view Workshop inspection details.',
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(

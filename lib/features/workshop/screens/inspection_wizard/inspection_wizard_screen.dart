@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../auth/services/permission_service.dart';
 import '../../models/inspection_wizard_data.dart';
 import '../../services/inspection_save_service.dart';
 import 'step1_vehicle_details.dart';
@@ -192,6 +193,15 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
 
   @override
 Widget build(BuildContext context) {
+  if (!PermissionService.instance.canManageWorkshop) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Access Denied')),
+      body: const Center(
+        child: Text('You do not have permission to create Workshop inspections.'),
+      ),
+    );
+  }
+
   final theme = Theme.of(context);
 
   return Scaffold(

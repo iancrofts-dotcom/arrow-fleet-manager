@@ -12,8 +12,8 @@ class WorkshopDashboardService {
     final inspections = await _repository.getAllInspections();
     final repairJobs = await _repository.getAllRepairJobs();
 
-    // Open means the inspection still requires workshop/manager action.
-    // A completed inspection remains open until it is signed off.
+    // Open means the inspection still requires workshop operational work.
+    // Completed inspections awaiting manager sign-off are tracked separately.
     final openInspections = inspections.where((inspection) {
       if (inspection.status == WorkshopInspectionStatus.signedOff) {
         return false;
@@ -23,12 +23,7 @@ class WorkshopDashboardService {
         return false;
       }
 
-      if (inspection.status == WorkshopInspectionStatus.completed) {
-        final signature = inspection.managerSignature;
-        return signature == null || signature.trim().isEmpty;
-      }
-
-      return true;
+      return inspection.status != WorkshopInspectionStatus.completed;
     }).length;
 
     // Completed Today is independent of the current status.

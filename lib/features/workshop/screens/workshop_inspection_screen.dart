@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/services/permission_service.dart';
 import '../models/workshop_inspection.dart';
 import '../repositories/workshop_repository.dart';
 import 'new_workshop_inspection_screen.dart';
@@ -37,6 +38,10 @@ class _WorkshopInspectionScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionService.instance.canManageWorkshop) {
+      return const _WorkshopInspectionsAccessDenied();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Workshop Inspections'),
@@ -192,5 +197,19 @@ class _WorkshopInspectionScreenState
         '${value.year} '
         '${value.hour.toString().padLeft(2, '0')}:'
         '${value.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+class _WorkshopInspectionsAccessDenied extends StatelessWidget {
+  const _WorkshopInspectionsAccessDenied();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Access Denied')),
+      body: const Center(
+        child: Text('You do not have permission to view Workshop inspections.'),
+      ),
+    );
   }
 }

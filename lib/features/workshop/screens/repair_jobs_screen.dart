@@ -361,31 +361,20 @@ class _RepairJobsScreenState
       return;
     }
 
-    final confirm = await showDialog<bool>(
+    final reason = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancel Repair Job?'),
-        content: const Text(
-          'This will mark the repair job as cancelled. '
-          'You can still view its history afterwards.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep Job'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Cancel Job'),
-          ),
-        ],
-      ),
+      builder: (context) => const _CancelRepairDialog(),
     );
 
-    if (confirm != true) return;
+    if (reason == null) return;
+
+    final description = '${job.description}\n\nCancellation reason: $reason';
 
     await _repository.updateRepairJob(
-      job.copyWith(status: RepairJobStatus.cancelled),
+      job.copyWith(
+        status: RepairJobStatus.cancelled,
+        description: description,
+      ),
     );
     await _repository.completeInspectionWhenRepairsResolved(
       job.inspectionId,
@@ -1556,6 +1545,60 @@ class _ReturnRepairDialogState extends State<_ReturnRepairDialog> {
           ),
           icon: const Icon(Icons.assignment_return_outlined),
           label: const Text('Return Job'),
+        ),
+      ],
+    );
+  }
+}
+
+class _CancelRepairDialog extends StatefulWidget {
+  const _CancelRepairDialog();
+
+  @override
+  State<_CancelRepairDialog> createState() => _CancelRepairDialogState();
+}
+
+class _CancelRepairDialogState extends State<_CancelRepairDialog> {
+  final TextEditingController _reasonController = TextEditingController();
+
+  @override
+  void dispose() {
+    _reasonController.dispose();
+    super.dispose();
+  }
+
+  void _cancel() {
+    final reason = _reasonController.text.trim();
+    if (reason.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a cancellation reason.')),
+      );
+      return;
+    }
+
+    Navigator.of(context).pop(reason);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Cancel Repair Job?'),
+      content: TextField(
+        controller: _reasonController,
+        maxLines: 3,
+        decoration: const InputDecoration(
+          labelText: 'Cancellation reason',
+          hintText: 'Record why this repair is accepted as cancelled.',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Keep Job'),
+        ),
+        FilledButton(
+          onPressed: _cancel,
+          child: const Text('Cancel Job'),
         ),
       ],
     );
