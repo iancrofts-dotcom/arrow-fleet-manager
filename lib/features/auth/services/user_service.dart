@@ -2,6 +2,7 @@ import '../models/user.dart';
 import '../models/user_entity.dart';
 import '../models/user_role.dart';
 import '../repositories/user_repository.dart';
+import 'password_service.dart';
 
 class UserService {
   UserService._();
@@ -9,30 +10,35 @@ class UserService {
   static final UserService instance = UserService._();
 
   final UserRepository _repository = UserRepository();
+  final PasswordService _passwordService = const PasswordService();
 
   /// Attempts to authenticate a user.
 /// Attempts to authenticate a user.
-Future<User?> login({
-  required String username,
-  required String password,
-}) async {
+  Future<User?> login({
+    required String username,
+    required String password,
+  }) async {
+    final user = await getUserByUsername(username);
 
-  final users = await getUsers();
+    if (user == null ||
+        !user.isActive ||
+        !_passwordService.verify(
+          plainTextPassword: password,
+          storedValue: user.passwordHash,
+        )) {
+      return null;
+    }
 
-   try {
-    final result = users.firstWhere(
-      (user) =>
-          user.username == username &&
-          user.passwordHash == password &&
-          user.isActive,
-    );
+    if (_passwordService.needsMigration(user.passwordHash)) {
+      final migratedUser = user.copyWith(
+        passwordHash: _passwordService.hash(password),
+      );
+      await _repository.updateUser(UserEntity.fromUser(migratedUser));
+      return migratedUser;
+    }
 
-
-    return result;
-  } on StateError {
-       return null;
+    return user;
   }
-}
   /// Returns all users.
   Future<List<User>> getUsers() async {
        final entities = await _repository.getAllUsers();
@@ -96,7 +102,11 @@ Future<User?> login({
           return false;
         }
 
-        if (password != null && user.passwordHash != password) {
+        if (password != null &&
+            !_passwordService.verify(
+              plainTextPassword: password,
+              storedValue: user.passwordHash,
+            )) {
           return false;
         }
 
@@ -144,21 +154,34 @@ Future<User?> login({
 
     return entity?.toUser();
   }
-    /// Adds a new user.
+  /// Adds a new user with a bcrypt password hash.
   Future<void> addUser(
-    User user,
-  ) async {
+    User user, {
+    required String password,
+  }) async {
+    final userWithPasswordHash = user.copyWith(
+      passwordHash: _passwordService.hash(password),
+    );
+
     await _repository.insertUser(
-      UserEntity.fromUser(user),
+      UserEntity.fromUser(userWithPasswordHash),
     );
   }
 
-  /// Updates an existing user.
+  /// Updates an existing user and only changes the stored password when a
+  /// replacement plaintext password is supplied.
   Future<void> updateUser(
-    User user,
-  ) async {
+    User user, {
+    String? newPassword,
+  }) async {
+    final userWithPasswordHash = newPassword == null
+        ? user
+        : user.copyWith(
+            passwordHash: _passwordService.hash(newPassword),
+          );
+
     await _repository.updateUser(
-      UserEntity.fromUser(user),
+      UserEntity.fromUser(userWithPasswordHash),
     );
   }
 

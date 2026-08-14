@@ -34,13 +34,13 @@ class AddUserScreen extends StatelessWidget {
     final user = User(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       username: username,
-      passwordHash: password,
+      passwordHash: '',
       role: role,
       driverId: null,
       isActive: isActive,
     );
 
-    await UserService.instance.saveUser(user);
+    await UserService.instance.addUser(user, password: password);
 
     if (!context.mounted) return;
 

@@ -116,10 +116,10 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     await UserService.instance.updateUser(
       latestUser.copyWith(
         username: username,
-        passwordHash: _passwordController.text.isEmpty
-            ? latestUser.passwordHash
-            : _passwordController.text,
       ),
+      newPassword: _passwordController.text.isEmpty
+          ? null
+          : _passwordController.text,
     );
     await AuthService.instance.refreshCurrentUser();
 

@@ -24,14 +24,16 @@ class EditUserScreen extends StatelessWidget {
     final updatedUser = User(
       id: user.id,
       username: username,
-      passwordHash:
-          password.isEmpty ? user.passwordHash : password,
+      passwordHash: user.passwordHash,
       role: role,
       driverId: user.driverId,
       isActive: isActive,
     );
 
-    await UserService.instance.updateUser(updatedUser);
+    await UserService.instance.updateUser(
+      updatedUser,
+      newPassword: password.isEmpty ? null : password,
+    );
 
     if (!context.mounted) return;
 
