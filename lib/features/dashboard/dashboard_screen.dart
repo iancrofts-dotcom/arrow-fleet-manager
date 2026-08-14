@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../auth/models/user_role.dart';
 import '../auth/screens/login_screen.dart';
 import '../auth/services/auth_service.dart';
+import '../auth/services/permission_service.dart';
 
 import 'builders/dashboard_router.dart';
 import 'sections/role_sections/driver_dashboard.dart';
+import 'sections/role_sections/technician_dashboard.dart';
 
 import 'models/dashboard_summary.dart';
 import 'models/dashboard_context.dart';
@@ -29,13 +31,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     _dashboardService = DashboardService();
 
-    if (AuthService.instance.currentRole != UserRole.driver) {
+    if (PermissionService.instance.canViewKpis) {
       summaryFuture = _dashboardService.loadSummary();
     }
   }
 
   Future<void> _refreshDashboard() async {
-    if (AuthService.instance.currentRole == UserRole.driver) {
+    if (!PermissionService.instance.canViewKpis) {
       return;
     }
 
@@ -105,6 +107,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: dashboardRole == DashboardRole.driver
           ? const DriverDashboard()
+          : dashboardRole == DashboardRole.technician
+              ? const TechnicianDashboard()
           : FutureBuilder<DashboardSummary>(
         future: summaryFuture!,
         builder: (context, snapshot) {

@@ -5,6 +5,8 @@ class WorkshopDashboardData {
   final int completedToday;
   final int criticalFailures;
   final int repairsRequired;
+  final int inspectionTotal;
+  final int defectTotal;
 
   // Workshop Manager operational KPIs.
   final int repairsOutstanding;
@@ -17,6 +19,8 @@ class WorkshopDashboardData {
     required this.completedToday,
     required this.criticalFailures,
     required this.repairsRequired,
+    this.inspectionTotal = 0,
+    this.defectTotal = 0,
     this.repairsOutstanding = 0,
     this.awaitingParts = 0,
     this.awaitingSignOff = 0,
@@ -29,6 +33,8 @@ class WorkshopDashboardData {
       completedToday: 0,
       criticalFailures: 0,
       repairsRequired: 0,
+      inspectionTotal: 0,
+      defectTotal: 0,
       repairsOutstanding: 0,
       awaitingParts: 0,
       awaitingSignOff: 0,

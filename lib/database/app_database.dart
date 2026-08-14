@@ -18,7 +18,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 21,
+      version: 22,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON;');
       },
@@ -491,6 +491,10 @@ class AppDatabase {
         if (oldVersion < 21) {
           await _migrateTechnicianIdsToText(db);
         }
+
+        if (oldVersion < 22) {
+          await db.execute('ALTER TABLE driver_compliance ADD COLUMN dbsExpiry TEXT');
+        }
       },
     );
 
@@ -774,6 +778,7 @@ class AppDatabase {
         licenceExpiry TEXT NOT NULL,
         cpcExpiry TEXT NOT NULL,
         medicalExpiry TEXT NOT NULL,
+        dbsExpiry TEXT,
         lastUpdated TEXT NOT NULL
       )
     ''');

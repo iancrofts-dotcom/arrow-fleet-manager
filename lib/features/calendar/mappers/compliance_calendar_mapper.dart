@@ -53,6 +53,16 @@ class ComplianceCalendarMapper {
 
               source: record,
         ),
+        if (record.dbsExpiry != null)
+          CalendarEvent(
+            title: 'DBS Expiry',
+            subtitle: name,
+            date: record.dbsExpiry!,
+            type: CalendarEventType.dbs,
+            icon: Icons.verified_user,
+            color: record.dbsExpired ? Colors.red : Colors.orange,
+            source: record,
+          ),
       ]);
     }
 

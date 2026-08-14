@@ -45,7 +45,8 @@ extension CalendarFilterExtension on CalendarFilter {
       case CalendarFilter.drivers:
         return event.type == CalendarEventType.licence ||
             event.type == CalendarEventType.cpc ||
-            event.type == CalendarEventType.medical;
+            event.type == CalendarEventType.medical ||
+            event.type == CalendarEventType.dbs;
     }
   }
 }

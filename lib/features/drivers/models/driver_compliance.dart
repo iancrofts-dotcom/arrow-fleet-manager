@@ -4,6 +4,7 @@ class DriverCompliance {
     required this.licenceExpiry,
     required this.cpcExpiry,
     required this.medicalExpiry,
+    this.dbsExpiry,
     required this.lastUpdated,
   });
 
@@ -11,6 +12,7 @@ class DriverCompliance {
   final DateTime licenceExpiry;
   final DateTime cpcExpiry;
   final DateTime medicalExpiry;
+  final DateTime? dbsExpiry;
 
   /// Records when this compliance record was last created or updated.
   final DateTime lastUpdated;
@@ -23,6 +25,7 @@ class DriverCompliance {
 
   bool get medicalExpired =>
       medicalExpiry.isBefore(DateTime.now());
+  bool get dbsExpired => dbsExpiry?.isBefore(DateTime.now()) ?? false;
 
   int get licenceDaysRemaining =>
       licenceExpiry.difference(DateTime.now()).inDays;
@@ -43,6 +46,7 @@ class DriverCompliance {
     DateTime? licenceExpiry,
     DateTime? cpcExpiry,
     DateTime? medicalExpiry,
+    DateTime? dbsExpiry,
     DateTime? lastUpdated,
   }) {
     return DriverCompliance(
@@ -53,6 +57,7 @@ class DriverCompliance {
           cpcExpiry ?? this.cpcExpiry,
       medicalExpiry:
           medicalExpiry ?? this.medicalExpiry,
+      dbsExpiry: dbsExpiry ?? this.dbsExpiry,
       lastUpdated:
           lastUpdated ?? this.lastUpdated,
     );
@@ -67,6 +72,7 @@ class DriverCompliance {
           cpcExpiry.toIso8601String(),
       'medicalExpiry':
           medicalExpiry.toIso8601String(),
+      'dbsExpiry': dbsExpiry?.toIso8601String(),
       'lastUpdated':
           lastUpdated.toIso8601String(),
     };
@@ -86,6 +92,9 @@ class DriverCompliance {
       medicalExpiry: DateTime.parse(
         map['medicalExpiry'] as String,
       ),
+      dbsExpiry: map['dbsExpiry'] == null
+          ? null
+          : DateTime.parse(map['dbsExpiry'] as String),
       lastUpdated: map['lastUpdated'] != null
           ? DateTime.parse(
               map['lastUpdated'] as String,

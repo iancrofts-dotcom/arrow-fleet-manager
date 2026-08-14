@@ -55,10 +55,26 @@ class WorkshopDashboardService {
           completedAt.isBefore(dayEnd);
     }).length;
 
-    final repairsOutstanding = repairJobs.where((job) {
-      return job.status != RepairJobStatus.completed &&
-          job.status != RepairJobStatus.cancelled;
-    }).length;
+    final unresolvedRepairJobs = repairJobs.where((job) {
+      switch (job.status) {
+        case RepairJobStatus.open:
+        case RepairJobStatus.assigned:
+        case RepairJobStatus.inProgress:
+        case RepairJobStatus.awaitingParts:
+        case RepairJobStatus.awaitingInspection:
+          return true;
+        case RepairJobStatus.completed:
+        case RepairJobStatus.cancelled:
+          return false;
+      }
+    }).toList(growable: false);
+
+    // One inspection with several jobs is one current repair requirement.
+    final repairsRequired = unresolvedRepairJobs
+        .map((job) => job.inspectionId)
+        .toSet()
+        .length;
+    final repairsOutstanding = unresolvedRepairJobs.length;
 
     final awaitingParts = repairJobs.where((job) {
       return job.status == RepairJobStatus.awaitingParts;
@@ -70,16 +86,25 @@ class WorkshopDashboardService {
           (signature == null || signature.trim().isEmpty);
     }).length;
 
-    final criticalFailures =
-        await _repository.getCriticalFailureCount();
-    final repairsRequired =
-        await _repository.getRepairRequiredCount();
+    // Repair jobs do not retain an item-level criticality flag. The reliable
+    // current operational definition is critical failures on inspections that
+    // are still being worked: draft, in progress, or awaiting repair.
+    final criticalFailures = inspections.where((inspection) {
+      return inspection.status == WorkshopInspectionStatus.draft ||
+          inspection.status == WorkshopInspectionStatus.inProgress ||
+          inspection.status == WorkshopInspectionStatus.awaitingRepair;
+    }).fold<int>(
+      0,
+      (total, inspection) => total + inspection.criticalFailures,
+    );
 
     return WorkshopDashboardData(
       openInspections: openInspections,
       completedToday: completedToday,
       criticalFailures: criticalFailures,
       repairsRequired: repairsRequired,
+      inspectionTotal: inspections.length,
+      defectTotal: repairJobs.length,
       repairsOutstanding: repairsOutstanding,
       awaitingParts: awaitingParts,
       awaitingSignOff: awaitingSignOff,

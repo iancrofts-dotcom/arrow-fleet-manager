@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_alert.dart';
 import 'dashboard_activity.dart';
 import 'dashboard_insight.dart';
+import '../../workshop/models/workshop_dashboard_data.dart';
 
 class DashboardSummary {
   const DashboardSummary({
@@ -19,6 +20,7 @@ class DashboardSummary {
     required this.complianceExpired,
     required this.recentActivity,
     required this.alerts,
+    this.workshopDashboard,
   });
 
   // Fleet
@@ -49,6 +51,7 @@ class DashboardSummary {
 
   final List<DashboardActivity> recentActivity;
   final List<DashboardAlert> alerts;
+  final WorkshopDashboardData? workshopDashboard;
 
   // Legacy compatibility
 
@@ -59,9 +62,9 @@ class DashboardSummary {
   int get inactiveVehicles =>
       vehicleCount - activeVehicles;
 
-  int get inspections => 0;
+  int get inspections => workshopDashboard?.inspectionTotal ?? 0;
 
-  int get defects => 0;
+  int get defects => workshopDashboard?.defectTotal ?? 0;
 
   int get motDue => complianceDue;
 
@@ -147,6 +150,7 @@ class DashboardSummary {
     int? complianceExpired,
     List<DashboardActivity>? recentActivity,
     List<DashboardAlert>? alerts,
+    WorkshopDashboardData? workshopDashboard,
   }) {
     return DashboardSummary(
       vehicleCount: vehicleCount ?? this.vehicleCount,
@@ -167,6 +171,7 @@ class DashboardSummary {
       recentActivity:
           recentActivity ?? this.recentActivity,
       alerts: alerts ?? this.alerts,
+      workshopDashboard: workshopDashboard ?? this.workshopDashboard,
     );
   }
 }

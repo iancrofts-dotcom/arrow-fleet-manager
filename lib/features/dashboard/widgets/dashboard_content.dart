@@ -9,6 +9,7 @@ import '../sections/maintenance_section.dart';
 import '../sections/priority_section.dart';
 import '../sections/quick_actions_section.dart';
 import '../sections/dashboard_kpi_section.dart';
+import '../sections/workshop_kpi_section.dart';
 import 'dashboard_header.dart';
 import 'responsive_dashboard_layout.dart';
 
@@ -39,6 +40,13 @@ class DashboardContent extends StatelessWidget {
             const SizedBox(height: 30),
 
             const DashboardKpiSection(),
+
+            if (this.context.summary.workshopDashboard != null) ...[
+              const SizedBox(height: 24),
+              WorkshopKpiSection(
+                data: this.context.summary.workshopDashboard!,
+              ),
+            ],
 
             const SizedBox(height: 24),
             

@@ -10,6 +10,8 @@ import '../models/dashboard_summary.dart';
 import '../repositories/fleet_dashboard_repository.dart';
 import '../models/fleet_health.dart';
 import 'fleet_health_service.dart';
+import '../../workshop/repositories/workshop_repository.dart';
+import '../../workshop/services/workshop_dashboard_service.dart';
 
 class DashboardService {
   DashboardService({
@@ -18,6 +20,7 @@ class DashboardService {
     DriverAssignmentService? assignmentService,
     DriverComplianceService? complianceService,
     MaintenanceService? maintenanceService,
+    WorkshopDashboardService? workshopDashboardService,
   })  : _vehicleService = vehicleService ?? VehicleService(),
         _driverService = driverService ?? DriverService(),
         _assignmentService =
@@ -25,13 +28,16 @@ class DashboardService {
         _complianceService =
             complianceService ?? DriverComplianceService(),
         _maintenanceService =
-            maintenanceService ?? MaintenanceService();
+            maintenanceService ?? MaintenanceService(),
+        _workshopDashboardService = workshopDashboardService ??
+            WorkshopDashboardService(WorkshopRepository());
 
   final VehicleService _vehicleService;
   final DriverService _driverService;
   final DriverAssignmentService _assignmentService;
   final DriverComplianceService _complianceService;
   final MaintenanceService _maintenanceService;
+  final WorkshopDashboardService _workshopDashboardService;
   final FleetDashboardRepository _dashboardRepository =
     FleetDashboardRepository.instance;
   final FleetHealthService _fleetHealthService =
@@ -104,6 +110,7 @@ final availableDrivers =
 
 
     final compliance = await _complianceService.getAll();
+    final workshopDashboard = await _workshopDashboardService.loadDashboard();
 
     final maintenance = await _maintenanceService.getAll();
 
@@ -320,6 +327,7 @@ date: document.expiryDate,
   complianceExpired: complianceExpired,
   recentActivity: recentActivity,
   alerts: alerts.take(15).toList(),
+  workshopDashboard: workshopDashboard,
 );
   }
 }
