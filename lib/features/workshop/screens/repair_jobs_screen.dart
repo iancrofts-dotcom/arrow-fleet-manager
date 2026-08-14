@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../auth/models/user.dart';
@@ -6,6 +8,9 @@ import '../../auth/services/auth_service.dart';
 import '../../auth/services/permission_service.dart';
 import '../../auth/services/user_service.dart';
 import '../models/repair_job.dart';
+import '../models/inspection_item.dart';
+import '../models/inspection_photo.dart';
+import '../repositories/inspection_photo_repository.dart';
 import '../repositories/workshop_repository.dart';
 
 class RepairJobsScreen extends StatefulWidget {
@@ -30,6 +35,8 @@ class _RepairJobsScreenState
     extends State<RepairJobsScreen> {
   final WorkshopRepository _repository =
       WorkshopRepository();
+  final InspectionPhotoRepository _photoRepository =
+      InspectionPhotoRepository();
 
   late Future<List<RepairJob>> _future;
 
@@ -74,6 +81,28 @@ class _RepairJobsScreenState
     });
 
     await _future;
+  }
+
+  Future<_RepairEvidence> _loadInspectionEvidence(RepairJob job) async {
+    final items = await _repository.getInspectionItems(job.inspectionId);
+    InspectionItem? inspectionItem;
+    for (final item in items) {
+      if (item.id == job.inspectionItemId) {
+        inspectionItem = item;
+        break;
+      }
+    }
+
+    final inspectionItemId = inspectionItem?.id;
+    final photos = inspectionItemId == null
+        ? const <InspectionPhoto>[]
+        : await _photoRepository.getForInspectionItem(inspectionItemId);
+
+    return _RepairEvidence(
+      itemTitle: inspectionItem?.title ?? job.title,
+      itemNotes: inspectionItem?.notes ?? '',
+      photos: photos,
+    );
   }
 
   String _statusText(RepairJobStatus status) {
@@ -1197,6 +1226,10 @@ class _RepairJobsScreenState
               ),
             ],
             const SizedBox(height: 16),
+            _InspectionEvidenceSection(
+              evidence: _loadInspectionEvidence(job),
+            ),
+            const SizedBox(height: 16),
             LayoutBuilder(
               builder: (context, constraints) {
                 final itemWidth = constraints.maxWidth >= 600
@@ -1307,6 +1340,178 @@ class _RepairJobsAccessDenied extends StatelessWidget {
       appBar: AppBar(title: const Text('Access Denied')),
       body: Center(
         child: Text(message),
+      ),
+    );
+  }
+}
+
+class _RepairEvidence {
+  const _RepairEvidence({
+    required this.itemTitle,
+    required this.itemNotes,
+    required this.photos,
+  });
+
+  final String itemTitle;
+  final String itemNotes;
+  final List<InspectionPhoto> photos;
+}
+
+class _InspectionEvidenceSection extends StatelessWidget {
+  const _InspectionEvidenceSection({
+    required this.evidence,
+  });
+
+  final Future<_RepairEvidence> evidence;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: FutureBuilder<_RepairEvidence>(
+        future: evidence,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 10),
+                Text('Loading inspection evidence...'),
+              ],
+            );
+          }
+
+          final repairEvidence = snapshot.data;
+          if (snapshot.hasError || repairEvidence == null) {
+            return const Text('No inspection photos attached');
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Inspection Evidence',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Checklist item: ${repairEvidence.itemTitle}',
+                style: theme.textTheme.bodySmall,
+              ),
+              if (repairEvidence.itemNotes.trim().isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  repairEvidence.itemNotes,
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+              const SizedBox(height: 10),
+              if (repairEvidence.photos.isEmpty)
+                const Text('No inspection photos attached')
+              else
+                SizedBox(
+                  height: 96,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: repairEvidence.photos.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) => _EvidenceThumbnail(
+                      photo: repairEvidence.photos[index],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _EvidenceThumbnail extends StatelessWidget {
+  const _EvidenceThumbnail({
+    required this.photo,
+  });
+
+  final InspectionPhoto photo;
+
+  @override
+  Widget build(BuildContext context) {
+    final file = File(photo.filePath);
+
+    if (!file.existsSync()) {
+      return Container(
+        width: 96,
+        height: 96,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: Border.all(color: Theme.of(context).dividerColor),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(Icons.broken_image_outlined),
+      );
+    }
+
+    return InkWell(
+      onTap: () => _showEvidenceViewer(context, file),
+      borderRadius: BorderRadius.circular(8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.file(
+          file,
+          width: 96,
+          height: 96,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEvidenceViewer(BuildContext context, File file) {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        insetPadding: EdgeInsets.zero,
+        backgroundColor: Colors.black,
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: InteractiveViewer(
+                  minScale: 0.8,
+                  maxScale: 4,
+                  child: Center(
+                    child: Image.file(file, fit: BoxFit.contain),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 12,
+                right: 12,
+                child: IconButton(
+                  tooltip: 'Close',
+                  color: Colors.white,
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

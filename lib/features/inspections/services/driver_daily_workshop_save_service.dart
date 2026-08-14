@@ -1,6 +1,8 @@
 import '../../vehicles/models/vehicle.dart';
 import '../../workshop/models/inspection_checklist_item.dart';
+import '../../workshop/models/inspection_photo.dart';
 import '../../workshop/models/inspection_item.dart' as workshop_item;
+import '../../workshop/repositories/inspection_photo_repository.dart';
 import '../../workshop/models/workshop_inspection.dart';
 import '../../workshop/repositories/workshop_repository.dart';
 import '../../workshop/services/repair_job_generator.dart';
@@ -15,14 +17,17 @@ class DriverDailyWorkshopSaveService {
     InspectionService? legacyInspectionService,
     WorkshopRepository? workshopRepository,
     RepairJobGenerator? repairJobGenerator,
+    InspectionPhotoRepository? photoRepository,
   })  : _legacyInspectionService =
             legacyInspectionService ?? InspectionService(),
         _workshopRepository = workshopRepository ?? WorkshopRepository(),
-        _repairJobGenerator = repairJobGenerator ?? RepairJobGenerator();
+        _repairJobGenerator = repairJobGenerator ?? RepairJobGenerator(),
+        _photoRepository = photoRepository ?? InspectionPhotoRepository();
 
   final InspectionService _legacyInspectionService;
   final WorkshopRepository _workshopRepository;
   final RepairJobGenerator _repairJobGenerator;
+  final InspectionPhotoRepository _photoRepository;
 
   Future<int> save({
     required Inspection inspection,
@@ -117,6 +122,32 @@ class DriverDailyWorkshopSaveService {
       workshopInspectionId,
     );
 
+    final photos = <InspectionPhoto>[];
+    for (var index = 0;
+        index < workshopChecklistItems.length && index < persistedItems.length;
+        index++) {
+      final inspectionItemId = persistedItems[index].id;
+      if (inspectionItemId == null) {
+        throw StateError('Saved workshop inspection item has no database ID.');
+      }
+
+      for (final filePath in workshopChecklistItems[index].photos) {
+        if (filePath.trim().isEmpty) {
+          continue;
+        }
+
+        photos.add(
+          InspectionPhoto(
+            inspectionId: workshopInspectionId,
+            inspectionItemId: inspectionItemId,
+            filePath: filePath,
+            createdAt: now,
+          ),
+        );
+      }
+    }
+    await _photoRepository.createPhotos(photos);
+
     for (var index = 0; index < generatedJobs.length; index++) {
       final sourceIndex = repairSourceIndexes[index];
       final inspectionItemId = persistedItems[sourceIndex].id;
@@ -145,6 +176,7 @@ class DriverDailyWorkshopSaveService {
             status: _checklistStatus(item.status),
             repairRequired: item.hasFailed,
             notes: item.notes,
+            photos: _photoPaths(item.photoPath),
           ),
         )
         .toList(growable: false);
@@ -165,6 +197,7 @@ class DriverDailyWorkshopSaveService {
             status: _itemStatus(entry.value.status),
             repairRequired: entry.value.repairRequired,
             notes: entry.value.notes,
+            photoCount: entry.value.photos.length,
             displayOrder: entry.key,
           ),
         )
@@ -215,6 +248,14 @@ class DriverDailyWorkshopSaveService {
 
     final passed = items.where((item) => item.hasPassed).length;
     return ((passed / items.length) * 100).round();
+  }
+
+  List<String> _photoPaths(String? photoPath) {
+    if (photoPath == null || photoPath.trim().isEmpty) {
+      return const [];
+    }
+
+    return [photoPath];
   }
 
   String _notes(Inspection inspection) {
