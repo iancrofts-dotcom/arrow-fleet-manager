@@ -63,6 +63,9 @@ class WorkshopInspection {
   final String registration;
   final String fleetNumber;
 
+  final int? templateId;
+  final String? templateName;
+
   final int? technicianId;
   final String technicianName;
 
@@ -112,6 +115,8 @@ class WorkshopInspection {
     required this.vehicleId,
     required this.registration,
     required this.fleetNumber,
+    this.templateId,
+    this.templateName,
     this.technicianId,
     required this.technicianName,
     this.driverId,
@@ -143,6 +148,8 @@ class WorkshopInspection {
     int? vehicleId,
     String? registration,
     String? fleetNumber,
+    int? templateId,
+    String? templateName,
     int? technicianId,
     String? technicianName,
     int? driverId,
@@ -173,6 +180,8 @@ class WorkshopInspection {
       vehicleId: vehicleId ?? this.vehicleId,
       registration: registration ?? this.registration,
       fleetNumber: fleetNumber ?? this.fleetNumber,
+      templateId: templateId ?? this.templateId,
+      templateName: templateName ?? this.templateName,
       technicianId: technicianId ?? this.technicianId,
       technicianName: technicianName ?? this.technicianName,
       driverId: driverId ?? this.driverId,
@@ -207,6 +216,8 @@ class WorkshopInspection {
       'vehicleId': vehicleId,
       'registration': registration,
       'fleetNumber': fleetNumber,
+      'templateId': templateId,
+      'templateName': templateName,
       'technicianId': technicianId,
       'technicianName': technicianName,
       'driverId': driverId,
@@ -240,6 +251,8 @@ class WorkshopInspection {
       vehicleId: map['vehicleId'],
       registration: map['registration'],
       fleetNumber: map['fleetNumber'],
+      templateId: map['templateId'],
+      templateName: map['templateName'],
       technicianId: map['technicianId'],
       technicianName: map['technicianName'],
       driverId: map['driverId'],

@@ -1,9 +1,11 @@
+import 'inspection_item.dart';
 
 enum ChecklistStatus {
   pending,
   pass,
- advisory,
+  advisory,
   fail,
+  notApplicable,
 }
 
 enum ChecklistPriority {
@@ -19,6 +21,8 @@ class InspectionChecklistItem {
   final String title;
   final String? description;
 
+  final InspectionResponseType responseType;
+
   ChecklistStatus status;
 
   ChecklistPriority priority;
@@ -29,6 +33,12 @@ class InspectionChecklistItem {
 
   bool photoRequired;
 
+  bool autoCreateRepair;
+
+  bool allowNotes;
+
+  String responseValue;
+
   String notes;
 
   List<String> photos;
@@ -37,15 +47,19 @@ class InspectionChecklistItem {
   required this.id,
   required this.category,
   required this.title,
-  this.description,
-  this.status = ChecklistStatus.pending,
-  this.priority = ChecklistPriority.medium,
-  this.repairRequired = false,
-  this.mandatory = true,
-  this.photoRequired = false,
-  this.notes = '',
-  List<String>? photos,
-}) : photos = photos ?? [];
+    this.description,
+    this.status = ChecklistStatus.pending,
+    this.priority = ChecklistPriority.medium,
+    this.repairRequired = false,
+    this.mandatory = true,
+    this.photoRequired = false,
+    this.autoCreateRepair = true,
+    this.allowNotes = true,
+    this.responseType = InspectionResponseType.passFailNotApplicable,
+    this.responseValue = '',
+    this.notes = '',
+    List<String>? photos,
+  }) : photos = photos ?? [];
 
   bool get passed => status == ChecklistStatus.pass;
 
@@ -61,6 +75,7 @@ class InspectionChecklistItem {
     status = ChecklistStatus.pending;
     repairRequired = false;
     notes = '';
+    responseValue = '';
     photos.clear();
   }
 

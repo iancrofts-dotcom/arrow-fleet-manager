@@ -18,7 +18,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 19,
+      version: 20,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON;');
       },
@@ -444,6 +444,48 @@ class AppDatabase {
             'ALTER TABLE workshop_inspections ADD COLUMN driverName TEXT',
           );
         }
+
+        // Version 20 - Custom Workshop Inspection Templates
+        if (oldVersion < 20) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS inspection_template_sections(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              templateId INTEGER NOT NULL,
+              title TEXT NOT NULL,
+              displayOrder INTEGER NOT NULL,
+              FOREIGN KEY(templateId)
+                REFERENCES inspection_templates(id)
+                ON DELETE CASCADE
+            )
+          ''');
+          await db.execute(
+            'ALTER TABLE inspection_template_items ADD COLUMN sectionId INTEGER',
+          );
+          await db.execute(
+            "ALTER TABLE inspection_template_items ADD COLUMN responseType TEXT NOT NULL DEFAULT 'passFailNotApplicable'",
+          );
+          await db.execute(
+            "ALTER TABLE inspection_template_items ADD COLUMN repairPriority TEXT NOT NULL DEFAULT 'medium'",
+          );
+          await db.execute(
+            "ALTER TABLE inspection_template_items ADD COLUMN roadworthyImpact TEXT NOT NULL DEFAULT 'none'",
+          );
+          await db.execute(
+            'ALTER TABLE workshop_inspections ADD COLUMN templateId INTEGER',
+          );
+          await db.execute(
+            'ALTER TABLE workshop_inspections ADD COLUMN templateName TEXT',
+          );
+          await db.execute(
+            'ALTER TABLE workshop_inspection_items ADD COLUMN sectionTitle TEXT',
+          );
+          await db.execute(
+            "ALTER TABLE workshop_inspection_items ADD COLUMN responseType TEXT NOT NULL DEFAULT 'passFailNotApplicable'",
+          );
+          await db.execute(
+            'ALTER TABLE workshop_inspection_items ADD COLUMN responseValue TEXT',
+          );
+        }
       },
     );
 
@@ -600,6 +642,8 @@ class AppDatabase {
         vehicleId INTEGER NOT NULL,
         registration TEXT NOT NULL,
         fleetNumber TEXT NOT NULL,
+        templateId INTEGER,
+        templateName TEXT,
         technicianId INTEGER,
         technicianName TEXT NOT NULL,
         driverId INTEGER,
@@ -631,7 +675,10 @@ class AppDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         inspectionId INTEGER NOT NULL,
         category TEXT NOT NULL,
+        sectionTitle TEXT,
         title TEXT NOT NULL,
+        responseType TEXT NOT NULL DEFAULT 'passFailNotApplicable',
+        responseValue TEXT,
         status TEXT NOT NULL,
         mandatory INTEGER NOT NULL DEFAULT 1,
         repairRequired INTEGER NOT NULL DEFAULT 0,
@@ -703,23 +750,42 @@ class AppDatabase {
     ''');
 
     await db.execute('''
+      CREATE TABLE inspection_template_sections(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        templateId INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        displayOrder INTEGER NOT NULL,
+        FOREIGN KEY(templateId)
+          REFERENCES inspection_templates(id)
+          ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
       CREATE TABLE inspection_template_items(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         templateId INTEGER NOT NULL,
+        sectionId INTEGER,
         category TEXT NOT NULL,
         title TEXT NOT NULL,
+        responseType TEXT NOT NULL DEFAULT 'passFailNotApplicable',
         description TEXT,
         displayOrder INTEGER NOT NULL,
         mandatory INTEGER NOT NULL DEFAULT 1,
         criticalSafetyItem INTEGER NOT NULL DEFAULT 0,
         autoCreateRepair INTEGER NOT NULL DEFAULT 1,
+        repairPriority TEXT NOT NULL DEFAULT 'medium',
+        roadworthyImpact TEXT NOT NULL DEFAULT 'none',
         photoRequiredOnFail INTEGER NOT NULL DEFAULT 0,
         allowNotes INTEGER NOT NULL DEFAULT 1,
         defaultStatus TEXT NOT NULL,
         isActive INTEGER NOT NULL DEFAULT 1,
         FOREIGN KEY(templateId)
           REFERENCES inspection_templates(id)
-          ON DELETE CASCADE
+          ON DELETE CASCADE,
+        FOREIGN KEY(sectionId)
+          REFERENCES inspection_template_sections(id)
+          ON DELETE SET NULL
       )
     ''');
   }

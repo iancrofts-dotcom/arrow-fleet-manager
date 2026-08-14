@@ -98,6 +98,9 @@ class PermissionService {
       isManager ||
       isWorkshop;
 
+  /// Create, edit, duplicate, and archive reusable Workshop inspection forms.
+  bool get canManageInspectionTemplates => canManageWorkshop;
+
   // ---------------------------------------------------------------------------
   // Dashboard / reporting
   // ---------------------------------------------------------------------------

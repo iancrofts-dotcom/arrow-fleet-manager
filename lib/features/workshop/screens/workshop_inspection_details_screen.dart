@@ -351,6 +351,9 @@ class _WorkshopInspectionDetailsScreenState
           'Inspection Type',
           _inspectionTypeLabel(inspection.inspectionType),
         ),
+        if (inspection.templateName != null &&
+            inspection.templateName!.trim().isNotEmpty)
+          _detailRow('Inspection Template', inspection.templateName!),
       ],
     );
   }
@@ -763,6 +766,19 @@ class _WorkshopInspectionDetailsScreenState
                 ),
               ],
             ),
+            if (item.sectionTitle != null &&
+                item.sectionTitle!.trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                item.sectionTitle!,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+            if (item.responseValue != null &&
+                item.responseValue!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text('Response: ${item.responseValue}'),
+            ],
             if (item.notes.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(item.notes),

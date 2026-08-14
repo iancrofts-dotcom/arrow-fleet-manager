@@ -1,3 +1,5 @@
+import 'workshop_activity.dart';
+
 class WorkshopDashboardData {
   final int openInspections;
   final int completedToday;
@@ -8,6 +10,7 @@ class WorkshopDashboardData {
   final int repairsOutstanding;
   final int awaitingParts;
   final int awaitingSignOff;
+  final List<WorkshopActivity> recentActivity;
 
   const WorkshopDashboardData({
     required this.openInspections,
@@ -17,6 +20,7 @@ class WorkshopDashboardData {
     this.repairsOutstanding = 0,
     this.awaitingParts = 0,
     this.awaitingSignOff = 0,
+    this.recentActivity = const [],
   });
 
   factory WorkshopDashboardData.empty() {
@@ -28,6 +32,7 @@ class WorkshopDashboardData {
       repairsOutstanding: 0,
       awaitingParts: 0,
       awaitingSignOff: 0,
+      recentActivity: [],
     );
   }
 }

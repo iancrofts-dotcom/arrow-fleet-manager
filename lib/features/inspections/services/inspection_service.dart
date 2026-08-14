@@ -30,10 +30,9 @@ class InspectionService {
   }
 
   String generateInspectionNumber() {
-    final year = DateTime.now().year;
-
-    final number =
-        'AST-$year-${_inspectionSequence.toString().padLeft(6, '0')}';
+    final now = DateTime.now();
+    final number = 'AST-${now.year}-${now.microsecondsSinceEpoch}-'
+        '${_inspectionSequence.toString().padLeft(6, '0')}';
 
     _inspectionSequence++;
 

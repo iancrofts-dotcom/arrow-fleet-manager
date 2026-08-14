@@ -1,7 +1,9 @@
 import '../models/repair_job.dart';
+import '../models/workshop_activity.dart';
 import '../models/workshop_dashboard_data.dart';
 import '../models/workshop_inspection.dart';
 import '../repositories/workshop_repository.dart';
+import '../screens/workshop_activity_service.dart';
 
 class WorkshopDashboardService {
   final WorkshopRepository _repository;
@@ -9,8 +11,14 @@ class WorkshopDashboardService {
   WorkshopDashboardService(this._repository);
 
   Future<WorkshopDashboardData> loadDashboard() async {
-    final inspections = await _repository.getAllInspections();
-    final repairJobs = await _repository.getAllRepairJobs();
+    final dashboardSources = await Future.wait([
+      _repository.getAllInspections(),
+      _repository.getAllRepairJobs(),
+      WorkshopActivityService(_repository).getRecentActivity(),
+    ]);
+    final inspections = dashboardSources[0] as List<WorkshopInspection>;
+    final repairJobs = dashboardSources[1] as List<RepairJob>;
+    final recentActivity = dashboardSources[2] as List<WorkshopActivity>;
 
     // Open means the inspection still requires workshop operational work.
     // Completed inspections awaiting manager sign-off are tracked separately.
@@ -75,6 +83,7 @@ class WorkshopDashboardService {
       repairsOutstanding: repairsOutstanding,
       awaitingParts: awaitingParts,
       awaitingSignOff: awaitingSignOff,
+      recentActivity: recentActivity,
     );
   }
 }

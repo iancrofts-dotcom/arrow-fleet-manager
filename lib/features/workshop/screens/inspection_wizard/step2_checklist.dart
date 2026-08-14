@@ -5,8 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/inspection_checklist_item.dart';
+import '../../models/inspection_item.dart';
+import '../../models/inspection_template_item.dart';
+import '../../models/inspection_template_section.dart';
 import '../../models/inspection_wizard_data.dart';
+import '../../models/repair_job.dart';
 import '../../services/checklist_template_service.dart';
+import '../../repositories/inspection_template_repository.dart';
 
 class Step2Checklist extends StatefulWidget {
   final InspectionWizardData data;
@@ -27,6 +32,7 @@ class Step2Checklist extends StatefulWidget {
 class _Step2ChecklistState extends State<Step2Checklist> {
   late final ChecklistTemplateService _templateService;
   late final ImagePicker _imagePicker;
+  bool _loadingChecklist = true;
 
   @override
   void initState() {
@@ -38,10 +44,78 @@ class _Step2ChecklistState extends State<Step2Checklist> {
     _loadChecklist();
   }
 
-  void _loadChecklist() {
+  Future<void> _loadChecklist() async {
     if (widget.data.checklistItems.isEmpty) {
-      widget.data.checklistItems =
-          _templateService.getDefaultTemplate();
+      final templateId = widget.data.templateId;
+      if (templateId == null) {
+        widget.data.checklistItems = _templateService.getDefaultTemplate();
+      } else {
+        final repository = InspectionTemplateRepository();
+        final results = await Future.wait([
+          repository.getTemplateItems(templateId),
+          repository.getTemplateSections(templateId),
+        ]);
+        final items = results[0] as List<InspectionTemplateItem>;
+        final sections = results[1] as List<InspectionTemplateSection>;
+        final sectionNames = <int, String>{};
+        for (final section in sections) {
+          final sectionId = section.id;
+          if (sectionId != null) {
+            sectionNames[sectionId] = section.title;
+          }
+        }
+        widget.data.checklistItems = items
+            .where((item) => item.isActive)
+            .map(
+              (item) => InspectionChecklistItem(
+                id: 'template-${item.id}',
+                category: sectionNames[item.sectionId] ?? item.category.name,
+                title: item.title,
+                description: item.description,
+                status: _checklistStatus(item.defaultStatus),
+                priority: _checklistPriority(item),
+                mandatory: item.mandatory,
+                photoRequired: item.photoRequiredOnFail,
+                autoCreateRepair: item.autoCreateRepair,
+                allowNotes: item.allowNotes,
+                responseType: item.responseType,
+              ),
+            )
+            .toList();
+      }
+    }
+
+    if (!mounted) return;
+    setState(() => _loadingChecklist = false);
+  }
+
+  ChecklistStatus _checklistStatus(InspectionItemStatus status) {
+    switch (status) {
+      case InspectionItemStatus.pass:
+        return ChecklistStatus.pass;
+      case InspectionItemStatus.fail:
+        return ChecklistStatus.fail;
+      case InspectionItemStatus.advisory:
+        return ChecklistStatus.advisory;
+      case InspectionItemStatus.notApplicable:
+        return ChecklistStatus.pending;
+    }
+  }
+
+  ChecklistPriority _checklistPriority(InspectionTemplateItem item) {
+    if (item.roadworthyImpact == TemplateRoadworthyImpact.notRoadworthy) {
+      return ChecklistPriority.critical;
+    }
+
+    switch (item.repairPriority) {
+      case RepairPriority.low:
+        return ChecklistPriority.low;
+      case RepairPriority.medium:
+        return ChecklistPriority.medium;
+      case RepairPriority.high:
+        return ChecklistPriority.high;
+      case RepairPriority.critical:
+        return ChecklistPriority.critical;
     }
   }
 
@@ -84,10 +158,42 @@ class _Step2ChecklistState extends State<Step2Checklist> {
     setState(() {
       item.status = status;
 
-      if (status != ChecklistStatus.fail) {
-        item.repairRequired = false;
-      }
+      item.repairRequired =
+          status == ChecklistStatus.fail && item.autoCreateRepair;
     });
+  }
+
+  void _setResponse(InspectionChecklistItem item, String value) {
+    setState(() {
+      item.responseValue = value;
+      item.status = value.trim().isEmpty
+          ? ChecklistStatus.pending
+          : ChecklistStatus.pass;
+    });
+  }
+
+  void _continue() {
+    final incomplete = widget.data.checklistItems.any(
+      (item) => item.mandatory && !item.completed,
+    );
+    final missingPhoto = widget.data.checklistItems.any(
+      (item) => item.failed && item.photoRequired && item.photos.isEmpty,
+    );
+
+    if (incomplete || missingPhoto) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            missingPhoto
+                ? 'Attach photo evidence for each failed item that requires it.'
+                : 'Complete all mandatory checklist items before continuing.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    widget.onNext();
   }
 
   void _setNotes(
@@ -200,6 +306,10 @@ class _Step2ChecklistState extends State<Step2Checklist> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+
+    if (_loadingChecklist) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     final grouped = <String, List<InspectionChecklistItem>>{};
 
@@ -365,6 +475,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
                         notes,
                       );
                     },
+                    onResponseChanged: (value) => _setResponse(item, value),
                     onTakePhoto: () {
                       _takePhoto(item);
                     },
@@ -419,7 +530,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
                 label: const Text('Back'),
               ),
               FilledButton.icon(
-                onPressed: widget.onNext,
+                onPressed: _continue,
                 icon: const Icon(
                   Icons.arrow_forward_rounded,
                 ),
@@ -494,6 +605,7 @@ class _ChecklistCard extends StatefulWidget {
       onStatusChanged;
   final ValueChanged<String>
       onNotesChanged;
+  final ValueChanged<String> onResponseChanged;
   final VoidCallback onTakePhoto;
   final VoidCallback onChoosePhoto;
   final ValueChanged<String> onRemovePhoto;
@@ -502,6 +614,7 @@ class _ChecklistCard extends StatefulWidget {
     required this.item,
     required this.onStatusChanged,
     required this.onNotesChanged,
+    required this.onResponseChanged,
     required this.onTakePhoto,
     required this.onChoosePhoto,
     required this.onRemovePhoto,
@@ -516,6 +629,7 @@ class _ChecklistCardState
     extends State<_ChecklistCard> {
   late final TextEditingController
       _notesController;
+  late final TextEditingController _responseController;
 
   bool _showNotes = false;
   bool _showPhotos = false;
@@ -528,6 +642,9 @@ class _ChecklistCardState
         TextEditingController(
       text: widget.item.notes,
     );
+    _responseController = TextEditingController(
+      text: widget.item.responseValue,
+    );
 
     _showNotes =
         widget.item.notes.trim().isNotEmpty;
@@ -539,6 +656,7 @@ class _ChecklistCardState
   @override
   void dispose() {
     _notesController.dispose();
+    _responseController.dispose();
     super.dispose();
   }
 
@@ -631,6 +749,14 @@ class _ChecklistCardState
                             scheme.onSurfaceVariant,
                       ),
                     ),
+                    if (widget.item.description != null &&
+                        widget.item.description!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        widget.item.description!,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -675,15 +801,35 @@ class _ChecklistCardState
           const SizedBox(height: 14),
 
           // =================================================================
-          // STATUS BUTTONS
+          // RESPONSE
           // =================================================================
 
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
+          if (widget.item.responseType == InspectionResponseType.text ||
+              widget.item.responseType == InspectionResponseType.numeric)
+            TextField(
+              controller: _responseController,
+              keyboardType: widget.item.responseType ==
+                      InspectionResponseType.numeric
+                  ? const TextInputType.numberWithOptions(decimal: true)
+                  : TextInputType.text,
+              decoration: InputDecoration(
+                labelText: widget.item.responseType == InspectionResponseType.numeric
+                    ? 'Numeric response'
+                    : 'Response',
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: widget.onResponseChanged,
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
               _StatusButton(
-                label: 'PASS',
+                label: widget.item.responseType ==
+                        InspectionResponseType.yesNoNotApplicable
+                    ? 'YES'
+                    : 'PASS',
                 icon: Icons.check,
                 selected:
                     widget.item.status ==
@@ -696,30 +842,50 @@ class _ChecklistCardState
               ),
 
               _StatusButton(
-                label: 'ADVISORY',
-                icon: Icons.warning_amber,
+                label: widget.item.responseType ==
+                        InspectionResponseType.yesNoNotApplicable
+                    ? 'NO'
+                    : 'ADVISORY',
+                icon: widget.item.responseType ==
+                        InspectionResponseType.yesNoNotApplicable
+                    ? Icons.close
+                    : Icons.warning_amber,
                 selected:
                     widget.item.status ==
-                        ChecklistStatus.advisory,
+                        (widget.item.responseType ==
+                                InspectionResponseType.yesNoNotApplicable
+                            ? ChecklistStatus.fail
+                            : ChecklistStatus.advisory),
                 onPressed: () {
                   widget.onStatusChanged(
-                    ChecklistStatus.advisory,
+                    widget.item.responseType ==
+                            InspectionResponseType.yesNoNotApplicable
+                        ? ChecklistStatus.fail
+                        : ChecklistStatus.advisory,
                   );
                 },
               ),
 
               _StatusButton(
-                label: 'DEFECT',
-                icon: Icons.close,
+                label: 'N/A',
+                icon: Icons.remove_circle_outline,
                 selected:
                     widget.item.status ==
-                        ChecklistStatus.fail,
+                        ChecklistStatus.notApplicable,
                 onPressed: () {
                   widget.onStatusChanged(
-                    ChecklistStatus.fail,
+                    ChecklistStatus.notApplicable,
                   );
                 },
               ),
+              if (widget.item.responseType ==
+                  InspectionResponseType.passFailNotApplicable)
+                _StatusButton(
+                  label: 'DEFECT',
+                  icon: Icons.close,
+                  selected: widget.item.status == ChecklistStatus.fail,
+                  onPressed: () => widget.onStatusChanged(ChecklistStatus.fail),
+                ),
             ],
           ),
 
@@ -733,23 +899,22 @@ class _ChecklistCardState
             spacing: 8,
             runSpacing: 8,
             children: [
-              OutlinedButton.icon(
-                onPressed: _toggleNotes,
-                icon: Icon(
-                  _showNotes
-                      ? Icons.expand_less
-                      : Icons.edit_note_outlined,
+              if (widget.item.allowNotes)
+                OutlinedButton.icon(
+                  onPressed: _toggleNotes,
+                  icon: Icon(
+                    _showNotes
+                        ? Icons.expand_less
+                        : Icons.edit_note_outlined,
+                  ),
+                  label: Text(
+                    _showNotes
+                        ? 'Hide notes'
+                        : widget.item.notes.trim().isEmpty
+                            ? 'Add note'
+                            : 'Edit note',
+                  ),
                 ),
-                label: Text(
-                  _showNotes
-                      ? 'Hide notes'
-                      : widget.item.notes
-                              .trim()
-                              .isEmpty
-                          ? 'Add note'
-                          : 'Edit note',
-                ),
-              ),
 
               OutlinedButton.icon(
                 onPressed: _togglePhotos,

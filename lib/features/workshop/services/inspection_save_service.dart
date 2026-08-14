@@ -92,11 +92,15 @@ class InspectionSaveService {
 
     // Save repair jobs.
     for (final repair in data.repairJobs) {
+      final sourceIndex = repair.inspectionItemId - 1;
+      final sourceItemId = sourceIndex >= 0 && sourceIndex < savedItems.length
+          ? savedItems[sourceIndex].id
+          : null;
+
       await _repository.createRepairJob(
         repair.copyWith(
           inspectionId: inspectionId,
-          technicianId: data.technicianId,
-          technicianName: data.technicianName ?? '',
+          inspectionItemId: sourceItemId ?? repair.inspectionItemId,
         ),
       );
     }

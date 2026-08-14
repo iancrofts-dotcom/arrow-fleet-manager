@@ -14,10 +14,11 @@ class RepairJobGenerator {
 
     int sequence = 1;
 
-    for (final item in items) {
-      if (!item.repairRequired && !item.failed) {
-  continue;
-}
+    for (var itemIndex = 0; itemIndex < items.length; itemIndex++) {
+      final item = items[itemIndex];
+      if (!item.repairRequired) {
+        continue;
+      }
 
       repairs.add(
         RepairJob(
@@ -26,7 +27,9 @@ class RepairJobGenerator {
             sequence,
           ),
           inspectionId: inspectionId,
-          inspectionItemId: sequence,
+          // This temporary one-based index is resolved to the database item ID
+          // by InspectionSaveService after the checklist is persisted.
+          inspectionItemId: itemIndex + 1,
           vehicleId: vehicleId,
           vehicleRegistration: vehicleRegistration,
           title: item.title,

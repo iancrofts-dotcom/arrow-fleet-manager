@@ -30,6 +30,9 @@ class InspectionWizardData {
 
   WorkshopInspectionType? inspectionType;
 
+  int? templateId;
+  String? templateName;
+
   DateTime dateStarted = DateTime.now();
 
   DateTime createdAt = DateTime.now();
@@ -134,6 +137,8 @@ class InspectionWizardData {
     // Inspection
     inspectionNumber = '';
     inspectionType = null;
+    templateId = null;
+    templateName = null;
     dateStarted = DateTime.now();
     createdAt = DateTime.now();
     updatedAt = DateTime.now();

@@ -10,6 +10,8 @@ import '../../controllers/inspection_wizard_controller.dart';
 import '../../../auth/models/user.dart';
 import '../../../auth/models/user_role.dart';
 import '../../../auth/services/user_service.dart';
+import '../../models/inspection_template.dart';
+import '../../repositories/inspection_template_repository.dart';
 
 class Step1VehicleDetails extends StatefulWidget {
   final InspectionWizardData data;
@@ -51,6 +53,9 @@ User? _selectedTechnician;
 
 bool _loading = true;
 bool _loadingTechnicians = true;
+List<InspectionTemplate> _templates = [];
+bool _loadingTemplates = true;
+String _templateSelection = 'default';
 
   @override
   void initState() {
@@ -76,6 +81,7 @@ bool _loadingTechnicians = true;
 
 _loadVehicles();
     _loadTechnicians();
+    _loadTemplates();
   }
 
 
@@ -165,6 +171,41 @@ widget.onNext();
       _selectedTechnician = selected;
       _loadingTechnicians = false;
     });
+  }
+
+  Future<void> _loadTemplates() async {
+    final templates = await InspectionTemplateRepository().getActiveTemplates();
+
+    if (!mounted) return;
+
+    setState(() {
+      _templates = templates;
+      _templateSelection = widget.data.templateId?.toString() ?? 'default';
+      _loadingTemplates = false;
+    });
+  }
+
+  void _selectTemplate(String value) {
+    final templateId = int.tryParse(value);
+    final template = _templateForId(templateId);
+
+    setState(() {
+      _templateSelection = value;
+      widget.data.templateId = templateId;
+      widget.data.templateName = template?.name;
+      widget.data.checklistItems = [];
+      widget.data.repairJobs = [];
+    });
+  }
+
+  InspectionTemplate? _templateForId(int? templateId) {
+    if (templateId == null) return null;
+
+    for (final template in _templates) {
+      if (template.id == templateId) return template;
+    }
+
+    return null;
   }
 
   User? _findTechnicianByName(
@@ -296,6 +337,40 @@ widget.onNext();
     ),
   ),
 ),
+
+          const SizedBox(height: 20),
+
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: _loadingTemplates
+                  ? const Center(child: CircularProgressIndicator())
+                  : DropdownButtonFormField<String>(
+                      initialValue: _templateSelection,
+                      decoration: const InputDecoration(
+                        labelText: 'Inspection Template',
+                        prefixIcon: Icon(Icons.article_outlined),
+                      ),
+                      items: [
+                        const DropdownMenuItem(
+                          value: 'default',
+                          child: Text('Default Workshop Checklist'),
+                        ),
+                        ..._templates.map(
+                          (template) => DropdownMenuItem(
+                            value: template.id.toString(),
+                            child: Text(template.name),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          _selectTemplate(value);
+                        }
+                      },
+                    ),
+            ),
+          ),
 
           const SizedBox(height: 20),
 

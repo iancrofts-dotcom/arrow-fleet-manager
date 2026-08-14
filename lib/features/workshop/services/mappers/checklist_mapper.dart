@@ -31,7 +31,15 @@ class ChecklistMapper {
 
       category: _category(item.category),
 
+      sectionTitle: item.category,
+
       title: item.title,
+
+      responseType: item.responseType,
+
+      responseValue: item.responseValue.trim().isEmpty
+          ? null
+          : item.responseValue.trim(),
 
       status: _status(item.status),
 
@@ -62,6 +70,9 @@ class ChecklistMapper {
 
       case ChecklistStatus.fail:
         return InspectionItemStatus.fail;
+
+      case ChecklistStatus.notApplicable:
+        return InspectionItemStatus.notApplicable;
     }
   }
 

@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import '../../../database/app_database.dart';
 import '../models/inspection_template.dart';
 import '../models/inspection_template_item.dart';
+import '../models/inspection_template_section.dart';
 
 /// ============================================================================
 /// INSPECTION TEMPLATE REPOSITORY
@@ -20,6 +21,7 @@ class InspectionTemplateRepository {
 
   static const String _templateTable = 'inspection_templates';
   static const String _itemTable = 'inspection_template_items';
+  static const String _sectionTable = 'inspection_template_sections';
 
   Future<Database> get _db async => await _database.database();
 
@@ -50,6 +52,18 @@ class InspectionTemplateRepository {
     return result
         .map((map) => InspectionTemplate.fromMap(map))
         .toList();
+  }
+
+  Future<List<InspectionTemplate>> getActiveTemplates() async {
+    final db = await _db;
+    final result = await db.query(
+      _templateTable,
+      where: 'isActive = ?',
+      whereArgs: [1],
+      orderBy: 'name ASC',
+    );
+
+    return result.map(InspectionTemplate.fromMap).toList();
   }
 
   Future<InspectionTemplate?> getTemplate(
@@ -94,6 +108,65 @@ class InspectionTemplateRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  // ===========================================================================
+  // TEMPLATE SECTIONS
+  // ===========================================================================
+
+  Future<int> addTemplateSection(InspectionTemplateSection section) async {
+    final db = await _db;
+    return db.insert(_sectionTable, section.toMap());
+  }
+
+  Future<List<InspectionTemplateSection>> getTemplateSections(
+    int templateId,
+  ) async {
+    final db = await _db;
+    final result = await db.query(
+      _sectionTable,
+      where: 'templateId = ?',
+      whereArgs: [templateId],
+      orderBy: 'displayOrder ASC',
+    );
+    return result.map(InspectionTemplateSection.fromMap).toList();
+  }
+
+  Future<void> replaceTemplateContent({
+    required int templateId,
+    required List<InspectionTemplateSection> sections,
+    required List<List<InspectionTemplateItem>> sectionItems,
+  }) async {
+    final db = await _db;
+
+    await db.transaction((txn) async {
+      await txn.delete(_itemTable, where: 'templateId = ?', whereArgs: [templateId]);
+      await txn.delete(_sectionTable, where: 'templateId = ?', whereArgs: [templateId]);
+
+      for (var index = 0; index < sections.length; index++) {
+        final section = sections[index];
+        final sectionId = await txn.insert(
+          _sectionTable,
+          section.copyWith(templateId: templateId, displayOrder: index).toMap(),
+        );
+
+        for (var itemIndex = 0;
+            itemIndex < sectionItems[index].length;
+            itemIndex++) {
+          final item = sectionItems[index][itemIndex];
+          await txn.insert(
+            _itemTable,
+            item
+                .copyWith(
+                  templateId: templateId,
+                  sectionId: sectionId,
+                  displayOrder: itemIndex,
+                )
+                .toMap(),
+          );
+        }
+      }
+    });
   }
 
   // ==========================================================================

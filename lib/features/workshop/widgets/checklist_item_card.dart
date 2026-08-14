@@ -52,6 +52,8 @@ class _ChecklistItemCardState extends State<ChecklistItemCard> {
         return Colors.red;
       case ChecklistStatus.pending:
         return Colors.blueGrey;
+      case ChecklistStatus.notApplicable:
+        return Colors.blueGrey;
     }
   }
 

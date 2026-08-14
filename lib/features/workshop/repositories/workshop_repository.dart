@@ -43,7 +43,6 @@ class WorkshopRepository {
     return db.insert(
       _table,
       inspection.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 

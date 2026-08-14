@@ -139,7 +139,7 @@ class _WorkshopInspectionScreenState
                     ),
                     subtitle: Text(
                       '${inspection.inspectionNumber}\n'
-                      '${_inspectionTypeLabel(inspection.inspectionType)}\n'
+                      '${inspection.templateName?.trim().isNotEmpty == true ? inspection.templateName : _inspectionTypeLabel(inspection.inspectionType)}\n'
                       '$submittedBy\n'
                       'Submitted: ${_dateTimeLabel(inspection.dateStarted)}\n'
                       'Result: ${inspection.overallResult.name} • Repairs: ${inspection.repairsRequired}',

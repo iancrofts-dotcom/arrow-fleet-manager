@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../auth/services/auth_service.dart';
 import '../../auth/services/permission_service.dart';
+import '../models/workshop_activity.dart';
 import '../models/workshop_dashboard_data.dart';
 import '../repositories/workshop_repository.dart';
 import '../services/workshop_dashboard_service.dart';
+import '../widgets/recent_activity_card.dart';
 import 'inspection_wizard/inspection_wizard_screen.dart';
+import 'inspection_templates_screen.dart';
 import 'workshop_inspection_screen.dart';
 import '../models/workshop_inspection.dart';
 import 'repair_jobs_screen.dart';
@@ -167,6 +170,24 @@ class _WorkshopDashboardScreenState
                                   MaterialPageRoute(
                                     builder: (_) =>
                                         const InspectionWizardScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            width: itemWidth,
+                            child: _ActionCard(
+                              icon: Icons.article_outlined,
+                              title: 'Inspection Templates',
+                              subtitle:
+                                  'Create and manage reusable inspection forms',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const InspectionTemplatesScreen(),
                                   ),
                                 );
                               },
@@ -521,30 +542,40 @@ class _WorkshopDashboardScreenState
 
                   const SizedBox(height: 12),
 
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: scheme.outlineVariant,
+                  if (dashboard.recentActivity.isEmpty)
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: scheme.outlineVariant,
+                        ),
+                      ),
+                      child: const ListTile(
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 6,
+                        ),
+                        leading: Icon(Icons.history_toggle_off_outlined),
+                        title: Text('No recent workshop activity'),
+                        subtitle: Text(
+                          'Activity from the last 48 hours appears here.',
+                        ),
+                      ),
+                    )
+                  else
+                    ...dashboard.recentActivity.map(
+                      (activity) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: RecentActivityCard(
+                          icon: _activityIcon(activity),
+                          iconColor: _activityColor(activity, scheme),
+                          title: activity.title,
+                          subtitle: activity.description,
+                          time: _relativeActivityTime(activity.dateTime),
+                        ),
                       ),
                     ),
-                    child: const ListTile(
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 6,
-                      ),
-                      leading: Icon(
-                        Icons.info_outline,
-                      ),
-                      title: Text(
-                        'Workshop Ready',
-                      ),
-                      subtitle: Text(
-                        'Live dashboard connected',
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -553,6 +584,51 @@ class _WorkshopDashboardScreenState
       ),
     );
   }
+}
+
+IconData _activityIcon(WorkshopActivity activity) {
+  switch (activity.type) {
+    case 'driverDailySubmitted':
+      return Icons.assignment_turned_in_outlined;
+    case 'repairGenerated':
+      return Icons.build_circle_outlined;
+    case 'repairApproved':
+      return Icons.task_alt_outlined;
+    case 'inspectionCompleted':
+      return Icons.check_circle_outline;
+    case 'inspectionSignedOff':
+      return Icons.verified_outlined;
+    default:
+      return Icons.assignment_outlined;
+  }
+}
+
+Color _activityColor(WorkshopActivity activity, ColorScheme scheme) {
+  switch (activity.type) {
+    case 'repairGenerated':
+      return scheme.error;
+    case 'repairApproved':
+    case 'inspectionCompleted':
+    case 'inspectionSignedOff':
+      return Colors.green;
+    default:
+      return scheme.primary;
+  }
+}
+
+String _relativeActivityTime(DateTime dateTime) {
+  final difference = DateTime.now().difference(dateTime);
+
+  if (difference.isNegative || difference.inMinutes < 1) {
+    return 'Just now';
+  }
+  if (difference.inHours < 1) {
+    return '${difference.inMinutes}m ago';
+  }
+  if (difference.inDays < 1) {
+    return '${difference.inHours}h ago';
+  }
+  return '${difference.inDays}d ago';
 }
 
 class _WorkshopAccessDenied extends StatelessWidget {

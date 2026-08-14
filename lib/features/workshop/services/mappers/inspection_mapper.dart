@@ -12,6 +12,9 @@ class InspectionMapper {
       registration: data.registration ?? '',
       fleetNumber: data.fleetNumber ?? '',
 
+      templateId: data.templateId,
+      templateName: data.templateName,
+
       technicianId: data.technicianId,
       technicianName: data.technicianName ??
           data.technician ??

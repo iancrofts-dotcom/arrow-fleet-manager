@@ -225,6 +225,8 @@ class DriverDailyWorkshopSaveService {
         return workshop_item.InspectionItemStatus.notApplicable;
       case ChecklistStatus.advisory:
         return workshop_item.InspectionItemStatus.advisory;
+      case ChecklistStatus.notApplicable:
+        return workshop_item.InspectionItemStatus.notApplicable;
     }
   }
 
