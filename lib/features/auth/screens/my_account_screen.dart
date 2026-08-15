@@ -5,6 +5,8 @@ import '../models/user_role.dart';
 import '../services/auth_service.dart';
 import '../services/permission_service.dart';
 import '../services/user_service.dart';
+import '../../drivers/models/driver_compliance.dart';
+import '../../drivers/services/driver_compliance_service.dart';
 
 /// Self-service account details for the currently signed-in Driver.
 ///
@@ -27,6 +29,8 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   bool _loading = true;
   bool _saving = false;
   String? _error;
+  DriverCompliance? _compliance;
+  final DriverComplianceService _complianceService = DriverComplianceService();
 
   @override
   void initState() {
@@ -66,8 +70,15 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       return;
     }
 
+    final driverId = user.driverId;
+    final compliance = driverId == null
+        ? null
+        : await _complianceService.getByDriverId(driverId);
+    if (!mounted) return;
+
     setState(() {
       _user = user;
+      _compliance = compliance;
       _usernameController.text = user.username;
       _loading = false;
     });
@@ -185,6 +196,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
             const SizedBox(height: 16),
             Text('Role: ${_user!.role.displayName}'),
             const SizedBox(height: 24),
+            Text('My Compliance', style: Theme.of(context).textTheme.titleMedium),
+            _complianceTile('Licence', _compliance?.licenceExpiry),
+            _complianceTile('CPC', _compliance?.cpcExpiry),
+            _complianceTile('Medical', _compliance?.medicalExpiry),
+            _complianceTile('DBS', _compliance?.dbsExpiry),
+            const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: _saving ? null : _save,
               icon: const Icon(Icons.save_outlined),
@@ -193,6 +210,18 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _complianceTile(String title, DateTime? expiry) {
+    final service = _complianceService;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(title),
+      subtitle: Text(expiry == null
+          ? 'Not recorded'
+          : '${expiry.day}/${expiry.month}/${expiry.year}'),
+      trailing: Text(service.status(expiry)),
     );
   }
 }

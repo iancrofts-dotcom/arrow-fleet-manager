@@ -6,6 +6,7 @@ import '../repositories/driver_compliance_repository.dart';
 import 'driver_service.dart';
 
 class DriverComplianceService {
+  static const int warningDays = 30;
   DriverComplianceService({
     DriverComplianceRepository? repository,
     DriverService? driverService,
@@ -75,21 +76,27 @@ class DriverComplianceService {
 
     return activities.take(limit).toList();
   }
-    bool isExpired(DateTime expiryDate) {
-    return expiryDate.isBefore(DateTime.now());
+  DateTime _dateOnly(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
+
+  DateTime get _today => _dateOnly(DateTime.now());
+
+  bool isExpired(DateTime expiryDate) {
+    return _dateOnly(expiryDate).isBefore(_today);
   }
 
   bool isDueSoon(
     DateTime expiryDate, {
-    int warningDays = 30,
+    int warningDays = DriverComplianceService.warningDays,
   }) {
-    final today = DateTime.now();
+    final today = _today;
+    final expiryDateOnly = _dateOnly(expiryDate);
 
-    if (expiryDate.isBefore(today)) {
+    if (expiryDateOnly.isBefore(today)) {
       return false;
     }
 
-    return expiryDate
+    return expiryDateOnly
             .difference(today)
             .inDays <=
         warningDays;
@@ -98,14 +105,15 @@ class DriverComplianceService {
   int daysRemaining(
     DateTime expiryDate,
   ) {
-    return expiryDate
-        .difference(DateTime.now())
-        .inDays;
+    return _dateOnly(expiryDate).difference(_today).inDays;
   }
 
   String status(
-    DateTime expiryDate,
+    DateTime? expiryDate,
   ) {
+    if (expiryDate == null) {
+      return 'Not Recorded';
+    }
     if (isExpired(expiryDate)) {
       return 'Expired';
     }
@@ -116,6 +124,9 @@ class DriverComplianceService {
 
     return 'Valid';
   }
+
+  bool isCompliant(DateTime? expiryDate) =>
+      expiryDate != null && !isExpired(expiryDate);
 
   List<DriverCompliance> expiringSoon(
     List<DriverCompliance> records,

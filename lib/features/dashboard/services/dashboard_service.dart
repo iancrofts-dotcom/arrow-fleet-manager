@@ -260,6 +260,27 @@ for (final record in compliance) {
       route: '/driver-compliance',
     );
   }
+
+  // DBS uses the shared compliance status authority so warning and expiry
+  // semantics stay aligned with the Driver compliance screens.
+  final dbsExpiry = record.dbsExpiry;
+  final dbsStatus = _complianceService.status(dbsExpiry);
+  if (dbsExpiry != null &&
+      (dbsStatus == 'Expired' || dbsStatus == 'Due Soon')) {
+    _addAlert(
+      alerts,
+      title: 'Driver Compliance',
+      message: dbsStatus == 'Expired'
+          ? '$driverName • DBS has expired.'
+          : '$driverName • DBS expires in ${_complianceService.daysRemaining(dbsExpiry)} day(s).',
+      date: dbsExpiry,
+      icon: Icons.verified_user,
+      severity: dbsStatus == 'Expired'
+          ? DashboardAlertSeverity.critical
+          : DashboardAlertSeverity.warning,
+      route: '/driver-compliance',
+    );
+  }
 }
 
 // Document alerts

@@ -33,6 +33,7 @@ class _DriverComplianceScreenState
   late DateTime _licenceExpiry;
   late DateTime _cpcExpiry;
   late DateTime _medicalExpiry;
+  DateTime? _dbsExpiry;
 
   @override
   void initState() {
@@ -52,6 +53,7 @@ class _DriverComplianceScreenState
       _licenceExpiry = record.licenceExpiry;
       _cpcExpiry = record.cpcExpiry;
       _medicalExpiry = record.medicalExpiry;
+      _dbsExpiry = record.dbsExpiry;
     } else {
       final now = DateTime.now();
 
@@ -130,6 +132,19 @@ class _DriverComplianceScreenState
     });
   }
 
+  Future<void> _pickDbsDate() async {
+    if (!_permissions.canManageDrivers) return;
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dbsExpiry ?? now,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _dbsExpiry = picked);
+  }
+
   Future<void> _save() async {
 
     if (!_permissions.canManageDrivers) {
@@ -145,6 +160,7 @@ class _DriverComplianceScreenState
       licenceExpiry: _licenceExpiry,
       cpcExpiry: _cpcExpiry,
       medicalExpiry: _medicalExpiry,
+      dbsExpiry: _dbsExpiry,
       lastUpdated: DateTime.now(),
     );
 
@@ -224,6 +240,15 @@ class _DriverComplianceScreenState
             onTap: _pickMedicalDate,
           ),
 
+          const SizedBox(height: 12),
+
+          _dateTile(
+            title: 'DBS Expiry',
+            date: _dbsExpiry,
+            status: _service.status(_dbsExpiry),
+            onTap: _pickDbsDate,
+          ),
+
           const SizedBox(height: 32),
 
           if (_permissions.canManageDrivers)
@@ -256,7 +281,7 @@ class _DriverComplianceScreenState
 
   Widget _dateTile({
     required String title,
-    required DateTime date,
+    required DateTime? date,
     required String status,
     required VoidCallback onTap,
   }) {
@@ -270,7 +295,7 @@ class _DriverComplianceScreenState
         ),
         title: Text(title),
         subtitle: Text(
-          _formatDate(date),
+          date == null ? 'Not recorded' : _formatDate(date),
         ),
         trailing: Chip(
           label: Text(status),

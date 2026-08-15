@@ -27,6 +27,7 @@ class _EditDriverComplianceScreenState
   late DateTime _licenceExpiry;
   late DateTime _cpcExpiry;
   late DateTime _medicalExpiry;
+  DateTime? _dbsExpiry;
 
   @override
   void initState() {
@@ -58,6 +59,7 @@ class _EditDriverComplianceScreenState
               now.month,
               now.day,
             );
+    _dbsExpiry = widget.compliance?.dbsExpiry;
   }
 
   Future<void> _pickDate(
@@ -84,6 +86,7 @@ class _EditDriverComplianceScreenState
   licenceExpiry: _licenceExpiry,
   cpcExpiry: _cpcExpiry,
   medicalExpiry: _medicalExpiry,
+  dbsExpiry: _dbsExpiry,
   lastUpdated: DateTime.now(),
 );
 
@@ -144,6 +147,15 @@ class _EditDriverComplianceScreenState
             ),
           ),
 
+          _dateTile(
+            title: 'DBS Expiry',
+            value: _dbsExpiry,
+            onTap: () => _pickDate(
+              _dbsExpiry ?? DateTime.now(),
+              (date) => _dbsExpiry = date,
+            ),
+          ),
+
           const SizedBox(height: 32),
 
           FilledButton.icon(
@@ -160,14 +172,14 @@ class _EditDriverComplianceScreenState
 
   Widget _dateTile({
     required String title,
-    required DateTime value,
+    required DateTime? value,
     required VoidCallback onTap,
   }) {
     return Card(
       child: ListTile(
         leading: const Icon(Icons.event),
         title: Text(title),
-        subtitle: Text(_formatDate(value)),
+        subtitle: Text(value == null ? 'Not recorded' : _formatDate(value)),
         trailing: const Icon(Icons.edit_calendar),
         onTap: onTap,
       ),
