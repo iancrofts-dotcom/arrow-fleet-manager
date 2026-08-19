@@ -8,22 +8,23 @@ class WorkshopActivityService {
 
   WorkshopActivityService(this._repository);
 
-  Future<List<WorkshopActivity>> getRecentActivity({DateTime? now}) async {
-    final results = await Future.wait([
-      _repository.getAllInspections(),
-      _repository.getAllRepairJobs(),
-    ]);
-    final inspections = results[0] as List<WorkshopInspection>;
-    final repairJobs = results[1] as List<RepairJob>;
+  Future<List<WorkshopActivity>> getRecentActivity({
+    List<WorkshopInspection>? inspections,
+    List<RepairJob>? repairJobs,
+  }) async {
+    if (inspections == null || repairJobs == null) {
+      final results = await Future.wait([
+        _repository.getAllInspections(),
+        _repository.getAllRepairJobs(),
+      ]);
+      inspections = results[0] as List<WorkshopInspection>;
+      repairJobs = results[1] as List<RepairJob>;
+    }
+
     final activities = <WorkshopActivity>[
       ...inspections.expand(_activitiesForInspection),
       ...repairJobs.expand(_activitiesForRepairJob),
     ];
-
-    final cutoff = (now ?? DateTime.now()).subtract(
-      const Duration(hours: 48),
-    );
-    activities.removeWhere((activity) => activity.dateTime.isBefore(cutoff));
     activities.sort((a, b) => b.dateTime.compareTo(a.dateTime));
 
     return activities.take(10).toList();
@@ -76,6 +77,17 @@ class WorkshopActivityService {
       type: 'repairGenerated',
       dateTime: job.createdAt,
     );
+
+    if (job.startedAt != null) {
+      yield WorkshopActivity(
+        title: 'Repair Job started',
+        description: job.technicianName.trim().isEmpty
+            ? details
+            : '$details â€¢ ${job.technicianName}',
+        type: 'repairStarted',
+        dateTime: job.startedAt!,
+      );
+    }
 
     if (job.status == RepairJobStatus.completed && job.completedAt != null) {
       yield WorkshopActivity(

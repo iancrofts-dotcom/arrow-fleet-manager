@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/services/permission_service.dart';
 import '../models/driver.dart';
 import '../models/driver_compliance.dart';
 import '../services/driver_compliance_service.dart';
@@ -99,6 +100,10 @@ class _EditDriverComplianceScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionService.instance.canManageDrivers) {
+      return const _DriverComplianceAccessDenied();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -188,5 +193,19 @@ class _EditDriverComplianceScreenState
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+class _DriverComplianceAccessDenied extends StatelessWidget {
+  const _DriverComplianceAccessDenied();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Access Denied')),
+      body: const Center(
+        child: Text('You do not have permission to edit driver compliance.'),
+      ),
+    );
   }
 }

@@ -592,6 +592,8 @@ IconData _activityIcon(WorkshopActivity activity) {
       return Icons.assignment_turned_in_outlined;
     case 'repairGenerated':
       return Icons.build_circle_outlined;
+    case 'repairStarted':
+      return Icons.play_circle_outline;
     case 'repairApproved':
       return Icons.task_alt_outlined;
     case 'inspectionCompleted':
@@ -607,6 +609,8 @@ Color _activityColor(WorkshopActivity activity, ColorScheme scheme) {
   switch (activity.type) {
     case 'repairGenerated':
       return scheme.error;
+    case 'repairStarted':
+      return scheme.primary;
     case 'repairApproved':
     case 'inspectionCompleted':
     case 'inspectionSignedOff':

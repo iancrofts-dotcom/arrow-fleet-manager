@@ -1,3 +1,7 @@
+/// Legacy table-name metadata used by older repositories.
+///
+/// [AppDatabase] is the authoritative schema and migration source. Do not use
+/// this class to determine the active database version or table definition.
 class DbSchema {
   DbSchema._();
 

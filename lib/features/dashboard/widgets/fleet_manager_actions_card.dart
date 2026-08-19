@@ -58,19 +58,34 @@ class FleetManagerActionsCard extends StatelessWidget {
 ),
 
                 FilledButton.icon(
-                  onPressed: null,
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRouter.drivers,
+                    );
+                  },
                   icon: const Icon(Icons.people),
                   label: const Text('Drivers'),
                 ),
 
                 FilledButton.icon(
-                  onPressed: null,
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRouter.calendar,
+                    );
+                  },
                   icon: const Icon(Icons.calendar_month),
                   label: const Text('Calendar'),
                 ),
 
                 FilledButton.icon(
-                  onPressed: null,
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRouter.reports,
+                    );
+                  },
                   icon: const Icon(Icons.assessment),
                   label: const Text('Reports'),
                 ),
