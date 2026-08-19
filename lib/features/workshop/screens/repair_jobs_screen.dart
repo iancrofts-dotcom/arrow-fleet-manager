@@ -1,17 +1,21 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 
 import '../../auth/models/user.dart';
 import '../../auth/models/user_role.dart';
 import '../../auth/services/auth_service.dart';
 import '../../auth/services/permission_service.dart';
 import '../../auth/services/user_service.dart';
+import '../../reports/services/pdf_export_service.dart';
 import '../models/repair_job.dart';
 import '../models/inspection_item.dart';
 import '../models/inspection_photo.dart';
 import '../repositories/inspection_photo_repository.dart';
 import '../repositories/workshop_repository.dart';
+import '../services/workshop_job_card_pdf_service.dart';
 
 class RepairJobsScreen extends StatefulWidget {
   final int? inspectionId;
@@ -37,6 +41,9 @@ class _RepairJobsScreenState
       WorkshopRepository();
   final InspectionPhotoRepository _photoRepository =
       InspectionPhotoRepository();
+  final WorkshopJobCardPdfService _jobCardPdfService =
+      const WorkshopJobCardPdfService();
+  final PdfExportService _pdfExportService = const PdfExportService();
 
   late Future<List<RepairJob>> _future;
 
@@ -101,6 +108,66 @@ class _RepairJobsScreenState
       itemNotes: inspectionItem?.notes ?? '',
       photos: photos,
     );
+  }
+
+  bool _canPrintJobCard(RepairJob job) {
+    if (PermissionService.instance.canManageWorkshop) return true;
+    return _isAssignedToCurrentTechnician(job);
+  }
+
+  Future<Uint8List?> _jobCardBytes(RepairJob job) async {
+    if (!_canPrintJobCard(job)) {
+      _showMessage('You can print only repair jobs assigned to you.');
+      return null;
+    }
+
+    final inspection = await _repository.getInspection(job.inspectionId);
+    if (inspection == null) {
+      _showMessage('The source inspection is no longer available.');
+      return null;
+    }
+
+    final items = await _repository.getInspectionItems(job.inspectionId);
+    InspectionItem? item;
+    for (final candidate in items) {
+      if (candidate.id == job.inspectionItemId) {
+        item = candidate;
+        break;
+      }
+    }
+    final sourceItemId = item?.id;
+    final photos = sourceItemId == null
+        ? const <InspectionPhoto>[]
+        : await _photoRepository.getForInspectionItem(sourceItemId);
+
+    return _jobCardPdfService.generate(
+      job: job,
+      inspection: inspection,
+      sourceItem: item,
+      photos: photos,
+    );
+  }
+
+  Future<void> _previewJobCard(RepairJob job) async {
+    final bytes = await _jobCardBytes(job);
+    if (!mounted || bytes == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PdfPreview(build: (_) async => bytes),
+      ),
+    );
+  }
+
+  Future<void> _printOrSaveJobCard(RepairJob job) async {
+    final bytes = await _jobCardBytes(job);
+    if (!mounted || bytes == null) return;
+    await Printing.layoutPdf(onLayout: (_) async => bytes);
+    final file = await _pdfExportService.savePdf(
+      bytes,
+      'job_card_${job.jobNumber}_${DateTime.now().millisecondsSinceEpoch}',
+    );
+    if (!mounted) return;
+    _showMessage('Job card saved to ${file.path}');
   }
 
   String _statusText(RepairJobStatus status) {
@@ -1254,6 +1321,27 @@ class _RepairJobsScreenState
               },
             ),
             const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _canPrintJobCard(job)
+                      ? () => _previewJobCard(job)
+                      : null,
+                  icon: const Icon(Icons.preview_outlined),
+                  label: const Text('Preview Job Card'),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: _canPrintJobCard(job)
+                      ? () => _printOrSaveJobCard(job)
+                      : null,
+                  icon: const Icon(Icons.print_outlined),
+                  label: const Text('Print / Save PDF'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
             OutlinedButton.icon(
               onPressed: _isTechnicianView
                   ? () => _updateOperationalWork(job)

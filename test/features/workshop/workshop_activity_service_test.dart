@@ -33,7 +33,10 @@ void main() {
         notes: '',
         managerSignature: 'Manager',
         createdAt: now.subtract(Duration(hours: index + 1)),
-        updatedAt: now.subtract(Duration(hours: index + 1)),
+        // Sign-off is a later persisted event than inspection completion.
+        // Keeping it recent makes this fixture exercise a sign-off entry
+        // within the final, sorted ten-event activity window.
+        updatedAt: now.subtract(Duration(minutes: index + 4)),
       );
     });
     final repairJobs = List.generate(3, (index) {

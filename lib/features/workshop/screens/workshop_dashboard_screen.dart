@@ -12,6 +12,7 @@ import 'inspection_templates_screen.dart';
 import 'workshop_inspection_screen.dart';
 import '../models/workshop_inspection.dart';
 import 'repair_jobs_screen.dart';
+import 'workshop_reports_screen.dart';
 
 class WorkshopDashboardScreen extends StatefulWidget {
   const WorkshopDashboardScreen({super.key});
@@ -301,6 +302,24 @@ class _WorkshopDashboardScreenState
                                 if (context.mounted) {
                                   _refreshDashboard();
                                 }
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            width: itemWidth,
+                            child: _ActionCard(
+                              icon: Icons.summarize_outlined,
+                              title: 'Workshop Reports',
+                              subtitle:
+                                  'Export repair, inspection and cost reports',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const WorkshopReportsScreen(),
+                                  ),
+                                );
                               },
                             ),
                           ),
