@@ -114,13 +114,6 @@ class DashboardHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Arrow Fleet Manager",
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text(
           "${_greeting()}, $userName",
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w600,

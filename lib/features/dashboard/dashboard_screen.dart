@@ -12,6 +12,7 @@ import 'sections/role_sections/technician_dashboard.dart';
 import 'models/dashboard_summary.dart';
 import 'models/dashboard_context.dart';
 import 'services/dashboard_service.dart';
+import '../../shared/widgets/app_page_scaffold.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -89,10 +90,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final dashboardRole = _getDashboardRole();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Arrow Fleet Manager'),
-        actions: [
+    return AppPageScaffold(
+      title: 'Dashboard',
+      subtitle: 'Fleet overview and operational status.',
+      actions: [
           IconButton(
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
@@ -104,8 +105,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: _logout,
           ),
         ],
-      ),
-      body: dashboardRole == DashboardRole.driver
+      child: dashboardRole == DashboardRole.driver
           ? const DriverDashboard()
           : dashboardRole == DashboardRole.technician
               ? const TechnicianDashboard()

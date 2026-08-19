@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
@@ -179,19 +180,15 @@ class _AddVehicleScreenState
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Add Vehicle',
-        ),
-      ),
-      body: IgnorePointer(
+    return AppPageScaffold(
+      title: 'Add Vehicle',
+      subtitle: 'Add a vehicle to the fleet.',
+      child: IgnorePointer(
         ignoring: _saving,
         child: Form(
           key: _formKey,
           child: ListView(
-            padding:
-                const EdgeInsets.all(20),
+            padding: EdgeInsets.zero,
             children: [
               TextFormField(
                 controller:

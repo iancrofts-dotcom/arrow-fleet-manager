@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 import '../models/vehicle.dart';
 import '../models/vehicle_filter.dart';
 import '../models/vehicle_sort.dart';
@@ -138,12 +139,10 @@ class _VehicleListScreenState
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Fleet Vehicles',
-        ),
-        actions: [
+    return AppPageScaffold(
+      title: 'Fleet Vehicles',
+      subtitle: 'Search, filter and manage the fleet.',
+      actions: [
           FleetSortButton(
             selectedSort:
                 _selectedSort,
@@ -154,7 +153,6 @@ class _VehicleListScreenState
             },
           ),
         ],
-      ),
       floatingActionButton:
           _permissions.canManageVehicles
               ? FloatingActionButton.extended(
@@ -168,25 +166,19 @@ class _VehicleListScreenState
                   ),
                 )
               : null,
-      body:
-          FutureBuilder<List<Vehicle>>(
+      child: FutureBuilder<List<Vehicle>>(
         future: vehiclesFuture,
         builder:
             (context, snapshot) {
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
-            return const Center(
-              child:
-                  CircularProgressIndicator(),
-            );
+            return const AppLoadingState(label: 'Loading fleet vehicles...');
           }
 
           if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                snapshot.error
-                    .toString(),
-              ),
+            return AppErrorState(
+              message: '${snapshot.error}',
+              onRetry: refresh,
             );
           }
 
@@ -216,41 +208,37 @@ class _VehicleListScreenState
           );
 
           if (vehicles.isEmpty) {
-            return const Center(
-              child: Text(
-                'No vehicles found.\nTap Add Vehicle to begin.',
-                textAlign:
-                    TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ),
+            return const AppEmptyState(
+              icon: Icons.local_shipping_outlined,
+              title: 'No vehicles found',
+              message: 'Tap Add Vehicle to begin building the fleet.',
             );
           }
 
           return Column(
             children: [
-              FleetSearchBar(
-                controller:
-                    _searchController,
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery =
-                        value;
-                  });
-                },
+              SectionCard(
+                padding: const EdgeInsets.all(12),
+                child: Column(children: [
+                  FleetSearchBar(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                  ),
+                  FleetFilterBar(
+                    selectedFilter: _selectedFilter,
+                    onChanged: (filter) {
+                      setState(() {
+                        _selectedFilter = filter;
+                      });
+                    },
+                  ),
+                ]),
               ),
-              FleetFilterBar(
-                selectedFilter:
-                    _selectedFilter,
-                onChanged:
-                    (filter) {
-                  setState(() {
-                    _selectedFilter =
-                        filter;
-                  });
-                },
-              ),
+              const SizedBox(height: 12),
               Expanded(
                 child:
                     RefreshIndicator(

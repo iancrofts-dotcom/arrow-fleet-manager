@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 import '../models/calendar_event.dart';
 import '../models/calendar_filter.dart';
 import '../services/calendar_service.dart';
@@ -45,26 +46,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
       return const _CalendarAccessDenied();
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Fleet Calendar'),
-      ),
-      body: FutureBuilder<List<CalendarEvent>>(
+    return AppPageScaffold(
+      title: 'Fleet Calendar',
+      subtitle: 'Upcoming fleet, maintenance and compliance dates.',
+      actions: [IconButton(tooltip: 'Refresh calendar', onPressed: _refresh, icon: const Icon(Icons.refresh))],
+      child: FutureBuilder<List<CalendarEvent>>(
         future: _eventsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const AppLoadingState(label: 'Loading calendar events...');
           }
 
           if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error loading calendar:\n${snapshot.error}',
-                textAlign: TextAlign.center,
-              ),
-            );
+            return AppErrorState(message: '${snapshot.error}', onRetry: _refresh);
           }
 
           final events = snapshot.data ?? [];
@@ -77,17 +71,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
             onRefresh: _refresh,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CalendarFilterChips(
-                    selected: _selectedFilter,
-                    onSelected: (filter) {
-                      setState(() {
-                        _selectedFilter = filter;
-                      });
-                    },
+                  SectionCard(
+                    padding: const EdgeInsets.all(12),
+                    child: CalendarFilterChips(
+                      selected: _selectedFilter,
+                      onSelected: (filter) {
+                        setState(() {
+                          _selectedFilter = filter;
+                        });
+                      },
+                    ),
                   ),
 
                   const SizedBox(height: 24),

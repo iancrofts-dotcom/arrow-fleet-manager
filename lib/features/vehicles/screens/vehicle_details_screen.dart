@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../assignments/repositories/assignment_repository.dart';
 import '../../auth/services/permission_service.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 import '../../drivers/models/driver.dart';
 import '../../drivers/screens/assign_driver_screen.dart';
@@ -147,11 +148,10 @@ class _VehicleDetailsScreenState
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_vehicle.registration),
-      ),
-      body: ListView(
+    return AppPageScaffold(
+      title: 'Vehicle Details',
+      subtitle: '${_vehicle.registration} • ${_vehicle.fleetNumber}',
+      child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(

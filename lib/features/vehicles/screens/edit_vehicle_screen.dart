@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 import '../models/vehicle.dart';
 
@@ -126,12 +127,11 @@ class _EditVehicleScreenState
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Edit Vehicle"),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+    return AppPageScaffold(
+      title: 'Edit Vehicle',
+      subtitle: widget.vehicle.registration,
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           TextField(
             controller: fleetController,

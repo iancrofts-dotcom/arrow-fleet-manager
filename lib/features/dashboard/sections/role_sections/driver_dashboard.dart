@@ -6,6 +6,7 @@ import '../../../auth/services/permission_service.dart';
 import '../../../drivers/services/driver_assignment_service.dart';
 import '../../../inspections/inspection_screen.dart';
 import '../../../vehicles/models/vehicle.dart';
+import '../../../../shared/widgets/app_page_scaffold.dart';
 
 class DriverDashboard extends StatelessWidget {
   const DriverDashboard({super.key});
@@ -25,29 +26,34 @@ class DriverDashboard extends StatelessWidget {
           ? Future<Vehicle?>.value()
           : DriverAssignmentService().getAssignedVehicle(driverId),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const AppLoadingState(
+            label: 'Loading your assigned vehicle...',
+          );
+        }
+
+        if (snapshot.hasError) {
+          return AppErrorState(message: '${snapshot.error}');
+        }
+
         final vehicle = snapshot.data;
-        final loading = snapshot.connectionState == ConnectionState.waiting;
+        if (vehicle == null) {
+          return const AppEmptyState(
+            icon: Icons.local_shipping_outlined,
+            title: 'No vehicle assigned',
+            message:
+                'Contact your fleet manager to be assigned a vehicle before completing a daily inspection.',
+          );
+        }
 
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            Text(
-              'Driver Home',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            const Text('Your vehicle, daily walkaround, and account.'),
-            const SizedBox(height: 24),
             _DriverActionCard(
               icon: Icons.local_shipping_outlined,
               title: 'My Vehicle',
-              subtitle: loading
-                  ? 'Loading assigned vehicle...'
-                  : vehicle == null
-                      ? 'No vehicle is currently assigned'
-                      : '${vehicle.registration} • ${vehicle.make} ${vehicle.model}',
+              subtitle:
+                  '${vehicle.registration} • ${vehicle.make} ${vehicle.model}',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const _MyAssignedVehicleScreen(),
@@ -58,12 +64,8 @@ class DriverDashboard extends StatelessWidget {
             _DriverActionCard(
               icon: Icons.fact_check_outlined,
               title: 'Daily Inspection',
-              subtitle: vehicle == null
-                  ? 'An assigned vehicle is required'
-                  : 'Complete today\'s vehicle walkaround',
-              onTap: vehicle == null
-                  ? null
-                  : () => Navigator.of(context).push(
+              subtitle: 'Complete today\'s vehicle walkaround',
+              onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => InspectionScreen(
                             assignedVehicle: vehicle,
@@ -102,27 +104,63 @@ class _MyAssignedVehicleScreen extends StatelessWidget {
       return const _DriverAccessDenied(message: 'No driver account is linked.');
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('My Vehicle')),
-      body: FutureBuilder<Vehicle?>(
+    return AppPageScaffold(
+      title: 'My Vehicle',
+      subtitle: 'Your currently assigned vehicle.',
+      child: FutureBuilder<Vehicle?>(
         future: DriverAssignmentService().getAssignedVehicle(driverId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppLoadingState(label: 'Loading your vehicle...');
+          }
+
+          if (snapshot.hasError) {
+            return AppErrorState(message: '${snapshot.error}');
           }
 
           final vehicle = snapshot.data;
           if (vehicle == null) {
-            return const Center(child: Text('No vehicle is currently assigned to you.'));
+            return const AppEmptyState(
+              icon: Icons.local_shipping_outlined,
+              title: 'No vehicle assigned',
+              message:
+                  'Contact your fleet manager if you think this is incorrect.',
+            );
           }
 
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.zero,
             children: [
-              _VehicleDetailCard(label: 'Registration', value: vehicle.registration),
-              _VehicleDetailCard(label: 'Fleet Number', value: vehicle.fleetNumber),
-              _VehicleDetailCard(label: 'Vehicle', value: '${vehicle.make} ${vehicle.model}'),
-              _VehicleDetailCard(label: 'Year', value: vehicle.year.toString()),
+              SectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Vehicle Overview',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    _VehicleDetailCard(
+                      label: 'Registration',
+                      value: vehicle.registration,
+                    ),
+                    _VehicleDetailCard(
+                      label: 'Fleet Number',
+                      value: vehicle.fleetNumber,
+                    ),
+                    _VehicleDetailCard(
+                      label: 'Vehicle',
+                      value: '${vehicle.make} ${vehicle.model}',
+                    ),
+                    _VehicleDetailCard(
+                      label: 'Year',
+                      value: vehicle.year.toString(),
+                    ),
+                  ],
+                ),
+              ),
             ],
           );
         },

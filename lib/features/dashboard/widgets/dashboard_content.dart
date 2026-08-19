@@ -27,10 +27,16 @@ class DashboardContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: this.context.onRefresh,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1240),
+              child: Padding(
+                padding: EdgeInsets.all(constraints.maxWidth < 700 ? 20 : 24),
+                child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DashboardHeader(
@@ -82,8 +88,12 @@ class DashboardContent extends StatelessWidget {
             ),
 
             const SizedBox(height: 30),
-          ],
+                ],
+              ),
+            ),
+          ),
         ),
+      ),
       ),
     );
   }
