@@ -106,8 +106,13 @@ Future<void> _openDocument(
             );
           }
 
-          final documents =
-              snapshot.data ?? [];
+          final allDocuments = snapshot.data ?? [];
+          final permissions = PermissionService.instance;
+          final documents = permissions.canViewDriverComplianceDocuments
+              ? allDocuments
+              : allDocuments.where((document) =>
+                  document.driverId == null ||
+                  !document.category.isSingleCurrentComplianceCategory).toList();
 
           if (documents.isEmpty) {
             return RefreshIndicator(

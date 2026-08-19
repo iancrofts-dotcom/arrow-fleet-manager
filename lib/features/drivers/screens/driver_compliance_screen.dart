@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
+import '../../documents/screens/driver_compliance_documents_screen.dart';
 
 import '../models/driver_compliance.dart';
 import '../services/driver_compliance_service.dart';
@@ -247,6 +248,22 @@ class _DriverComplianceScreenState
             date: _dbsExpiry,
             status: _service.status(_dbsExpiry),
             onTap: _pickDbsDate,
+          ),
+
+          const SizedBox(height: 16),
+
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => DriverComplianceDocumentsScreen(
+                    driverId: widget.driverId,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.folder_shared_outlined),
+            label: const Text('Compliance Evidence'),
           ),
 
           const SizedBox(height: 32),

@@ -16,6 +16,8 @@ class DocumentCalendarMapper {
     final events = <CalendarEvent>[];
 
     for (final document in documents) {
+      final expiryDate = document.expiryDate;
+      if (expiryDate == null) continue;
       String subtitle = '';
 
       if (document.vehicleId != null) {
@@ -33,7 +35,7 @@ class DocumentCalendarMapper {
         CalendarEvent(
           title: document.title,
           subtitle: subtitle,
-          date: document.expiryDate,
+          date: expiryDate,
           type: CalendarEventType.document,
           icon: _icon(document.category),
           color: document.isExpired
@@ -72,6 +74,12 @@ class DocumentCalendarMapper {
 
       case DocumentCategory.medical:
         return Icons.medical_services;
+
+      case DocumentCategory.dbs:
+        return Icons.verified_user;
+
+      case DocumentCategory.tachographCard:
+        return Icons.credit_card;
 
       case DocumentCategory.v5:
         return Icons.description;

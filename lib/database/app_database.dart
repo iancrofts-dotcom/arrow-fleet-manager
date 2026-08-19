@@ -18,7 +18,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 22,
+      version: 23,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON;');
       },
@@ -495,6 +495,32 @@ class AppDatabase {
         if (oldVersion < 22) {
           await db.execute('ALTER TABLE driver_compliance ADD COLUMN dbsExpiry TEXT');
         }
+
+        // Version 23 - Driver compliance document history and audit metadata.
+        // Rebuild the small table so expiry snapshots can be absent while old
+        // evidence rows remain intact.
+        if (oldVersion < 23) {
+          await db.transaction((txn) async {
+            await txn.execute(
+              'ALTER TABLE fleet_documents RENAME TO fleet_documents_v22',
+            );
+            await _createFleetDocumentsTable(txn);
+            await txn.execute('''
+              INSERT INTO fleet_documents(
+                id, title, category, filePath, issueDate, expiryDate,
+                lastUpdated, notes, driverId, vehicleId, isArchived,
+                archivedAt, replacedByDocumentId, uploadedByUserId,
+                originalFileName
+              )
+              SELECT
+                id, title, category, filePath, issueDate, expiryDate,
+                lastUpdated, notes, driverId, vehicleId, 0,
+                NULL, NULL, NULL, NULL
+              FROM fleet_documents_v22
+            ''');
+            await txn.execute('DROP TABLE fleet_documents_v22');
+          });
+        }
       },
     );
 
@@ -688,6 +714,28 @@ class AppDatabase {
     ''');
   }
 
+  Future<void> _createFleetDocumentsTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE fleet_documents(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL,
+        filePath TEXT NOT NULL,
+        issueDate TEXT NOT NULL,
+        expiryDate TEXT,
+        lastUpdated TEXT NOT NULL,
+        notes TEXT,
+        driverId INTEGER,
+        vehicleId INTEGER,
+        isArchived INTEGER NOT NULL DEFAULT 0,
+        archivedAt TEXT,
+        replacedByDocumentId INTEGER,
+        uploadedByUserId TEXT,
+        originalFileName TEXT
+      )
+    ''');
+  }
+
   Future<void> _createTables(Database db) async {
     await db.execute('''
       CREATE TABLE inspections(
@@ -797,20 +845,7 @@ class AppDatabase {
       )
     ''');
 
-    await db.execute('''
-      CREATE TABLE fleet_documents(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        category TEXT NOT NULL,
-        filePath TEXT NOT NULL,
-        issueDate TEXT NOT NULL,
-        expiryDate TEXT NOT NULL,
-        lastUpdated TEXT NOT NULL,
-        notes TEXT,
-        driverId INTEGER,
-        vehicleId INTEGER
-      )
-    ''');
+    await _createFleetDocumentsTable(db);
 
     await db.execute('''
       CREATE TABLE repairs(

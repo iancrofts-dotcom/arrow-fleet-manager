@@ -43,6 +43,17 @@ class PermissionService {
   bool get canManageDrivers =>
       isAdmin || isManager;
 
+  /// Current and archived Driver compliance evidence. Workshop Managers do
+  /// not currently have Driver compliance access, so this does not broaden
+  /// their authority.
+  bool get canViewDriverComplianceDocuments =>
+      isAdmin || isManager;
+
+  bool get canManageDriverComplianceDocuments =>
+      isAdmin || isManager;
+
+  bool get canViewOwnComplianceDocuments => isDriver;
+
   /// Driver-only access to the vehicle assigned through driver_assignments.
   bool get canViewAssignedVehicle => isDriver;
 

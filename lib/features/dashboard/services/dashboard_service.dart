@@ -285,6 +285,10 @@ for (final record in compliance) {
 
 // Document alerts
 for (final document in documents) {
+  final expiryDate = document.expiryDate;
+  if (expiryDate == null) {
+    continue;
+  }
   String owner = 'Fleet';
 
   if (document.vehicleId != null) {
@@ -301,7 +305,7 @@ for (final document in documents) {
       title: 'Documents',
       message:
           '$owner • ${document.title} has expired.',
-      date: document.expiryDate,
+      date: expiryDate,
       icon: Icons.description,
       severity: DashboardAlertSeverity.critical,
       route: '/documents',
@@ -312,7 +316,7 @@ for (final document in documents) {
       title: 'Documents',
      message:
     '$owner • ${document.title} ${_daysMessage(document.daysRemaining)}.',
-date: document.expiryDate,
+date: expiryDate,
       icon: Icons.description,
       severity: DashboardAlertSeverity.warning,
       route: '/documents',
