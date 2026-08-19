@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/widgets/app_page_scaffold.dart';
 import '../../../auth/services/permission_service.dart';
 import '../../models/inspection_wizard_data.dart';
 import '../../services/inspection_save_service.dart';
@@ -32,6 +33,7 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
   static const int totalSteps = 5;
 
   int currentStep = 0;
+  bool _allowPop = false;
 
   double get progress => (currentStep + 1) / totalSteps;
 
@@ -47,7 +49,7 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
 
   Future<void> _backToWorkshop() async {
     if (!_hasChanges) {
-      Navigator.of(context).pop();
+      _closeWizard();
       return;
     }
 
@@ -72,8 +74,13 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
     );
 
     if (discard == true && mounted) {
-      Navigator.of(context).pop();
+      _closeWizard();
     }
+  }
+
+  void _closeWizard([Object? result]) {
+    setState(() => _allowPop = true);
+    Navigator.of(context).pop(result);
   }
 
   void nextStep() {
@@ -122,7 +129,7 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
       );
 
       if (mounted) {
-        Navigator.pop(context, true);
+        _closeWizard(true);
       }
     } catch (e) {
       if (!mounted) {
@@ -192,218 +199,57 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  if (!PermissionService.instance.canManageWorkshop) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Access Denied')),
-      body: const Center(
-        child: Text('You do not have permission to create Workshop inspections.'),
-      ),
-    );
-  }
-
-  final theme = Theme.of(context);
-
-  return Scaffold(
-    backgroundColor: theme.colorScheme.surfaceContainerLowest,
-    body: SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SizedBox(
-            width: double.infinity,
-            height: constraints.maxHeight,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 1440,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      _InspectionHeader(
-                        data: wizardData,
-                        onBackToWorkshop: _backToWorkshop,
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      _ProgressStepper(
-                        currentStep: currentStep,
-                        progress: progress,
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      Expanded(
-                        child: Card(
-                          elevation: 0,
-                          color: theme.colorScheme.surface,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            side: BorderSide(
-                              color: theme.colorScheme.outlineVariant,
-                            ),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: buildStep(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    ),
-  );
-}
-}
-
-class _InspectionHeader extends StatelessWidget {
-  final InspectionWizardData data;
-  final VoidCallback onBackToWorkshop;
-
-  const _InspectionHeader({
-    required this.data,
-    required this.onBackToWorkshop,
-  });
-
-  @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    if (!PermissionService.instance.canManageWorkshop) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Access Denied')),
+        body: const Center(
+          child: Text(
+            'You do not have permission to create Workshop inspections.',
+          ),
+        ),
+      );
+    }
 
-    final details = [
-      (
-        'Vehicle Registration',
-        data.registration ?? 'Not selected',
-      ),
-      (
-        'Fleet Number',
-        data.fleetNumber ?? 'Not selected',
-      ),
-      (
-        'Inspection Type',
-        data.inspectionType?.name ?? 'Not selected',
-      ),
-      (
-        'Technician',
-        data.technicianName ?? 'Current technician',
-      ),
-      (
-        'Date & Time',
-        _dateLabel(data.dateStarted),
-      ),
-    ];
+    final registration = wizardData.registration;
+    final templateName = wizardData.templateName;
+    final subtitle = registration == null || registration.trim().isEmpty
+        ? 'Create a new Workshop inspection.'
+        : templateName == null || templateName.trim().isEmpty
+            ? registration
+            : '$registration • $templateName';
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: scheme.primaryContainer,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: onBackToWorkshop,
-              icon: const Icon(
-                Icons.arrow_back_rounded,
-              ),
-              label: const Text(
-                'Back to Workshop',
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _backToWorkshop();
+        }
+      },
+      child: AppPageScaffold(
+        title: 'Inspection Wizard',
+        subtitle: subtitle,
+        child: Column(
+          children: [
+            SectionCard(
+              child: _ProgressStepper(
+                currentStep: currentStep,
+                progress: progress,
               ),
             ),
-          ),
-
-          const SizedBox(height: 4),
-
-          // Centred Arrow logo.
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 200,
-              maxHeight: 90,
-            ),
-            child: Image.asset(
-              'assets/images/arrow_logo.png',
-              fit: BoxFit.contain,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          Text(
-            'Arrow Fleet Manager',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
+            const SizedBox(height: 20),
+            Expanded(
+              child: SectionCard(
+                padding: EdgeInsets.zero,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: buildStep(),
                 ),
-          ),
-
-          Text(
-            'Workshop',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-
-          const SizedBox(height: 20),
-
-          Wrap(
-            spacing: 28,
-            runSpacing: 16,
-            alignment: WrapAlignment.center,
-            children: details
-                .map(
-                  (detail) => _HeaderDetail(
-                    label: detail.$1,
-                    value: detail.$2,
-                  ),
-                )
-                .toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _dateLabel(DateTime value) {
-    return '${value.day.toString().padLeft(2, '0')}/'
-        '${value.month.toString().padLeft(2, '0')}/'
-        '${value.year} '
-        '${value.hour.toString().padLeft(2, '0')}:'
-        '${value.minute.toString().padLeft(2, '0')}';
-  }
-}
-
-class _HeaderDetail extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _HeaderDetail({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium,
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
               ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

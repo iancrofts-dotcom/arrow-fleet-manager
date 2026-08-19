@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../shared/widgets/app_page_scaffold.dart';
 import '../../auth/services/auth_service.dart';
 import '../../auth/services/permission_service.dart';
 
@@ -164,103 +165,69 @@ class _WorkshopInspectionDetailsScreenState
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Workshop Inspection',
-        ),
-      ),
-      body: FutureBuilder<_InspectionDetailsData>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+    return FutureBuilder<_InspectionDetailsData>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const AppPageScaffold(
+            title: 'Inspection Details',
+            child: AppLoadingState(label: 'Loading inspection details...'),
+          );
+        }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      snapshot.error.toString(),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _refresh,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
+        if (snapshot.hasError) {
+          return AppPageScaffold(
+            title: 'Inspection Details',
+            child: AppErrorState(
+              message: snapshot.error.toString(),
+              onRetry: _refresh,
+            ),
+          );
+        }
 
-          final details = snapshot.data!;
+        final details = snapshot.data!;
+        final inspection = details.inspection;
 
-          return RefreshIndicator(
+        return AppPageScaffold(
+          title: 'Inspection Details',
+          subtitle:
+              '${inspection.inspectionNumber} • ${inspection.registration}',
+          actions: [
+            IconButton(
+              tooltip: 'Refresh inspection',
+              onPressed: _refresh,
+              icon: const Icon(Icons.refresh_rounded),
+            ),
+          ],
+          child: RefreshIndicator(
             onRefresh: _refresh,
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(bottom: 24),
               children: [
-                _buildHeader(
-                  context,
-                  details.inspection,
-                ),
+                _buildHeader(context, inspection),
                 const SizedBox(height: 16),
-                _buildVehicleCard(
-                  context,
-                  details.inspection,
-                ),
+                _buildVehicleCard(context, inspection),
                 const SizedBox(height: 16),
-                _buildSignOffCard(
-                  context,
-                  details.inspection,
-                  details.repairStatus,
-                ),
+                _buildSignOffCard(context, inspection, details.repairStatus),
                 const SizedBox(height: 16),
-                _buildResultCard(
-                  context,
-                  details.inspection,
-                ),
+                _buildResultCard(context, inspection),
                 const SizedBox(height: 16),
-                _buildChecklistCard(
-                  context,
-                  details.items,
-                  details.photos,
-                ),
+                _buildChecklistCard(context, details.items, details.photos),
                 const SizedBox(height: 16),
                 _buildRepairsCard(
                   context,
                   details.repairJobs,
                   details.repairStatus,
                 ),
-                if (details.inspection.notes
-                    .trim()
-                    .isNotEmpty) ...[
+                if (inspection.notes.trim().isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _buildNotesCard(
-                    context,
-                    details.inspection.notes,
-                  ),
+                  _buildNotesCard(context, inspection.notes),
                 ],
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -1220,29 +1187,24 @@ class _WorkshopInspectionDetailsScreenState
     required IconData icon,
     required List<Widget> children,
   }) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon),
-                const SizedBox(width: 10),
-                Text(
-                  title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...children,
-          ],
-        ),
+    return SectionCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...children,
+        ],
       ),
     );
   }

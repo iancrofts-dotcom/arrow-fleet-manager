@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/status_badge.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 import '../../auth/services/permission_service.dart';
 import '../models/inspection_item.dart';
 import '../models/inspection_template.dart';
@@ -75,33 +77,38 @@ class _InspectionTemplatesScreenState extends State<InspectionTemplatesScreen> {
       return const _TemplateAccessDenied();
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Inspection Templates')),
+    return AppPageScaffold(
+      title: 'Inspection Templates',
+      subtitle: 'Create and manage reusable inspection forms.',
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openBuilder,
         icon: const Icon(Icons.add),
         label: const Text('Create Template'),
       ),
-      body: FutureBuilder<List<_TemplateSummary>>(
+      child: FutureBuilder<List<_TemplateSummary>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppLoadingState(label: 'Loading inspection templates...');
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Unable to load templates.\n${snapshot.error}'));
+            return AppErrorState(
+              message: 'Unable to load templates.\n${snapshot.error}',
+              onRetry: _refresh,
+            );
           }
           final templates = snapshot.data ?? const <_TemplateSummary>[];
           if (templates.isEmpty) {
             return RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
-                padding: const EdgeInsets.all(24),
                 children: const [
-                  SizedBox(height: 100),
-                  Icon(Icons.article_outlined, size: 64),
-                  SizedBox(height: 16),
-                  Center(child: Text('No custom inspection templates yet.')),
+                  SizedBox(height: 96),
+                  AppEmptyState(
+                    icon: Icons.article_outlined,
+                    title: 'No custom inspection templates',
+                    message: 'Create a reusable form to tailor workshop inspections.',
+                  ),
                 ],
               ),
             );
@@ -109,22 +116,43 @@ class _InspectionTemplatesScreenState extends State<InspectionTemplatesScreen> {
           return RefreshIndicator(
             onRefresh: _refresh,
             child: ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(bottom: 24),
               itemCount: templates.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final summary = templates[index];
                 final template = summary.template;
-                return Card(
+                return SectionCard(
+                  padding: EdgeInsets.zero,
                   child: ListTile(
                     leading: CircleAvatar(
                       child: Icon(template.isActive ? Icons.article_outlined : Icons.archive_outlined),
                     ),
                     title: Text(template.name),
-                    subtitle: Text(
-                      '${template.vehicleType.name} - ${summary.sectionCount} sections - '
-                      '${summary.itemCount} items\n'
-                      '${template.isActive ? 'Active' : 'Archived'} - updated ${_dateLabel(template.updatedAt)}',
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${template.vehicleType.name} • ${summary.sectionCount} sections • '
+                            '${summary.itemCount} items',
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              template.isActive
+                                  ? StatusBadge.success('Active')
+                                  : StatusBadge.warning('Archived'),
+                              Text('Updated ${_dateLabel(template.updatedAt)}'),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     isThreeLine: true,
                     trailing: PopupMenuButton<String>(
@@ -346,10 +374,22 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
     if (!PermissionService.instance.canManageInspectionTemplates) {
       return const _TemplateAccessDenied();
     }
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.template == null || widget.duplicate ? 'Create Inspection Template' : 'Edit Inspection Template')),
-      body: Stepper(
+    final isNewTemplate = widget.template == null || widget.duplicate;
+    final title = isNewTemplate
+        ? 'Create Inspection Template'
+        : 'Edit Inspection Template';
+
+    if (_loading) {
+      return AppPageScaffold(
+        title: title,
+        child: const AppLoadingState(label: 'Loading template...'),
+      );
+    }
+
+    return AppPageScaffold(
+      title: title,
+      subtitle: 'Build a reusable inspection form in six steps.',
+      child: Stepper(
         currentStep: _step,
         onStepTapped: (value) => setState(() => _step = value),
         onStepContinue: () {
@@ -379,14 +419,16 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
     );
   }
 
-  Widget _buildDetails() => Column(children: [
-    TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Form name')),
-    const SizedBox(height: 12),
-    TextField(controller: _descriptionController, minLines: 2, maxLines: 4, decoration: const InputDecoration(labelText: 'Description')),
-    const SizedBox(height: 12),
-    DropdownButtonFormField<WorkshopVehicleType>(initialValue: _vehicleType, decoration: const InputDecoration(labelText: 'Vehicle category'), items: WorkshopVehicleType.values.map((type) => DropdownMenuItem(value: type, child: Text(type.name))).toList(), onChanged: (value) { if (value != null) setState(() => _vehicleType = value); }),
-    SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Active'), value: _isActive, onChanged: (value) => setState(() => _isActive = value)),
-  ]);
+  Widget _buildDetails() => SectionCard(
+    child: Column(children: [
+      TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Form name')),
+      const SizedBox(height: 12),
+      TextField(controller: _descriptionController, minLines: 2, maxLines: 4, decoration: const InputDecoration(labelText: 'Description')),
+      const SizedBox(height: 12),
+      DropdownButtonFormField<WorkshopVehicleType>(initialValue: _vehicleType, decoration: const InputDecoration(labelText: 'Vehicle category'), items: WorkshopVehicleType.values.map((type) => DropdownMenuItem(value: type, child: Text(type.name))).toList(), onChanged: (value) { if (value != null) setState(() => _vehicleType = value); }),
+      SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Active'), value: _isActive, onChanged: (value) => setState(() => _isActive = value)),
+    ]),
+  );
 
   Widget _buildSections() {
     return Column(
@@ -440,10 +482,9 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
         for (var sectionIndex = 0;
             sectionIndex < _sections.length;
             sectionIndex++)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
+          SectionCard(
+            padding: const EdgeInsets.all(12),
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -502,7 +543,6 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
                     ),
                 ],
               ),
-            ),
           ),
       ],
     );
@@ -530,10 +570,9 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         for (final section in _sections)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
+          SectionCard(
+            padding: const EdgeInsets.all(12),
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -551,7 +590,6 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
                     ),
                 ],
               ),
-            ),
           ),
       ],
     );

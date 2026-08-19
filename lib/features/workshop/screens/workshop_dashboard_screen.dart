@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/app_page_scaffold.dart';
 import '../../auth/services/auth_service.dart';
 import '../../auth/services/permission_service.dart';
 import '../models/workshop_activity.dart';
@@ -61,35 +62,27 @@ class _WorkshopDashboardScreenState
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Workshop'),
-        leading: IconButton(
-          tooltip: 'Back to main screen',
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.of(context).maybePop();
-          },
+    return AppPageScaffold(
+      title: 'Workshop',
+      subtitle: 'Inspections, repairs and workshop activity.',
+      actions: [
+        IconButton(
+          tooltip: 'Refresh dashboard',
+          onPressed: _refreshDashboard,
+          icon: const Icon(Icons.refresh_rounded),
         ),
-      ),
-      body: FutureBuilder<WorkshopDashboardData>(
+      ],
+      child: FutureBuilder<WorkshopDashboardData>(
         future: _dashboardFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const AppLoadingState(label: 'Loading Workshop dashboard...');
           }
 
           if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Unable to load dashboard.\n\n${snapshot.error}',
-                  textAlign: TextAlign.center,
-                ),
-              ),
+            return AppErrorState(
+              message: 'Unable to load dashboard.\n\n${snapshot.error}',
+              onRetry: _refreshDashboard,
             );
           }
 
@@ -109,14 +102,10 @@ class _WorkshopDashboardScreenState
             onRefresh: _refreshDashboard,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+              padding: const EdgeInsets.only(bottom: 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _WorkshopHeader(),
-
-                  const SizedBox(height: 28),
-
                   Row(
                     children: [
                       Expanded(
@@ -127,11 +116,6 @@ class _WorkshopDashboardScreenState
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                      ),
-                      IconButton(
-                        tooltip: 'Refresh dashboard',
-                        onPressed: _refreshDashboard,
-                        icon: const Icon(Icons.refresh_rounded),
                       ),
                     ],
                   ),
@@ -722,62 +706,6 @@ class _TechnicianWorkshopLanding extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _WorkshopHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: scheme.primaryContainer,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 200,
-              maxHeight: 90,
-            ),
-            child: Image.asset(
-              'assets/images/arrow_logo.png',
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Arrow Fleet Manager',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Workshop',
-            style: theme.textTheme.titleSmall,
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'Workshop Management',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Inspections, repairs and workshop activity',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium,
-          ),
-        ],
       ),
     );
   }

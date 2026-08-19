@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/app_page_scaffold.dart';
 import '../../auth/services/permission_service.dart';
 import '../models/workshop_inspection.dart';
 import '../repositories/workshop_repository.dart';
@@ -42,10 +43,9 @@ class _WorkshopInspectionScreenState
       return const _WorkshopInspectionsAccessDenied();
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Workshop Inspections'),
-      ),
+    return AppPageScaffold(
+      title: 'Workshop Inspections',
+      subtitle: 'Vehicle inspections, Driver Daily submissions and sign-off status.',
       floatingActionButton: FloatingActionButton.extended(
        onPressed: () async {
   await Navigator.of(context).push(
@@ -59,24 +59,17 @@ class _WorkshopInspectionScreenState
         icon: const Icon(Icons.add),
         label: const Text('New Inspection'),
       ),
-      body: FutureBuilder<List<WorkshopInspection>>(
+      child: FutureBuilder<List<WorkshopInspection>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const AppLoadingState(label: 'Loading Workshop inspections...');
           }
 
           if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Unable to load inspections.\n\n${snapshot.error}',
-                  textAlign: TextAlign.center,
-                ),
-              ),
+            return AppErrorState(
+              message: 'Unable to load inspections.\n\n${snapshot.error}',
+              onRetry: _refresh,
             );
           }
 
@@ -88,23 +81,10 @@ class _WorkshopInspectionScreenState
               child: ListView(
                 children: const [
                   SizedBox(height: 120),
-                  Icon(
-                    Icons.assignment_outlined,
-                    size: 80,
-                    color: Colors.grey,
-                  ),
-                  SizedBox(height: 20),
-                  Center(
-                    child: Text(
-                      'No workshop inspections found.',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Center(
-                    child: Text(
-                      'Tap "New Inspection" to create one.',
-                    ),
+                  AppEmptyState(
+                    icon: Icons.assignment_outlined,
+                    title: 'No Workshop inspections found',
+                    message: 'Use New Inspection to create one.',
                   ),
                 ],
               ),

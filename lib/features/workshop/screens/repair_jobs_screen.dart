@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
+import '../../../shared/status_badge.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 import '../../auth/models/user.dart';
 import '../../auth/models/user_role.dart';
 import '../../auth/services/auth_service.dart';
@@ -720,60 +722,29 @@ class _RepairJobsScreenState
       );
     }
 
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _isTechnicianView ? 'My Repair Jobs' : 'Repair Jobs',
-        ),
-        leading: IconButton(
-          tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        actions: [
+    return AppPageScaffold(
+      title: _isTechnicianView ? 'My Repair Jobs' : 'Repair Jobs',
+      subtitle: _isTechnicianView
+          ? 'Workshop work assigned to your technician account.'
+          : 'Workshop repairs and technician work.',
+      actions: [
           IconButton(
             tooltip: 'Refresh',
             onPressed: _refresh,
             icon: const Icon(Icons.refresh_rounded),
           ),
-        ],
-      ),
-      body: FutureBuilder<List<RepairJob>>(
+      ],
+      child: FutureBuilder<List<RepairJob>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppLoadingState(label: 'Loading repair jobs...');
           }
 
           if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline, size: 52, color: scheme.error),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Unable to load repair jobs',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(snapshot.error.toString(), textAlign: TextAlign.center),
-                    const SizedBox(height: 18),
-                    FilledButton.icon(
-                      onPressed: _refresh,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
+            return AppErrorState(
+              message: 'Unable to load repair jobs.\n${snapshot.error}',
+              onRetry: _refresh,
             );
           }
 
@@ -788,42 +759,15 @@ class _RepairJobsScreenState
               onRefresh: _refresh,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                padding: const EdgeInsets.only(bottom: 32),
                 children: [
-                  _repairHeader(context, 0, 0, 0),
-                  const SizedBox(height: 18),
                   _workflowProgress(context, 0, 0),
                   const SizedBox(height: 18),
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: scheme.outlineVariant),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(28),
-                      child: Column(
-                        children: [
-                          Icon(Icons.build_circle_outlined,
-                              size: 72, color: scheme.primary),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No repair jobs recorded',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Repair jobs generated from failed inspection items '
-                            'will appear here.',
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 12),
-                          Text('Inspection ID: ${widget.inspectionId}'),
-                        ],
-                      ),
-                    ),
+                  const AppEmptyState(
+                    icon: Icons.build_circle_outlined,
+                    title: 'No repair jobs recorded',
+                    message:
+                        'Repair jobs generated from failed inspection items will appear here.',
                   ),
                 ],
               ),
@@ -843,10 +787,8 @@ class _RepairJobsScreenState
             onRefresh: _refresh,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+              padding: const EdgeInsets.only(bottom: 32),
               children: [
-                _repairHeader(context, jobs.length, outstanding, totalCost),
-                const SizedBox(height: 18),
                 _workflowProgress(context, outstanding, completed),
                 const SizedBox(height: 18),
                 _summaryCard(
@@ -876,46 +818,17 @@ class _RepairJobsScreenState
     BuildContext context,
     List<RepairJob> jobs,
   ) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
     return RefreshIndicator(
       onRefresh: _refresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        padding: const EdgeInsets.only(bottom: 32),
         children: [
-          Text(
-            'Assigned Repair Jobs',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Update work on jobs assigned to your technician account.',
-          ),
-          const SizedBox(height: 18),
           if (jobs.isEmpty)
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: scheme.outlineVariant),
-              ),
-              child: const Padding(
-                padding: EdgeInsets.all(28),
-                child: Column(
-                  children: [
-                    Icon(Icons.assignment_turned_in_outlined, size: 64),
-                    SizedBox(height: 16),
-                    Text(
-                      'No repair jobs are currently assigned to you.',
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
+            const AppEmptyState(
+              icon: Icons.assignment_turned_in_outlined,
+              title: 'No assigned repair jobs',
+              message: 'Repair jobs assigned to you will appear here.',
             )
           else
             ...jobs.map(
@@ -924,75 +837,6 @@ class _RepairJobsScreenState
                 child: _repairCard(context, job),
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _repairHeader(
-    BuildContext context,
-    int jobCount,
-    int outstanding,
-    double totalCost,
-  ) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: scheme.primaryContainer,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: scheme.primary,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Icon(Icons.build_circle_outlined,
-                    color: scheme.onPrimary, size: 28),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Repair Management',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text('Inspection ID: ${widget.inspectionId}'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Text(
-            outstanding > 0
-                ? '$outstanding repair ${outstanding == 1 ? 'job' : 'jobs'} require workshop attention'
-                : jobCount > 0
-                    ? 'All repair jobs are completed'
-                    : 'No repair jobs have been recorded',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          if (jobCount > 0) ...[
-            const SizedBox(height: 5),
-            Text('Estimated repair value: £${totalCost.toStringAsFixed(2)}'),
-          ],
         ],
       ),
     );
@@ -1225,10 +1069,9 @@ class _RepairJobsScreenState
                   ),
                 ),
                 const SizedBox(width: 8),
-                Chip(
-                  label: Text(_statusText(job.status)),
-                  backgroundColor: statusColor.withValues(alpha: 0.12),
-                  side: BorderSide(color: statusColor),
+                StatusBadge(
+                  label: _statusText(job.status),
+                  color: statusColor,
                 ),
               ],
             ),
