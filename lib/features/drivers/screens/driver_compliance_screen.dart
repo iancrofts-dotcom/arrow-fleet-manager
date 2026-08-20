@@ -23,9 +23,9 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
   bool _loading = true;
   bool _saving = false;
 
-  late DateTime _licenceExpiry;
-  late DateTime _cpcExpiry;
-  late DateTime _medicalExpiry;
+  DateTime? _licenceExpiry;
+  DateTime? _cpcExpiry;
+  DateTime? _medicalExpiry;
   DateTime? _dbsExpiry;
 
   @override
@@ -44,14 +44,6 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
       _cpcExpiry = record.cpcExpiry;
       _medicalExpiry = record.medicalExpiry;
       _dbsExpiry = record.dbsExpiry;
-    } else {
-      final now = DateTime.now();
-
-      _licenceExpiry = DateTime(now.year + 1, now.month, now.day);
-
-      _cpcExpiry = DateTime(now.year + 1, now.month, now.day);
-
-      _medicalExpiry = DateTime(now.year + 1, now.month, now.day);
     }
 
     setState(() {
@@ -66,12 +58,12 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: _licenceExpiry,
+      initialDate: _licenceExpiry ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
 
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
 
     setState(() {
       _licenceExpiry = picked;
@@ -85,12 +77,12 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: _cpcExpiry,
+      initialDate: _cpcExpiry ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
 
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
 
     setState(() {
       _cpcExpiry = picked;
@@ -104,12 +96,12 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: _medicalExpiry,
+      initialDate: _medicalExpiry ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
 
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
 
     setState(() {
       _medicalExpiry = picked;
@@ -134,6 +126,20 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
       return;
     }
 
+    final licenceExpiry = _licenceExpiry;
+    final cpcExpiry = _cpcExpiry;
+    final medicalExpiry = _medicalExpiry;
+    if (licenceExpiry == null || cpcExpiry == null || medicalExpiry == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Enter Licence, CPC and Medical expiry dates before saving.',
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _saving = true;
     });
@@ -141,9 +147,9 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
     try {
       final compliance = DriverCompliance(
         driverId: widget.driverId,
-        licenceExpiry: _licenceExpiry,
-        cpcExpiry: _cpcExpiry,
-        medicalExpiry: _medicalExpiry,
+        licenceExpiry: licenceExpiry,
+        cpcExpiry: cpcExpiry,
+        medicalExpiry: medicalExpiry,
         dbsExpiry: _dbsExpiry,
         lastUpdated: DateTime.now(),
       );
@@ -290,6 +296,9 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
 
       case 'Due Soon':
         return Colors.orange;
+
+      case 'Not Recorded':
+        return Colors.grey;
 
       default:
         return Colors.green;
