@@ -83,7 +83,7 @@ class WorkshopActivityService {
         title: 'Repair Job started',
         description: job.technicianName.trim().isEmpty
             ? details
-            : '$details â€¢ ${job.technicianName}',
+            : '$details | ${job.technicianName}',
         type: 'repairStarted',
         dateTime: job.startedAt!,
       );
