@@ -12,26 +12,18 @@ import '../../vehicles/screens/assign_vehicle_screen.dart';
 import '../../assignments/repositories/assignment_repository.dart';
 
 class DriverDetailsScreen extends StatefulWidget {
-  const DriverDetailsScreen({
-    super.key,
-    required this.driver,
-  });
+  const DriverDetailsScreen({super.key, required this.driver});
 
   final Driver driver;
 
   @override
-  State<DriverDetailsScreen> createState() =>
-      _DriverDetailsScreenState();
+  State<DriverDetailsScreen> createState() => _DriverDetailsScreenState();
 }
 
-class _DriverDetailsScreenState
-    extends State<DriverDetailsScreen> {
+class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
+  final AssignmentRepository _repository = AssignmentRepository.instance;
 
-  final AssignmentRepository _repository =
-      AssignmentRepository.instance;
-
-  final PermissionService _permissions =
-      PermissionService.instance;
+  final PermissionService _permissions = PermissionService.instance;
 
   Vehicle? _assignedVehicle;
 
@@ -51,10 +43,7 @@ class _DriverDetailsScreenState
       return;
     }
 
-    final vehicle =
-        await _repository.getAssignedVehicle(
-      widget.driver.id!,
-    );
+    final vehicle = await _repository.getAssignedVehicle(widget.driver.id!);
 
     if (!mounted) return;
 
@@ -67,18 +56,12 @@ class _DriverDetailsScreenState
   Future<void> _assignVehicle() async {
     if (widget.driver.id == null) return;
 
-    final vehicle =
-        await Navigator.push<Vehicle>(
+    final vehicle = await Navigator.push<Vehicle>(
       context,
-      MaterialPageRoute(
-        builder: (_) =>
-            const AssignVehicleScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const AssignVehicleScreen()),
     );
 
-    if (!mounted ||
-        vehicle == null ||
-        vehicle.id == null) {
+    if (!mounted || vehicle == null || vehicle.id == null) {
       return;
     }
 
@@ -91,13 +74,8 @@ class _DriverDetailsScreenState
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-      SnackBar(
-        content: Text(
-          '${vehicle.registration} assigned successfully.',
-        ),
-      ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${vehicle.registration} assigned successfully.')),
     );
   }
 
@@ -106,41 +84,27 @@ class _DriverDetailsScreenState
       return;
     }
 
-    await _repository.unassignVehicle(
-      _assignedVehicle!.id!,
-    );
+    await _repository.unassignVehicle(_assignedVehicle!.id!);
 
     await _loadAssignedVehicle();
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Vehicle assignment ended.',
-        ),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Vehicle assignment ended.')));
   }
 
   @override
   Widget build(BuildContext context) {
-
     if (!_permissions.canViewDrivers) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'Access Denied',
-          ),
-        ),
+        appBar: AppBar(title: const Text('Access Denied')),
         body: const Center(
           child: Text(
             'You do not have permission to view driver details.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 18,
-            ),
+            style: TextStyle(fontSize: 18),
           ),
         ),
       );
@@ -149,47 +113,32 @@ class _DriverDetailsScreenState
     final driver = widget.driver;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(driver.fullName),
-      ),
+      appBar: AppBar(title: Text(driver.fullName)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
             elevation: 2,
             child: Padding(
-              padding:
-                  const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
                   CircleAvatar(
                     radius: 40,
                     child: Text(
-                      driver.firstName
-                          .substring(0, 1),
-                      style:
-                          const TextStyle(
-                        fontSize: 28,
-                      ),
+                      driver.firstName.substring(0, 1),
+                      style: const TextStyle(fontSize: 28),
                     ),
                   ),
-                  const SizedBox(
-                    height: 16,
-                  ),
+                  const SizedBox(height: 16),
                   Text(
                     driver.fullName,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall,
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  const SizedBox(
-                    height: 8,
-                  ),
+                  const SizedBox(height: 8),
                   Text(
                     driver.licenceNumber,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ],
               ),
@@ -202,16 +151,14 @@ class _DriverDetailsScreenState
             context,
             Icons.phone,
             'Phone',
-            driver.phone ??
-                'Not provided',
+            driver.phone ?? 'Not provided',
           ),
 
           _detailTile(
             context,
             Icons.email,
             'Email',
-            driver.email ??
-                'Not provided',
+            driver.email ?? 'Not provided',
           ),
 
           _detailTile(
@@ -226,100 +173,65 @@ class _DriverDetailsScreenState
             Icons.calendar_today,
             'Licence Expiry',
             driver.licenceExpiry != null
-                ? _formatDate(
-                    driver.licenceExpiry!,
-                  )
+                ? _formatDate(driver.licenceExpiry!)
                 : 'Not set',
-          ),          Card(
+          ),
+          Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Vehicle Assignment',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge,
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
 
                   const SizedBox(height: 16),
 
                   if (_loadingVehicle)
-                    const Center(
-                      child:
-                          CircularProgressIndicator(),
-                    )
+                    const Center(child: CircularProgressIndicator())
                   else
                     ListTile(
-                      contentPadding:
-                          EdgeInsets.zero,
-                      leading: const Icon(
-                        Icons.local_shipping,
-                      ),
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.local_shipping),
                       title: Text(
-                        _assignedVehicle
-                                ?.registration ??
-                            'No Vehicle Assigned',
+                        _assignedVehicle?.registration ?? 'No Vehicle Assigned',
                       ),
                       subtitle: Text(
-                        _assignedVehicle ==
-                                null
+                        _assignedVehicle == null
                             ? 'Select a vehicle'
                             : '${_assignedVehicle!.fleetNumber}\n'
-                              '${_assignedVehicle!.make} ${_assignedVehicle!.model}',
+                                  '${_assignedVehicle!.make} ${_assignedVehicle!.model}',
                       ),
-                      isThreeLine:
-                          _assignedVehicle !=
-                              null,
+                      isThreeLine: _assignedVehicle != null,
                     ),
 
                   const SizedBox(height: 16),
 
                   Row(
                     children: [
-
                       if (_permissions.canManageDrivers)
                         Expanded(
-                          child:
-                              FilledButton.icon(
-                            onPressed:
-                                _assignVehicle,
-                            icon:
-                                const Icon(
-                              Icons
-                                  .local_shipping,
-                            ),
+                          child: FilledButton.icon(
+                            onPressed: _assignVehicle,
+                            icon: const Icon(Icons.local_shipping),
                             label: Text(
-                              _assignedVehicle ==
-                                      null
+                              _assignedVehicle == null
                                   ? 'Assign Vehicle'
                                   : 'Change Vehicle',
                             ),
                           ),
                         ),
 
-                      if (_permissions
-                              .canManageDrivers &&
-                          _assignedVehicle !=
-                              null) ...[
-                        const SizedBox(
-                          width: 12,
-                        ),
+                      if (_permissions.canManageDrivers &&
+                          _assignedVehicle != null) ...[
+                        const SizedBox(width: 12),
                         Expanded(
-                          child:
-                              OutlinedButton.icon(
-                            onPressed:
-                                _endAssignment,
-                            icon:
-                                const Icon(
-                              Icons.link_off,
-                            ),
-                            label:
-                                const Text(
-                              'End Assignment',
-                            ),
+                          child: OutlinedButton.icon(
+                            onPressed: _endAssignment,
+                            icon: const Icon(Icons.link_off),
+                            label: const Text('End Assignment'),
                           ),
                         ),
                       ],
@@ -334,38 +246,26 @@ class _DriverDetailsScreenState
 
           Card(
             child: ListTile(
-              leading: const Icon(
-                Icons.verified_user,
-              ),
-              title: const Text(
-                'Driver Compliance',
-              ),
+              leading: const Icon(Icons.verified_user),
+              title: const Text('Driver Compliance'),
               subtitle: const Text(
                 'View and manage licence, CPC and medical expiry dates.',
               ),
-              trailing:
-                  const Icon(
-                Icons.chevron_right,
-              ),
+              trailing: const Icon(Icons.chevron_right),
               onTap: () async {
                 if (driver.id == null) {
                   return;
                 }
 
-                final refresh =
-                    await Navigator.push<bool>(
+                final refresh = await Navigator.push<bool>(
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                        DriverComplianceScreen(
-                      driverId:
-                          driver.id!,
-                    ),
+                        DriverComplianceScreen(driverId: driver.id!),
                   ),
                 );
 
-                if (refresh == true &&
-                    mounted) {
+                if (refresh == true && mounted) {
                   setState(() {
                     _loadAssignedVehicle();
                   });
@@ -379,29 +279,19 @@ class _DriverDetailsScreenState
           if (_permissions.canManageDrivers)
             FilledButton.icon(
               onPressed: () async {
-                await Navigator.push(
+                final updatedDriver = await Navigator.push<Driver>(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        EditDriverScreen(
-                      driver: driver,
-                    ),
+                    builder: (_) => EditDriverScreen(driver: driver),
                   ),
                 );
 
-                if (context.mounted) {
-                  Navigator.pop(
-                    context,
-                    true,
-                  );
-                }
+                if (!context.mounted || updatedDriver == null) return;
+
+                Navigator.pop(context, true);
               },
-              icon: const Icon(
-                Icons.edit,
-              ),
-              label: const Text(
-                'Edit Driver',
-              ),
+              icon: const Icon(Icons.edit),
+              label: const Text('Edit Driver'),
             ),
         ],
       ),
@@ -423,9 +313,7 @@ class _DriverDetailsScreenState
     );
   }
 
-  String _formatDate(
-    DateTime date,
-  ) {
+  String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
 }
