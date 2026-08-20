@@ -7,26 +7,18 @@ import '../models/driver_compliance.dart';
 import '../services/driver_compliance_service.dart';
 
 class DriverComplianceScreen extends StatefulWidget {
-  const DriverComplianceScreen({
-    super.key,
-    required this.driverId,
-  });
+  const DriverComplianceScreen({super.key, required this.driverId});
 
   final int driverId;
 
   @override
-  State<DriverComplianceScreen> createState() =>
-      _DriverComplianceScreenState();
+  State<DriverComplianceScreen> createState() => _DriverComplianceScreenState();
 }
 
-class _DriverComplianceScreenState
-    extends State<DriverComplianceScreen> {
+class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
+  final DriverComplianceService _service = DriverComplianceService();
 
-  final DriverComplianceService _service =
-      DriverComplianceService();
-
-  final PermissionService _permissions =
-      PermissionService.instance;
+  final PermissionService _permissions = PermissionService.instance;
 
   bool _loading = true;
   bool _saving = false;
@@ -43,10 +35,7 @@ class _DriverComplianceScreenState
   }
 
   Future<void> _loadCompliance() async {
-    final record =
-        await _service.getByDriverId(
-      widget.driverId,
-    );
+    final record = await _service.getByDriverId(widget.driverId);
 
     if (!mounted) return;
 
@@ -58,14 +47,11 @@ class _DriverComplianceScreenState
     } else {
       final now = DateTime.now();
 
-      _licenceExpiry =
-          DateTime(now.year + 1, now.month, now.day);
+      _licenceExpiry = DateTime(now.year + 1, now.month, now.day);
 
-      _cpcExpiry =
-          DateTime(now.year + 1, now.month, now.day);
+      _cpcExpiry = DateTime(now.year + 1, now.month, now.day);
 
-      _medicalExpiry =
-          DateTime(now.year + 1, now.month, now.day);
+      _medicalExpiry = DateTime(now.year + 1, now.month, now.day);
     }
 
     setState(() {
@@ -74,7 +60,6 @@ class _DriverComplianceScreenState
   }
 
   Future<void> _pickLicenceDate() async {
-
     if (!_permissions.canManageDrivers) {
       return;
     }
@@ -94,7 +79,6 @@ class _DriverComplianceScreenState
   }
 
   Future<void> _pickCpcDate() async {
-
     if (!_permissions.canManageDrivers) {
       return;
     }
@@ -114,7 +98,6 @@ class _DriverComplianceScreenState
   }
 
   Future<void> _pickMedicalDate() async {
-
     if (!_permissions.canManageDrivers) {
       return;
     }
@@ -147,8 +130,7 @@ class _DriverComplianceScreenState
   }
 
   Future<void> _save() async {
-
-    if (!_permissions.canManageDrivers) {
+    if (!_permissions.canManageDrivers || _saving) {
       return;
     }
 
@@ -156,34 +138,41 @@ class _DriverComplianceScreenState
       _saving = true;
     });
 
-    final compliance = DriverCompliance(
-      driverId: widget.driverId,
-      licenceExpiry: _licenceExpiry,
-      cpcExpiry: _cpcExpiry,
-      medicalExpiry: _medicalExpiry,
-      dbsExpiry: _dbsExpiry,
-      lastUpdated: DateTime.now(),
-    );
+    try {
+      final compliance = DriverCompliance(
+        driverId: widget.driverId,
+        licenceExpiry: _licenceExpiry,
+        cpcExpiry: _cpcExpiry,
+        medicalExpiry: _medicalExpiry,
+        dbsExpiry: _dbsExpiry,
+        lastUpdated: DateTime.now(),
+      );
 
-    await _service.save(compliance);
+      await _service.save(compliance);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _saving = false;
-    });
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
 
-    Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to save driver compliance.\n$error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-
     if (!_permissions.canViewDrivers) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Access Denied'),
-        ),
+        appBar: AppBar(title: const Text('Access Denied')),
         body: const Center(
           child: Text(
             'You do not have permission to view driver compliance.',
@@ -195,27 +184,18 @@ class _DriverComplianceScreenState
     }
 
     if (_loading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Driver Compliance',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Driver Compliance')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [          _dateTile(
+        children: [
+          _dateTile(
             title: 'Licence Expiry',
             date: _licenceExpiry,
-            status: _service.status(
-              _licenceExpiry,
-            ),
+            status: _service.status(_licenceExpiry),
             onTap: _pickLicenceDate,
           ),
 
@@ -224,9 +204,7 @@ class _DriverComplianceScreenState
           _dateTile(
             title: 'CPC Expiry',
             date: _cpcExpiry,
-            status: _service.status(
-              _cpcExpiry,
-            ),
+            status: _service.status(_cpcExpiry),
             onTap: _pickCpcDate,
           ),
 
@@ -235,9 +213,7 @@ class _DriverComplianceScreenState
           _dateTile(
             title: 'Medical Expiry',
             date: _medicalExpiry,
-            status: _service.status(
-              _medicalExpiry,
-            ),
+            status: _service.status(_medicalExpiry),
             onTap: _pickMedicalDate,
           ),
 
@@ -270,26 +246,15 @@ class _DriverComplianceScreenState
 
           if (_permissions.canManageDrivers)
             FilledButton.icon(
-              onPressed: _saving
-                  ? null
-                  : _save,
+              onPressed: _saving ? null : _save,
               icon: _saving
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child:
-                          CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(
-                      Icons.save,
-                    ),
-              label: Text(
-                _saving
-                    ? 'Saving...'
-                    : 'Save Compliance',
-              ),
+                  : const Icon(Icons.save),
+              label: Text(_saving ? 'Saving...' : 'Save Compliance'),
             ),
         ],
       ),
@@ -306,31 +271,19 @@ class _DriverComplianceScreenState
 
     return Card(
       child: ListTile(
-        leading: Icon(
-          Icons.verified_user,
-          color: color,
-        ),
+        leading: Icon(Icons.verified_user, color: color),
         title: Text(title),
-        subtitle: Text(
-          date == null ? 'Not recorded' : _formatDate(date),
-        ),
+        subtitle: Text(date == null ? 'Not recorded' : _formatDate(date)),
         trailing: Chip(
           label: Text(status),
-          backgroundColor:
-              color.withValues(
-            alpha: 0.15,
-          ),
+          backgroundColor: color.withValues(alpha: 0.15),
         ),
-        onTap: _permissions.canManageDrivers
-            ? onTap
-            : null,
+        onTap: _permissions.canManageDrivers ? onTap : null,
       ),
     );
   }
 
-  Color _statusColor(
-    String status,
-  ) {
+  Color _statusColor(String status) {
     switch (status) {
       case 'Expired':
         return Colors.red;
@@ -343,9 +296,7 @@ class _DriverComplianceScreenState
     }
   }
 
-  String _formatDate(
-    DateTime date,
-  ) {
+  String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
 }
