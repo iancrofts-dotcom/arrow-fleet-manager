@@ -51,6 +51,25 @@ class WorkshopReportingService {
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
+  /// Loads the persisted inspection context for supplied repair jobs.
+  ///
+  /// Repair-job reporting is filtered by [RepairJob.createdAt], so source
+  /// inspections must not be filtered by [WorkshopInspection.dateStarted].
+  /// Missing legacy references are omitted and retain the PDF's existing
+  /// per-job fallback presentation.
+  Future<List<WorkshopInspection>> loadInspectionsForRepairJobs(
+    Iterable<RepairJob> jobs,
+  ) async {
+    final inspectionIds = jobs
+        .map((job) => job.inspectionId)
+        .where((inspectionId) => inspectionId > 0)
+        .toSet();
+    final inspections = await Future.wait(
+      inspectionIds.map(_repository.getInspection),
+    );
+    return inspections.whereType<WorkshopInspection>().toList(growable: false);
+  }
+
   List<WorkshopInspection> filterInspections(
     Iterable<WorkshopInspection> inspections,
     WorkshopReportFilter filter,

@@ -130,7 +130,7 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
     return switch (_type) {
       _WorkshopReportType.repairJobs => _pdfService.generateRepairJobs(
           jobs: jobs,
-          inspections: inspections,
+          inspections: await _reporting.loadInspectionsForRepairJobs(jobs),
           filterSummary: filterSummary,
         ),
       _WorkshopReportType.vehicleHistory => _createVehicleHistoryPdf(data, jobs, inspections),

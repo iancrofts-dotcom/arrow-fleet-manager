@@ -1,6 +1,7 @@
 import 'package:arrow_fleet_manager/features/workshop/models/inspection_item.dart';
 import 'package:arrow_fleet_manager/features/workshop/models/repair_job.dart';
 import 'package:arrow_fleet_manager/features/workshop/models/workshop_inspection.dart';
+import 'package:arrow_fleet_manager/features/workshop/repositories/workshop_repository.dart';
 import 'package:arrow_fleet_manager/features/workshop/services/workshop_reporting_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -105,12 +106,41 @@ void main() {
       expect(summary.actualHours, 5);
       expect(summary.actualCost, 50);
     });
+
+    test('loads source inspections by ID for in-range repair jobs without applying inspection date filtering', () async {
+      final inspection = _inspection(id: 42, dateStarted: DateTime(2026, 7, 1));
+      final repository = _InspectionContextRepository({42: inspection});
+      final reporting = WorkshopReportingService(repository: repository);
+      final jobs = reporting.filterJobs([
+        _job('RJ-1', inspectionId: 42, createdAt: DateTime(2026, 8, 20, 9)),
+        _job('RJ-2', inspectionId: 42, createdAt: DateTime(2026, 8, 20, 10)),
+      ], WorkshopReportFilter(start: DateTime(2026, 8, 20), end: DateTime(2026, 8, 20)));
+
+      final contexts = await reporting.loadInspectionsForRepairJobs(jobs);
+
+      expect(jobs, hasLength(2));
+      expect(contexts, [inspection]);
+      expect(repository.requestedIds, [42]);
+    });
+
+    test('safely omits missing repair-job inspection references', () async {
+      final repository = _InspectionContextRepository(const {});
+      final reporting = WorkshopReportingService(repository: repository);
+
+      final contexts = await reporting.loadInspectionsForRepairJobs([
+        _job('RJ-missing', inspectionId: 404),
+      ]);
+
+      expect(contexts, isEmpty);
+      expect(repository.requestedIds, [404]);
+    });
   });
 }
 
 RepairJob _job(
   String number, {
   DateTime? createdAt,
+  int inspectionId = 1,
   String? technicianId,
   String technicianName = '',
   RepairJobStatus status = RepairJobStatus.open,
@@ -118,7 +148,7 @@ RepairJob _job(
   double actualCost = 0,
 }) => RepairJob(
   jobNumber: number,
-  inspectionId: 1,
+  inspectionId: inspectionId,
   inspectionItemId: 1,
   vehicleId: 1,
   vehicleRegistration: 'AB12 CDE',
@@ -132,8 +162,8 @@ RepairJob _job(
   createdAt: createdAt ?? DateTime(2026, 8, 19),
 );
 
-WorkshopInspection _inspection() => WorkshopInspection(
-  id: 1,
+WorkshopInspection _inspection({int id = 1, DateTime? dateStarted}) => WorkshopInspection(
+  id: id,
   inspectionNumber: 'WI-1',
   vehicleId: 1,
   registration: 'AB12 CDE',
@@ -142,7 +172,7 @@ WorkshopInspection _inspection() => WorkshopInspection(
   inspectionType: WorkshopInspectionType.defectInspection,
   status: WorkshopInspectionStatus.awaitingRepair,
   vehicleStatus: VehicleWorkshopStatus.awaitingRepair,
-  dateStarted: DateTime(2026, 8, 19),
+  dateStarted: dateStarted ?? DateTime(2026, 8, 19),
   mileage: 1000,
   overallResult: InspectionResult.fail,
   inspectionScore: 0,
@@ -155,3 +185,16 @@ WorkshopInspection _inspection() => WorkshopInspection(
   createdAt: DateTime(2026, 8, 19),
   updatedAt: DateTime(2026, 8, 19),
 );
+
+class _InspectionContextRepository extends WorkshopRepository {
+  _InspectionContextRepository(this._inspections);
+
+  final Map<int, WorkshopInspection> _inspections;
+  final List<int> requestedIds = [];
+
+  @override
+  Future<WorkshopInspection?> getInspection(int id) async {
+    requestedIds.add(id);
+    return _inspections[id];
+  }
+}
