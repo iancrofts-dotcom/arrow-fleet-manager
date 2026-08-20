@@ -9,8 +9,10 @@ class RepairJobGenerator {
     required List<InspectionChecklistItem> items,
     String? technicianId,
     String technicianName = '',
+    bool generateJobNumbers = true,
   }) {
     final repairs = <RepairJob>[];
+    final createdAt = DateTime.now();
 
     int sequence = 1;
 
@@ -22,10 +24,16 @@ class RepairJobGenerator {
 
       repairs.add(
         RepairJob(
-          jobNumber: _generateJobNumber(
-            inspectionId,
-            sequence,
-          ),
+          // The management wizard does not have a persisted inspection ID
+          // yet. Its final number is assigned by InspectionSaveService inside
+          // the transaction after SQLite returns that ID.
+          jobNumber: generateJobNumbers
+              ? jobNumberFor(
+                  inspectionId: inspectionId,
+                  sequence: sequence,
+                  createdAt: createdAt,
+                )
+              : '',
           inspectionId: inspectionId,
           // This temporary one-based index is resolved to the database item ID
           // by InspectionSaveService after the checklist is persisted.
@@ -41,19 +49,12 @@ class RepairJobGenerator {
           status: technicianId == null
               ? RepairJobStatus.open
               : RepairJobStatus.assigned,
-          priority: _priorityFromChecklist(
-            item.priority,
-          ),
-          estimatedHours: _estimatedHours(
-            item.category,
-          ),
+          priority: _priorityFromChecklist(item.priority),
+          estimatedHours: _estimatedHours(item.category),
           estimatedCost: 0,
-          partsRequired: _partsRequired(
-            item.category,
-          ),
-          roadworthy:
-              item.priority != ChecklistPriority.critical,
-          createdAt: DateTime.now(),
+          partsRequired: _partsRequired(item.category),
+          roadworthy: item.priority != ChecklistPriority.critical,
+          createdAt: createdAt,
         ),
       );
 
@@ -63,18 +64,16 @@ class RepairJobGenerator {
     return repairs;
   }
 
-  String _generateJobNumber(
-    int inspectionId,
-    int sequence,
-  ) {
-    final year = DateTime.now().year;
-
+  String jobNumberFor({
+    required int inspectionId,
+    required int sequence,
+    DateTime? createdAt,
+  }) {
+    final year = (createdAt ?? DateTime.now()).year;
     return 'RJ-$year-$inspectionId-${sequence.toString().padLeft(3, '0')}';
   }
 
-  RepairPriority _priorityFromChecklist(
-    ChecklistPriority priority,
-  ) {
+  RepairPriority _priorityFromChecklist(ChecklistPriority priority) {
     switch (priority) {
       case ChecklistPriority.low:
         return RepairPriority.low;

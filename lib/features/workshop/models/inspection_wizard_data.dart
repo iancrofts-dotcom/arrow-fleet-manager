@@ -26,6 +26,8 @@ class InspectionWizardData {
   // Inspection
   // ==========================================================================
 
+  // Final inspection identity is assigned by InspectionSaveService only after
+  // SQLite has created the authoritative inspection ID.
   String inspectionNumber = '';
 
   WorkshopInspectionType? inspectionType;
@@ -81,11 +83,9 @@ class InspectionWizardData {
   // Results
   // ==========================================================================
 
-  VehicleWorkshopStatus vehicleStatus =
-      VehicleWorkshopStatus.roadworthy;
+  VehicleWorkshopStatus vehicleStatus = VehicleWorkshopStatus.roadworthy;
 
-  InspectionResult overallResult =
-      InspectionResult.pending;
+  InspectionResult overallResult = InspectionResult.pending;
 
   // ==========================================================================
   // Notes
@@ -107,21 +107,15 @@ class InspectionWizardData {
 
   bool get hasVehicle => vehicleId != null;
 
-  bool get hasMileage =>
-      mileage != null && mileage! > 0;
+  bool get hasMileage => mileage != null && mileage! > 0;
 
-  bool get hasInspectionType =>
-      inspectionType != null;
+  bool get hasInspectionType => inspectionType != null;
 
   bool get hasTechnician =>
-      technicianName != null &&
-      technicianName!.trim().isNotEmpty;
+      technicianName != null && technicianName!.trim().isNotEmpty;
 
   bool get canContinueFromStep1 =>
-      hasVehicle &&
-      hasMileage &&
-      hasInspectionType &&
-      hasTechnician;
+      hasVehicle && hasMileage && hasInspectionType && hasTechnician;
 
   // ==========================================================================
   // Reset
@@ -164,11 +158,9 @@ class InspectionWizardData {
     totalCost = 0;
 
     // Results
-    vehicleStatus =
-        VehicleWorkshopStatus.roadworthy;
+    vehicleStatus = VehicleWorkshopStatus.roadworthy;
 
-    overallResult =
-        InspectionResult.pending;
+    overallResult = InspectionResult.pending;
 
     // Notes
     notes = '';

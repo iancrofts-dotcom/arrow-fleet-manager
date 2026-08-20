@@ -22,14 +22,12 @@ class Step4Repairs extends StatefulWidget {
 }
 
 class _Step4RepairsState extends State<Step4Repairs> {
-  final RepairJobGenerator _generator =
-      RepairJobGenerator();
+  final RepairJobGenerator _generator = RepairJobGenerator();
 
   List<InspectionChecklistItem> get checklistItems =>
       widget.data.checklistItems;
 
-  List<RepairJob> get repairJobs =>
-      widget.data.repairJobs;
+  List<RepairJob> get repairJobs => widget.data.repairJobs;
 
   @override
   void initState() {
@@ -40,12 +38,10 @@ class _Step4RepairsState extends State<Step4Repairs> {
 
   void _loadRepairJobs() {
     if (widget.data.repairJobs.isEmpty) {
-      widget.data.repairJobs =
-          _generator.generate(
+      widget.data.repairJobs = _generator.generate(
         inspectionId: 0,
         vehicleId: widget.data.vehicleId ?? 0,
-        vehicleRegistration:
-            widget.data.registration ?? '',
+        vehicleRegistration: widget.data.registration ?? '',
         items: checklistItems,
         technicianId: widget.data.templateId == null
             ? widget.data.technicianId
@@ -53,112 +49,61 @@ class _Step4RepairsState extends State<Step4Repairs> {
         technicianName: widget.data.templateId == null
             ? widget.data.technicianName ?? ''
             : '',
+        generateJobNumbers: false,
       );
     }
   }
 
   double get totalEstimatedHours {
-    return repairJobs.fold(
-      0,
-      (sum, job) => sum + job.estimatedHours,
-    );
+    return repairJobs.fold(0, (sum, job) => sum + job.estimatedHours);
   }
 
   double get totalEstimatedCost {
-    return repairJobs.fold(
-      0,
-      (sum, job) => sum + job.estimatedCost,
-    );
+    return repairJobs.fold(0, (sum, job) => sum + job.estimatedCost);
   }
 
   int get criticalCount {
     return repairJobs
-        .where(
-          (job) =>
-              job.priority ==
-              RepairPriority.critical,
-        )
+        .where((job) => job.priority == RepairPriority.critical)
         .length;
   }
 
   int get highCount {
     return repairJobs
-        .where(
-          (job) =>
-              job.priority ==
-              RepairPriority.high,
-        )
+        .where((job) => job.priority == RepairPriority.high)
         .length;
   }
 
   int get partsRequiredCount {
-    return repairJobs
-        .where(
-          (job) => job.partsRequired,
-        )
-        .length;
+    return repairJobs.where((job) => job.partsRequired).length;
   }
 
-  void _updateJob(
-    int index,
-    RepairJob job,
-  ) {
+  void _updateJob(int index, RepairJob job) {
     setState(() {
       widget.data.repairJobs[index] = job;
     });
   }
 
-  void _setPriority(
-    int index,
-    RepairPriority priority,
-  ) {
-    _updateJob(
-      index,
-      repairJobs[index].copyWith(
-        priority: priority,
-      ),
-    );
+  void _setPriority(int index, RepairPriority priority) {
+    _updateJob(index, repairJobs[index].copyWith(priority: priority));
   }
 
-  void _setStatus(
-    int index,
-    RepairJobStatus status,
-  ) {
-    _updateJob(
-      index,
-      repairJobs[index].copyWith(
-        status: status,
-      ),
-    );
+  void _setStatus(int index, RepairJobStatus status) {
+    _updateJob(index, repairJobs[index].copyWith(status: status));
   }
 
   void _togglePartsRequired(int index) {
     final job = repairJobs[index];
 
-    _updateJob(
-      index,
-      job.copyWith(
-        partsRequired: !job.partsRequired,
-      ),
-    );
+    _updateJob(index, job.copyWith(partsRequired: !job.partsRequired));
   }
 
   void _setEstimatedHours(int index, double hours) {
-    _updateJob(
-      index,
-      repairJobs[index].copyWith(
-        estimatedHours: hours,
-      ),
-    );
+    _updateJob(index, repairJobs[index].copyWith(estimatedHours: hours));
   }
 
   void _setEstimatedCost(int index, double cost) {
-    _updateJob(
-      index,
-      repairJobs[index].copyWith(
-        estimatedCost: cost,
-      ),
-    );
+    _updateJob(index, repairJobs[index].copyWith(estimatedCost: cost));
   }
 
   @override
@@ -171,21 +116,11 @@ class _Step4RepairsState extends State<Step4Repairs> {
         // ===================================================================
         // HEADER
         // ===================================================================
-
         Container(
-          padding: const EdgeInsets.fromLTRB(
-            24,
-            20,
-            24,
-            18,
-          ),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 18),
           decoration: BoxDecoration(
             color: scheme.surface,
-            border: Border(
-              bottom: BorderSide(
-                color: scheme.outlineVariant,
-              ),
-            ),
+            border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
           ),
           child: Row(
             children: [
@@ -194,8 +129,7 @@ class _Step4RepairsState extends State<Step4Repairs> {
                 height: 50,
                 decoration: BoxDecoration(
                   color: scheme.primaryContainer,
-                  borderRadius:
-                      BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   Icons.build_circle_outlined,
@@ -208,16 +142,12 @@ class _Step4RepairsState extends State<Step4Repairs> {
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Repair Review',
-                      style: theme.textTheme
-                          .headlineSmall
-                          ?.copyWith(
-                        fontWeight:
-                            FontWeight.w800,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -225,10 +155,8 @@ class _Step4RepairsState extends State<Step4Repairs> {
                       repairJobs.isEmpty
                           ? 'No repairs are required.'
                           : 'Review the work generated from the inspection.',
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(
-                        color:
-                            scheme.onSurfaceVariant,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -237,23 +165,20 @@ class _Step4RepairsState extends State<Step4Repairs> {
 
               if (repairJobs.isNotEmpty)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 9,
                   ),
                   decoration: BoxDecoration(
                     color: scheme.primaryContainer,
-                    borderRadius:
-                        BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     '${repairJobs.length} '
                     '${repairJobs.length == 1 ? 'repair' : 'repairs'}',
                     style: TextStyle(
                       color: scheme.primary,
-                      fontWeight:
-                          FontWeight.w800,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -264,7 +189,6 @@ class _Step4RepairsState extends State<Step4Repairs> {
         // ===================================================================
         // CONTENT
         // ===================================================================
-
         Expanded(
           child: repairJobs.isEmpty
               ? _NoRepairs()
@@ -274,20 +198,13 @@ class _Step4RepairsState extends State<Step4Repairs> {
                     // =======================================================
                     // KPI SUMMARY
                     // =======================================================
-
                     _RepairSummaryCard(
-                      repairCount:
-                          repairJobs.length,
-                      totalHours:
-                          totalEstimatedHours,
-                      totalCost:
-                          totalEstimatedCost,
-                      criticalCount:
-                          criticalCount,
-                      highCount:
-                          highCount,
-                      partsRequiredCount:
-                          partsRequiredCount,
+                      repairCount: repairJobs.length,
+                      totalHours: totalEstimatedHours,
+                      totalCost: totalEstimatedCost,
+                      criticalCount: criticalCount,
+                      highCount: highCount,
+                      partsRequiredCount: partsRequiredCount,
                     ),
 
                     const SizedBox(height: 20),
@@ -295,55 +212,32 @@ class _Step4RepairsState extends State<Step4Repairs> {
                     // =======================================================
                     // REPAIR JOBS
                     // =======================================================
-
                     Text(
                       'Repair Jobs',
-                      style: theme.textTheme.titleLarge
-                          ?.copyWith(
-                        fontWeight:
-                            FontWeight.w800,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
 
                     const SizedBox(height: 12),
 
-                    for (
-                      int index = 0;
-                      index < repairJobs.length;
-                      index++
-                    ) ...[
+                    for (int index = 0; index < repairJobs.length; index++) ...[
                       _RepairJobCard(
                         job: repairJobs[index],
-                        onPriorityChanged:
-                            (priority) {
-                          _setPriority(
-                            index,
-                            priority,
-                          );
+                        onPriorityChanged: (priority) {
+                          _setPriority(index, priority);
                         },
-                        onStatusChanged:
-                            (status) {
-                          _setStatus(
-                            index,
-                            status,
-                          );
+                        onStatusChanged: (status) {
+                          _setStatus(index, status);
                         },
                         onPartsChanged: () {
-                          _togglePartsRequired(
-                            index,
-                          );
+                          _togglePartsRequired(index);
                         },
                         onHoursChanged: (hours) {
-                          _setEstimatedHours(
-                            index,
-                            hours,
-                          );
+                          _setEstimatedHours(index, hours);
                         },
                         onCostChanged: (cost) {
-                          _setEstimatedCost(
-                            index,
-                            cost,
-                          );
+                          _setEstimatedCost(index, cost);
                         },
                       ),
                       const SizedBox(height: 12),
@@ -355,43 +249,27 @@ class _Step4RepairsState extends State<Step4Repairs> {
         // ===================================================================
         // FOOTER
         // ===================================================================
-
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 16,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           decoration: BoxDecoration(
             color: scheme.surface,
-            border: Border(
-              top: BorderSide(
-                color: scheme.outlineVariant,
-              ),
-            ),
+            border: Border(top: BorderSide(color: scheme.outlineVariant)),
           ),
           child: Wrap(
-            alignment:
-                WrapAlignment.spaceBetween,
+            alignment: WrapAlignment.spaceBetween,
             spacing: 12,
             runSpacing: 12,
             children: [
               OutlinedButton.icon(
-                onPressed:
-                    widget.onPrevious,
-                icon: const Icon(
-                  Icons.arrow_back_rounded,
-                ),
+                onPressed: widget.onPrevious,
+                icon: const Icon(Icons.arrow_back_rounded),
                 label: const Text('Back'),
               ),
 
               FilledButton.icon(
                 onPressed: widget.onNext,
-                icon: const Icon(
-                  Icons.arrow_forward_rounded,
-                ),
-                label: const Text(
-                  'Continue to Sign-off',
-                ),
+                icon: const Icon(Icons.arrow_forward_rounded),
+                label: const Text('Continue to Sign-off'),
               ),
             ],
           ),
@@ -431,29 +309,20 @@ class _RepairSummaryCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: scheme.surface,
-        borderRadius:
-            BorderRadius.circular(18),
-        border: Border.all(
-          color: scheme.outlineVariant,
-        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.analytics_outlined,
-                color: scheme.primary,
-              ),
+              Icon(Icons.analytics_outlined, color: scheme.primary),
               const SizedBox(width: 8),
               Text(
                 'Repair Overview',
-                style: theme.textTheme.titleLarge
-                    ?.copyWith(
-                  fontWeight:
-                      FontWeight.w800,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
@@ -468,38 +337,32 @@ class _RepairSummaryCard extends StatelessWidget {
               _Kpi(
                 icon: Icons.build_outlined,
                 label: 'Repairs',
-                value:
-                    '$repairCount',
+                value: '$repairCount',
               ),
               _Kpi(
                 icon: Icons.schedule_outlined,
                 label: 'Labour',
-                value:
-                    '${totalHours.toStringAsFixed(1)} hrs',
+                value: '${totalHours.toStringAsFixed(1)} hrs',
               ),
               _Kpi(
                 icon: Icons.payments_outlined,
                 label: 'Estimated',
-                value:
-                    '£${totalCost.toStringAsFixed(2)}',
+                value: '£${totalCost.toStringAsFixed(2)}',
               ),
               _Kpi(
                 icon: Icons.priority_high,
                 label: 'Critical',
-                value:
-                    '$criticalCount',
+                value: '$criticalCount',
               ),
               _Kpi(
                 icon: Icons.warning_amber_outlined,
                 label: 'High',
-                value:
-                    '$highCount',
+                value: '$highCount',
               ),
               _Kpi(
                 icon: Icons.inventory_2_outlined,
                 label: 'Parts',
-                value:
-                    '$partsRequiredCount',
+                value: '$partsRequiredCount',
               ),
             ],
           ),
@@ -518,49 +381,25 @@ class _Kpi extends StatelessWidget {
   final String label;
   final String value;
 
-  const _Kpi({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
+  const _Kpi({required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    final scheme =
-        Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 11,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color:
-            scheme.surfaceContainerHighest,
-        borderRadius:
-            BorderRadius.circular(12),
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 19,
-            color: scheme.primary,
-          ),
+          Icon(icon, size: 19, color: scheme.primary),
           const SizedBox(width: 7),
-          Text(
-            '$label: ',
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
+          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -633,81 +472,57 @@ class _RepairJobCardState extends State<_RepairJobCard> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    final priorityIcon =
-        _priorityIcon(widget.job.priority);
+    final priorityIcon = _priorityIcon(widget.job.priority);
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: scheme.surface,
-        borderRadius:
-            BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: widget.job.priority ==
-                  RepairPriority.critical
-              ? scheme.error
-                  .withValues(alpha: 0.45)
+          color: widget.job.priority == RepairPriority.critical
+              ? scheme.error.withValues(alpha: 0.45)
               : scheme.outlineVariant,
-          width:
-              widget.job.priority ==
-                      RepairPriority.critical
-                  ? 1.5
-                  : 1,
+          width: widget.job.priority == RepairPriority.critical ? 1.5 : 1,
         ),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // -----------------------------------------------------------------
           // TITLE
           // -----------------------------------------------------------------
-
           Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color:
-                      scheme.primaryContainer,
-                  borderRadius:
-                      BorderRadius.circular(12),
+                  color: scheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  priorityIcon,
-                  color: scheme.primary,
-                ),
+                child: Icon(priorityIcon, color: scheme.primary),
               ),
 
               const SizedBox(width: 12),
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       widget.job.title,
-                      style: theme.textTheme
-                          .titleMedium
-                          ?.copyWith(
-                        fontWeight:
-                            FontWeight.w800,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       widget.job.jobNumber,
-                      style: theme.textTheme
-                          .bodySmall
-                          ?.copyWith(
-                        color:
-                            scheme.onSurfaceVariant,
-                        fontWeight:
-                            FontWeight.w600,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -721,15 +536,11 @@ class _RepairJobCardState extends State<_RepairJobCard> {
           // -----------------------------------------------------------------
           // DESCRIPTION
           // -----------------------------------------------------------------
-
           Container(
-            padding:
-                const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color:
-                  scheme.surfaceContainerLow,
-              borderRadius:
-                  BorderRadius.circular(12),
+              color: scheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               widget.job.description,
@@ -742,7 +553,6 @@ class _RepairJobCardState extends State<_RepairJobCard> {
           // -----------------------------------------------------------------
           // ESTIMATES
           // -----------------------------------------------------------------
-
           LayoutBuilder(
             builder: (context, constraints) {
               final hoursField = TextField(
@@ -791,11 +601,7 @@ class _RepairJobCardState extends State<_RepairJobCard> {
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  hoursField,
-                  const SizedBox(height: 12),
-                  costField,
-                ],
+                children: [hoursField, const SizedBox(height: 12), costField],
               );
             },
           ),
@@ -805,11 +611,9 @@ class _RepairJobCardState extends State<_RepairJobCard> {
           // -----------------------------------------------------------------
           // PRIORITY
           // -----------------------------------------------------------------
-
           Text(
             'Priority',
-            style: theme.textTheme.labelLarge
-                ?.copyWith(
+            style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -820,18 +624,12 @@ class _RepairJobCardState extends State<_RepairJobCard> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (final priority
-                  in RepairPriority.values)
+              for (final priority in RepairPriority.values)
                 _ChoiceButton(
-                  label:
-                      _priorityLabel(priority),
-                  selected:
-                      widget.job.priority ==
-                          priority,
+                  label: _priorityLabel(priority),
+                  selected: widget.job.priority == priority,
                   onPressed: () {
-                    widget.onPriorityChanged(
-                      priority,
-                    );
+                    widget.onPriorityChanged(priority);
                   },
                 ),
             ],
@@ -842,11 +640,9 @@ class _RepairJobCardState extends State<_RepairJobCard> {
           // -----------------------------------------------------------------
           // STATUS
           // -----------------------------------------------------------------
-
           Text(
             'Status',
-            style: theme.textTheme.labelLarge
-                ?.copyWith(
+            style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -859,57 +655,37 @@ class _RepairJobCardState extends State<_RepairJobCard> {
             children: [
               _ChoiceButton(
                 label: 'OPEN',
-                selected:
-                    widget.job.status ==
-                        RepairJobStatus.open,
+                selected: widget.job.status == RepairJobStatus.open,
                 onPressed: () {
-                  widget.onStatusChanged(
-                    RepairJobStatus.open,
-                  );
+                  widget.onStatusChanged(RepairJobStatus.open);
                 },
               ),
               _ChoiceButton(
                 label: 'ASSIGNED',
-                selected:
-                    widget.job.status ==
-                        RepairJobStatus.assigned,
+                selected: widget.job.status == RepairJobStatus.assigned,
                 onPressed: () {
-                  widget.onStatusChanged(
-                    RepairJobStatus.assigned,
-                  );
+                  widget.onStatusChanged(RepairJobStatus.assigned);
                 },
               ),
               _ChoiceButton(
                 label: 'IN PROGRESS',
-                selected:
-                    widget.job.status ==
-                        RepairJobStatus.inProgress,
+                selected: widget.job.status == RepairJobStatus.inProgress,
                 onPressed: () {
-                  widget.onStatusChanged(
-                    RepairJobStatus.inProgress,
-                  );
+                  widget.onStatusChanged(RepairJobStatus.inProgress);
                 },
               ),
               _ChoiceButton(
                 label: 'AWAITING PARTS',
-                selected:
-                    widget.job.status ==
-                        RepairJobStatus.awaitingParts,
+                selected: widget.job.status == RepairJobStatus.awaitingParts,
                 onPressed: () {
-                  widget.onStatusChanged(
-                    RepairJobStatus.awaitingParts,
-                  );
+                  widget.onStatusChanged(RepairJobStatus.awaitingParts);
                 },
               ),
               _ChoiceButton(
                 label: 'COMPLETED',
-                selected:
-                    widget.job.status ==
-                        RepairJobStatus.completed,
+                selected: widget.job.status == RepairJobStatus.completed,
                 onPressed: () {
-                  widget.onStatusChanged(
-                    RepairJobStatus.completed,
-                  );
+                  widget.onStatusChanged(RepairJobStatus.completed);
                 },
               ),
             ],
@@ -920,12 +696,9 @@ class _RepairJobCardState extends State<_RepairJobCard> {
           // -----------------------------------------------------------------
           // PARTS
           // -----------------------------------------------------------------
-
           SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
-            title: const Text(
-              'Parts required',
-            ),
+            title: const Text('Parts required'),
             subtitle: Text(
               widget.job.partsRequired
                   ? 'Parts will need to be sourced.'
@@ -941,9 +714,7 @@ class _RepairJobCardState extends State<_RepairJobCard> {
     );
   }
 
-  IconData _priorityIcon(
-    RepairPriority priority,
-  ) {
+  IconData _priorityIcon(RepairPriority priority) {
     switch (priority) {
       case RepairPriority.low:
         return Icons.arrow_downward;
@@ -959,9 +730,7 @@ class _RepairJobCardState extends State<_RepairJobCard> {
     }
   }
 
-  String _priorityLabel(
-    RepairPriority priority,
-  ) {
+  String _priorityLabel(RepairPriority priority) {
     switch (priority) {
       case RepairPriority.low:
         return 'LOW';
@@ -996,14 +765,8 @@ class _ChoiceButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return selected
-        ? FilledButton(
-            onPressed: onPressed,
-            child: Text(label),
-          )
-        : OutlinedButton(
-            onPressed: onPressed,
-            child: Text(label),
-          );
+        ? FilledButton(onPressed: onPressed, child: Text(label))
+        : OutlinedButton(onPressed: onPressed, child: Text(label));
   }
 }
 
@@ -1021,54 +784,36 @@ class _NoRepairs extends StatelessWidget {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Container(
-          constraints:
-              const BoxConstraints(
-            maxWidth: 600,
-          ),
-          padding:
-              const EdgeInsets.all(32),
+          constraints: const BoxConstraints(maxWidth: 600),
+          padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color:
-                scheme.primaryContainer,
-            borderRadius:
-                BorderRadius.circular(20),
+            color: scheme.primaryContainer,
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.verified_outlined,
-                size: 64,
-                color: scheme.primary,
-              ),
+              Icon(Icons.verified_outlined, size: 64, color: scheme.primary),
 
               const SizedBox(height: 18),
 
               Text(
                 'No Repairs Required',
-                style: theme.textTheme
-                    .headlineSmall
-                    ?.copyWith(
-                  fontWeight:
-                      FontWeight.w800,
-                  color:
-                      scheme.onPrimaryContainer,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: scheme.onPrimaryContainer,
                 ),
-                textAlign:
-                    TextAlign.center,
+                textAlign: TextAlign.center,
               ),
 
               const SizedBox(height: 8),
 
               Text(
                 'The inspection has not generated any repair jobs.',
-                style: theme.textTheme.bodyLarge
-                    ?.copyWith(
-                  color:
-                      scheme.onPrimaryContainer,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: scheme.onPrimaryContainer,
                 ),
-                textAlign:
-                    TextAlign.center,
+                textAlign: TextAlign.center,
               ),
             ],
           ),

@@ -14,22 +14,28 @@ import '../models/workshop_inspection.dart';
 /// will be added in later steps.
 /// ============================================================================
 
-enum RepairCompletionStatus {
-  noRepairs,
-  outstanding,
-  complete,
-}
+enum RepairCompletionStatus { noRepairs, outstanding, complete }
 
 class WorkshopRepository {
-  WorkshopRepository({
-    AppDatabase? database,
-  }) : _database = database ?? AppDatabase();
+  WorkshopRepository({AppDatabase? database})
+    : _database = database ?? AppDatabase();
 
   final AppDatabase _database;
 
   static const String _table = 'workshop_inspections';
 
   Future<Database> get _db async => await _database.database();
+
+  /// Runs related Workshop writes as one SQLite transaction.
+  ///
+  /// Callers pass the returned executor to the repository methods that take
+  /// an optional [DatabaseExecutor], so all writes share the same boundary.
+  Future<T> transaction<T>(
+    Future<T> Function(DatabaseExecutor executor) action,
+  ) async {
+    final db = await _db;
+    return db.transaction((transaction) => action(transaction));
+  }
 
   // ==========================================================================
   // CREATE
@@ -41,10 +47,7 @@ class WorkshopRepository {
   }) async {
     final db = executor ?? await _db;
 
-    return db.insert(
-      _table,
-      inspection.toMap(),
-    );
+    return db.insert(_table, inspection.toMap());
   }
 
   // ==========================================================================
@@ -91,14 +94,9 @@ class WorkshopRepository {
   Future<List<WorkshopInspection>> getAllInspections() async {
     final db = await _db;
 
-    final result = await db.query(
-      _table,
-      orderBy: 'createdAt DESC',
-    );
+    final result = await db.query(_table, orderBy: 'createdAt DESC');
 
-    return result
-        .map((map) => WorkshopInspection.fromMap(map))
-        .toList();
+    return result.map((map) => WorkshopInspection.fromMap(map)).toList();
   }
 
   // ==========================================================================
@@ -106,9 +104,10 @@ class WorkshopRepository {
   // ==========================================================================
 
   Future<int> updateInspection(
-    WorkshopInspection inspection,
-  ) async {
-    final db = await _db;
+    WorkshopInspection inspection, {
+    DatabaseExecutor? executor,
+  }) async {
+    final db = executor ?? await _db;
 
     return db.update(
       _table,
@@ -125,11 +124,7 @@ class WorkshopRepository {
   Future<int> deleteInspection(int id) async {
     final db = await _db;
 
-    return db.delete(
-      _table,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete(_table, where: 'id = ?', whereArgs: [id]);
   }
 
   // ==========================================================================
@@ -149,9 +144,7 @@ class WorkshopRepository {
     final db = await _db;
 
     final result = Sqflite.firstIntValue(
-      await db.rawQuery(
-        'SELECT COUNT(*) FROM $_table',
-      ),
+      await db.rawQuery('SELECT COUNT(*) FROM $_table'),
     );
 
     return result ?? 0;
@@ -167,11 +160,7 @@ class WorkshopRepository {
         FROM $_table
         WHERE status IN (?, ?, ?)
         ''',
-        [
-          'draft',
-          'inProgress',
-          'awaitingRepair',
-        ],
+        ['draft', 'inProgress', 'awaitingRepair'],
       ),
     );
 
@@ -195,51 +184,46 @@ class WorkshopRepository {
     return result ?? 0;
   }
 
-Future<int> getCriticalFailureCount() async {
-  final db = await _db;
+  Future<int> getCriticalFailureCount() async {
+    final db = await _db;
 
-  final result = Sqflite.firstIntValue(
-    await db.rawQuery(
-      '''
+    final result = Sqflite.firstIntValue(
+      await db.rawQuery(
+        '''
       SELECT COUNT(*)
       FROM workshop_inspection_items
       WHERE status = ?
       ''',
-      ['fail'],
-    ),
-  );
+        ['fail'],
+      ),
+    );
 
-  return result ?? 0;
-}
+    return result ?? 0;
+  }
 
-Future<int> getRepairRequiredCount() async {
-  final db = await _db;
+  Future<int> getRepairRequiredCount() async {
+    final db = await _db;
 
-  final result = Sqflite.firstIntValue(
-    await db.rawQuery(
-      '''
+    final result = Sqflite.firstIntValue(
+      await db.rawQuery(
+        '''
       SELECT COUNT(*)
       FROM workshop_repair_jobs
       WHERE status != ?
       AND status != ?
       ''',
-      [
-        'completed',
-        'cancelled',
-      ],
-    ),
-  );
+        ['completed', 'cancelled'],
+      ),
+    );
 
-  return result ?? 0;
-}
+    return result ?? 0;
+  }
 
   // ==========================================================================
   // INSPECTION ITEMS
   // ==========================================================================
 
-  Future<int> addInspectionItem(
-    InspectionItem item,
-  ) async {
+  Future<int> addInspectionItem(InspectionItem item) async {
     final db = await _db;
 
     return db.insert(
@@ -265,9 +249,7 @@ Future<int> getRepairRequiredCount() async {
       );
     }
 
-    await batch.commit(
-      noResult: true,
-    );
+    await batch.commit(noResult: true);
   }
 
   Future<List<InspectionItem>> getInspectionItems(
@@ -283,14 +265,10 @@ Future<int> getRepairRequiredCount() async {
       orderBy: 'displayOrder ASC',
     );
 
-    return result
-        .map((map) => InspectionItem.fromMap(map))
-        .toList();
+    return result.map((map) => InspectionItem.fromMap(map)).toList();
   }
 
-  Future<int> updateInspectionItem(
-    InspectionItem item,
-  ) async {
+  Future<int> updateInspectionItem(InspectionItem item) async {
     final db = await _db;
 
     return db.update(
@@ -311,9 +289,7 @@ Future<int> getRepairRequiredCount() async {
     );
   }
 
-  Future<int> deleteInspectionItems(
-    int inspectionId,
-  ) async {
+  Future<int> deleteInspectionItems(int inspectionId) async {
     final db = await _db;
 
     return db.delete(
@@ -340,9 +316,7 @@ Future<int> getRepairRequiredCount() async {
     );
   }
 
-  Future<List<RepairJob>> getRepairJobs(
-    int inspectionId,
-  ) async {
+  Future<List<RepairJob>> getRepairJobs(int inspectionId) async {
     final db = await _db;
 
     final result = await db.query(
@@ -352,11 +326,8 @@ Future<int> getRepairRequiredCount() async {
       orderBy: 'createdAt DESC',
     );
 
-    return result
-        .map((map) => RepairJob.fromMap(map))
-        .toList();
+    return result.map((map) => RepairJob.fromMap(map)).toList();
   }
-
 
   /// Returns every repair job in the workshop, regardless of inspection.
   /// Jobs are returned newest first.
@@ -368,9 +339,7 @@ Future<int> getRepairRequiredCount() async {
       orderBy: 'createdAt DESC',
     );
 
-    return result
-        .map((map) => RepairJob.fromMap(map))
-        .toList();
+    return result.map((map) => RepairJob.fromMap(map)).toList();
   }
 
   /// Returns repair jobs assigned to a specific technician user ID.
@@ -386,9 +355,7 @@ Future<int> getRepairRequiredCount() async {
       orderBy: 'createdAt DESC',
     );
 
-    return result
-        .map((map) => RepairJob.fromMap(map))
-        .toList();
+    return result.map((map) => RepairJob.fromMap(map)).toList();
   }
 
   Future<RepairJob?> getRepairJob(int id) async {
@@ -408,9 +375,7 @@ Future<int> getRepairRequiredCount() async {
     return RepairJob.fromMap(result.first);
   }
 
-  Future<int> updateRepairJob(
-    RepairJob job,
-  ) async {
+  Future<int> updateRepairJob(RepairJob job) async {
     final db = await _db;
 
     return db.update(
@@ -420,7 +385,6 @@ Future<int> getRepairRequiredCount() async {
       whereArgs: [job.id],
     );
   }
-
 
   Future<RepairCompletionStatus> getRepairCompletionStatus(
     int inspectionId,
@@ -448,9 +412,7 @@ Future<int> getRepairRequiredCount() async {
 
   /// Completes an inspection once all of its non-cancelled repair jobs have
   /// been resolved. Final manager sign-off remains a separate action.
-  Future<bool> completeInspectionWhenRepairsResolved(
-    int inspectionId,
-  ) async {
+  Future<bool> completeInspectionWhenRepairsResolved(int inspectionId) async {
     final repairStatus = await getRepairCompletionStatus(inspectionId);
 
     if (repairStatus == RepairCompletionStatus.outstanding) {
@@ -479,16 +441,10 @@ Future<int> getRepairRequiredCount() async {
   Future<int> deleteRepairJob(int id) async {
     final db = await _db;
 
-    return db.delete(
-      'workshop_repair_jobs',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete('workshop_repair_jobs', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<int> deleteRepairJobs(
-    int inspectionId,
-  ) async {
+  Future<int> deleteRepairJobs(int inspectionId) async {
     final db = await _db;
 
     return db.delete(

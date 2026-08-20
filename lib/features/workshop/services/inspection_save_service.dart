@@ -4,6 +4,7 @@ import '../repositories/inspection_photo_repository.dart';
 import '../repositories/workshop_repository.dart';
 import 'mappers/checklist_mapper.dart';
 import 'mappers/inspection_mapper.dart';
+import 'repair_job_generator.dart';
 
 class InspectionSaveService {
   InspectionSaveService({
@@ -11,100 +12,110 @@ class InspectionSaveService {
     InspectionMapper? inspectionMapper,
     ChecklistMapper? checklistMapper,
     InspectionPhotoRepository? photoRepository,
-  })  : _repository =
-            repository ?? WorkshopRepository(),
-        _inspectionMapper =
-            inspectionMapper ?? const InspectionMapper(),
-        _checklistMapper =
-            checklistMapper ?? const ChecklistMapper(),
-        _photoRepository =
-            photoRepository ?? InspectionPhotoRepository();
+    RepairJobGenerator? repairJobGenerator,
+  }) : _repository = repository ?? WorkshopRepository(),
+       _inspectionMapper = inspectionMapper ?? const InspectionMapper(),
+       _checklistMapper = checklistMapper ?? const ChecklistMapper(),
+       _photoRepository = photoRepository ?? InspectionPhotoRepository(),
+       _repairJobGenerator = repairJobGenerator ?? RepairJobGenerator();
 
   final WorkshopRepository _repository;
   final InspectionMapper _inspectionMapper;
   final ChecklistMapper _checklistMapper;
   final InspectionPhotoRepository _photoRepository;
+  final RepairJobGenerator _repairJobGenerator;
 
-  Future<int> saveInspection(
-    InspectionWizardData data,
-  ) async {
-    // Convert wizard data into the database model.
-    final inspection =
-        _inspectionMapper.map(data);
+  Future<int> saveInspection(InspectionWizardData data) async {
+    return _repository.transaction((executor) async {
+      // The initial value exists only inside this transaction. The final,
+      // stable number is derived from SQLite's generated inspection ID below.
+      final pendingInspection = _inspectionMapper
+          .map(data)
+          .copyWith(inspectionNumber: 'PENDING');
+      final inspectionId = await _repository.createInspection(
+        pendingInspection,
+        executor: executor,
+      );
+      final inspectionNumber = _inspectionNumber(data, inspectionId);
+      await _repository.updateInspection(
+        pendingInspection.copyWith(
+          id: inspectionId,
+          inspectionNumber: inspectionNumber,
+          updatedAt: DateTime.now(),
+        ),
+        executor: executor,
+      );
 
-    // Save inspection header first so we have its database ID.
-    final inspectionId =
-        await _repository.createInspection(
-      inspection,
-    );
+      final inspectionItems = _checklistMapper.mapList(
+        inspectionId,
+        data.checklistItems,
+      );
+      await _repository.addInspectionItems(inspectionItems, executor: executor);
 
-    // Convert and save checklist items.
-    final inspectionItems =
-        _checklistMapper.mapList(
-      inspectionId,
-      data.checklistItems,
-    );
-
-    await _repository.addInspectionItems(
-      inspectionItems,
-    );
-
-    // Reload the persisted checklist rows so we have the
-    // database-generated item IDs needed by the photo table.
-    final savedItems =
-        await _repository.getInspectionItems(
-      inspectionId,
-    );
-
-    // Save every photo against its corresponding persisted
-    // checklist item.
-    final photos = <InspectionPhoto>[];
-
-    for (var index = 0;
-        index < data.checklistItems.length &&
-            index < savedItems.length;
-        index++) {
-      final wizardItem = data.checklistItems[index];
-      final savedItem = savedItems[index];
-
-      final itemId = savedItem.id;
-      if (itemId == null) {
-        continue;
-      }
-
-      for (final filePath in wizardItem.photos) {
-        if (filePath.trim().isEmpty) {
-          continue;
-        }
-
-        photos.add(
-          InspectionPhoto(
-            inspectionId: inspectionId,
-            inspectionItemId: itemId,
-            filePath: filePath,
-            createdAt: DateTime.now(),
-          ),
+      // Reload the persisted rows in display order so photos and repairs are
+      // linked to their database-generated item IDs, not wizard placeholders.
+      final savedItems = await _repository.getInspectionItems(
+        inspectionId,
+        executor: executor,
+      );
+      if (savedItems.length != data.checklistItems.length) {
+        throw StateError(
+          'Workshop inspection items were not saved completely.',
         );
       }
-    }
 
-    await _photoRepository.createPhotos(photos);
+      final photos = <InspectionPhoto>[];
+      for (var index = 0; index < data.checklistItems.length; index++) {
+        final itemId = savedItems[index].id;
+        if (itemId == null) {
+          throw StateError(
+            'Saved workshop inspection item has no database ID.',
+          );
+        }
+        for (final filePath in data.checklistItems[index].photos) {
+          if (filePath.trim().isEmpty) continue;
+          photos.add(
+            InspectionPhoto(
+              inspectionId: inspectionId,
+              inspectionItemId: itemId,
+              filePath: filePath,
+              createdAt: DateTime.now(),
+            ),
+          );
+        }
+      }
+      await _photoRepository.createPhotos(photos, executor: executor);
 
-    // Save repair jobs.
-    for (final repair in data.repairJobs) {
-      final sourceIndex = repair.inspectionItemId - 1;
-      final sourceItemId = sourceIndex >= 0 && sourceIndex < savedItems.length
-          ? savedItems[sourceIndex].id
-          : null;
+      for (var sequence = 0; sequence < data.repairJobs.length; sequence++) {
+        final repair = data.repairJobs[sequence];
+        final sourceIndex = repair.inspectionItemId - 1;
+        if (sourceIndex < 0 || sourceIndex >= savedItems.length) {
+          throw StateError('Repair job source item could not be resolved.');
+        }
+        final sourceItemId = savedItems[sourceIndex].id;
+        if (sourceItemId == null) {
+          throw StateError('Saved repair source item has no database ID.');
+        }
+        await _repository.createRepairJob(
+          repair.copyWith(
+            jobNumber: _repairJobGenerator.jobNumberFor(
+              inspectionId: inspectionId,
+              sequence: sequence + 1,
+              createdAt: repair.createdAt,
+            ),
+            inspectionId: inspectionId,
+            inspectionItemId: sourceItemId,
+          ),
+          executor: executor,
+        );
+      }
 
-      await _repository.createRepairJob(
-        repair.copyWith(
-          inspectionId: inspectionId,
-          inspectionItemId: sourceItemId ?? repair.inspectionItemId,
-        ),
-      );
-    }
+      return inspectionId;
+    });
+  }
 
-    return inspectionId;
+  String _inspectionNumber(InspectionWizardData data, int inspectionId) {
+    final year = data.dateStarted.year;
+    return 'WI-$year-${inspectionId.toString().padLeft(6, '0')}';
   }
 }
