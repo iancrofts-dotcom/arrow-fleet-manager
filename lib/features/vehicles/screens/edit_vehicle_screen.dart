@@ -4,6 +4,7 @@ import '../../auth/services/permission_service.dart';
 import '../../../shared/widgets/app_page_scaffold.dart';
 
 import '../models/vehicle.dart';
+import '../services/vehicle_service.dart';
 
 class EditVehicleScreen extends StatefulWidget {
   final Vehicle vehicle;
@@ -23,6 +24,10 @@ class _EditVehicleScreenState
 
   final PermissionService _permissions =
       PermissionService.instance;
+
+  final VehicleService _vehicleService = VehicleService();
+
+  bool _saving = false;
 
   late final TextEditingController fleetController;
   late final TextEditingController registrationController;
@@ -77,10 +82,14 @@ class _EditVehicleScreenState
     super.dispose();
   }
 
-  void save() {
-    Navigator.pop(
-      context,
-      Vehicle(
+  Future<void> save() async {
+    if (_saving) return;
+
+    setState(() {
+      _saving = true;
+    });
+
+    final vehicle = Vehicle(
         id: widget.vehicle.id,
         fleetNumber: fleetController.text.trim(),
         registration:
@@ -98,8 +107,26 @@ class _EditVehicleScreenState
         motExpiry: widget.vehicle.motExpiry,
         serviceDue: widget.vehicle.serviceDue,
         active: widget.vehicle.active,
-      ),
-    );
+      );
+
+    try {
+      await _vehicleService.updateVehicle(vehicle);
+
+      if (!mounted) return;
+
+      Navigator.pop(context, vehicle);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to update vehicle.\n$error'),
+        ),
+      );
+      setState(() {
+        _saving = false;
+      });
+    }
   }
 
   InputDecoration input(String label) {
@@ -170,9 +197,9 @@ class _EditVehicleScreenState
           const SizedBox(height: 30),
 
           FilledButton.icon(
-            onPressed: save,
+            onPressed: _saving ? null : save,
             icon: const Icon(Icons.save),
-            label: const Text("Update Vehicle"),
+            label: Text(_saving ? 'Updating Vehicle...' : 'Update Vehicle'),
           ),
         ],
       ),
