@@ -8,19 +8,15 @@ class AssignVehicleScreen extends StatefulWidget {
   const AssignVehicleScreen({super.key});
 
   @override
-  State<AssignVehicleScreen> createState() =>
-      _AssignVehicleScreenState();
+  State<AssignVehicleScreen> createState() => _AssignVehicleScreenState();
 }
 
-class _AssignVehicleScreenState
-    extends State<AssignVehicleScreen> {
-  final VehicleService _vehicleService =
-      VehicleService();
+class _AssignVehicleScreenState extends State<AssignVehicleScreen> {
+  final VehicleService _vehicleService = VehicleService();
 
   late Future<List<Vehicle>> _vehiclesFuture;
 
-  final TextEditingController _searchController =
-      TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   String _search = '';
 
@@ -36,28 +32,18 @@ class _AssignVehicleScreenState
     super.dispose();
   }
 
-  List<Vehicle> _filterVehicles(
-    List<Vehicle> vehicles,
-  ) {
-    if (_search.isEmpty) {
-      return vehicles;
-    }
+  List<Vehicle> _filterVehicles(List<Vehicle> vehicles) {
+    final activeVehicles = vehicles.where((vehicle) => vehicle.active);
+
+    if (_search.isEmpty) return activeVehicles.toList(growable: false);
 
     final query = _search.toLowerCase();
 
-    return vehicles.where((vehicle) {
-      return vehicle.registration
-              .toLowerCase()
-              .contains(query) ||
-          vehicle.fleetNumber
-              .toLowerCase()
-              .contains(query) ||
-          vehicle.make
-              .toLowerCase()
-              .contains(query) ||
-          vehicle.model
-              .toLowerCase()
-              .contains(query);
+    return activeVehicles.where((vehicle) {
+      return vehicle.registration.toLowerCase().contains(query) ||
+          vehicle.fleetNumber.toLowerCase().contains(query) ||
+          vehicle.make.toLowerCase().contains(query) ||
+          vehicle.model.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -73,9 +59,7 @@ class _AssignVehicleScreenState
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Assign Vehicle'),
-      ),
+      appBar: AppBar(title: const Text('Assign Vehicle')),
       body: Column(
         children: [
           Padding(
@@ -98,68 +82,41 @@ class _AssignVehicleScreenState
             child: FutureBuilder<List<Vehicle>>(
               future: _vehiclesFuture,
               builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Center(
-                    child:
-                        CircularProgressIndicator(),
-                  );
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      snapshot.error.toString(),
-                    ),
-                  );
+                  return Center(child: Text(snapshot.error.toString()));
                 }
 
-                final vehicles =
-                    _filterVehicles(
-                  snapshot.data ?? [],
-                );
+                final vehicles = _filterVehicles(snapshot.data ?? []);
 
                 if (vehicles.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No vehicles found.',
-                    ),
-                  );
+                  return const Center(child: Text('No vehicles found.'));
                 }
 
                 return ListView.builder(
                   itemCount: vehicles.length,
-                  itemBuilder:
-                      (context, index) {
-                    final vehicle =
-                        vehicles[index];
+                  itemBuilder: (context, index) {
+                    final vehicle = vehicles[index];
 
                     return Card(
-                      margin:
-                          const EdgeInsets.symmetric(
+                      margin: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 6,
                       ),
                       child: ListTile(
-                        leading: const Icon(
-                          Icons.local_shipping,
-                        ),
-                        title: Text(
-                          vehicle.registration,
-                        ),
+                        leading: const Icon(Icons.local_shipping),
+                        title: Text(vehicle.registration),
                         subtitle: Text(
                           '${vehicle.fleetNumber}\n'
                           '${vehicle.make} ${vehicle.model}',
                         ),
                         isThreeLine: true,
-                        trailing: const Icon(
-                          Icons.chevron_right,
-                        ),
+                        trailing: const Icon(Icons.chevron_right),
                         onTap: () {
-                          Navigator.pop(
-                            context,
-                            vehicle,
-                          );
+                          Navigator.pop(context, vehicle);
                         },
                       ),
                     );

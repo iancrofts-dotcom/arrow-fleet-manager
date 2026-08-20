@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 
-class DeleteVehicleDialog extends StatelessWidget {
-  const DeleteVehicleDialog({
-    super.key,
-    required this.registration,
-  });
+class DeactivateVehicleDialog extends StatelessWidget {
+  const DeactivateVehicleDialog({super.key, required this.registration});
 
   final String registration;
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Delete Vehicle"),
+      title: const Text("Deactivate Vehicle"),
       content: Text(
-        "Delete vehicle '$registration'?\n\nThis action cannot be undone.",
+        "Deactivate vehicle '$registration'?\n\nThe vehicle will become "
+        'inactive. Its maintenance, inspections, assignments and records '
+        'will be retained.',
       ),
       actions: [
         TextButton(
@@ -22,7 +21,7 @@ class DeleteVehicleDialog extends StatelessWidget {
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
-          child: const Text("Delete"),
+          child: const Text("Deactivate"),
         ),
       ],
     );

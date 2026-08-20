@@ -8,8 +8,7 @@ import '../models/driver_assignment.dart';
 class AssignmentRepository {
   AssignmentRepository._();
 
-  static final AssignmentRepository instance =
-      AssignmentRepository._();
+  static final AssignmentRepository instance = AssignmentRepository._();
 
   final AppDatabase _database = AppDatabase();
 
@@ -27,18 +26,14 @@ class AssignmentRepository {
       orderBy: 'assigned_from DESC',
     );
 
-    return result
-        .map((e) => DriverAssignment.fromMap(e))
-        .toList();
+    return result.map((e) => DriverAssignment.fromMap(e)).toList();
   }
 
   // ------------------------------------------------------------
   // Current assignment
   // ------------------------------------------------------------
 
-  Future<DriverAssignment?> getCurrentAssignmentForDriver(
-    int driverId,
-  ) async {
+  Future<DriverAssignment?> getCurrentAssignmentForDriver(int driverId) async {
     final db = await _db;
 
     final result = await db.query(
@@ -74,9 +69,7 @@ class AssignmentRepository {
   // Lookup Driver
   // ------------------------------------------------------------
 
-  Future<Driver?> getAssignedDriver(
-    int vehicleId,
-  ) async {
+  Future<Driver?> getAssignedDriver(int vehicleId) async {
     final db = await _db;
 
     final result = await db.rawQuery(
@@ -103,9 +96,7 @@ class AssignmentRepository {
   // Lookup Vehicle
   // ------------------------------------------------------------
 
-  Future<Vehicle?> getAssignedVehicle(
-    int driverId,
-  ) async {
+  Future<Vehicle?> getAssignedVehicle(int driverId) async {
     final db = await _db;
 
     final result = await db.rawQuery(
@@ -141,13 +132,32 @@ class AssignmentRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
 
     await db.transaction((txn) async {
+      final driver = await txn.query(
+        'drivers',
+        columns: const ['id'],
+        where: 'id = ? AND active = 1',
+        whereArgs: [driverId],
+        limit: 1,
+      );
+      if (driver.isEmpty) {
+        throw StateError('An active driver is required for an assignment.');
+      }
+
+      final vehicle = await txn.query(
+        'vehicles',
+        columns: const ['id'],
+        where: 'id = ? AND active = 1',
+        whereArgs: [vehicleId],
+        limit: 1,
+      );
+      if (vehicle.isEmpty) {
+        throw StateError('An active vehicle is required for an assignment.');
+      }
+
       // Close existing assignment for driver
       await txn.update(
         'driver_assignments',
-        {
-          'active': 0,
-          'assigned_to': now,
-        },
+        {'active': 0, 'assigned_to': now},
         where: 'driver_id = ? AND active = 1',
         whereArgs: [driverId],
       );
@@ -155,25 +165,19 @@ class AssignmentRepository {
       // Close existing assignment for vehicle
       await txn.update(
         'driver_assignments',
-        {
-          'active': 0,
-          'assigned_to': now,
-        },
+        {'active': 0, 'assigned_to': now},
         where: 'vehicle_id = ? AND active = 1',
         whereArgs: [vehicleId],
       );
 
       // Create new assignment
-      await txn.insert(
-        'driver_assignments',
-        {
-          'driver_id': driverId,
-          'vehicle_id': vehicleId,
-          'assigned_from': now,
-          'assigned_to': null,
-          'active': 1,
-        },
-      );
+      await txn.insert('driver_assignments', {
+        'driver_id': driverId,
+        'vehicle_id': vehicleId,
+        'assigned_from': now,
+        'assigned_to': null,
+        'active': 1,
+      });
     });
   }
 
@@ -181,18 +185,12 @@ class AssignmentRepository {
   // End Assignment
   // ------------------------------------------------------------
 
-  Future<void> endAssignment(
-    int assignmentId,
-  ) async {
+  Future<void> endAssignment(int assignmentId) async {
     final db = await _db;
 
     await db.update(
       'driver_assignments',
-      {
-        'active': 0,
-        'assigned_to':
-            DateTime.now().millisecondsSinceEpoch,
-      },
+      {'active': 0, 'assigned_to': DateTime.now().millisecondsSinceEpoch},
       where: 'id = ?',
       whereArgs: [assignmentId],
     );
@@ -202,18 +200,12 @@ class AssignmentRepository {
   // Unassign Vehicle
   // ------------------------------------------------------------
 
-  Future<void> unassignVehicle(
-    int vehicleId,
-  ) async {
+  Future<void> unassignVehicle(int vehicleId) async {
     final db = await _db;
 
     await db.update(
       'driver_assignments',
-      {
-        'active': 0,
-        'assigned_to':
-            DateTime.now().millisecondsSinceEpoch,
-      },
+      {'active': 0, 'assigned_to': DateTime.now().millisecondsSinceEpoch},
       where: 'vehicle_id = ? AND active = 1',
       whereArgs: [vehicleId],
     );
@@ -223,18 +215,12 @@ class AssignmentRepository {
   // Unassign Driver
   // ------------------------------------------------------------
 
-  Future<void> unassignDriver(
-    int driverId,
-  ) async {
+  Future<void> unassignDriver(int driverId) async {
     final db = await _db;
 
     await db.update(
       'driver_assignments',
-      {
-        'active': 0,
-        'assigned_to':
-            DateTime.now().millisecondsSinceEpoch,
-      },
+      {'active': 0, 'assigned_to': DateTime.now().millisecondsSinceEpoch},
       where: 'driver_id = ? AND active = 1',
       whereArgs: [driverId],
     );
@@ -244,9 +230,7 @@ class AssignmentRepository {
   // Driver History
   // ------------------------------------------------------------
 
-  Future<List<DriverAssignment>> getDriverHistory(
-    int driverId,
-  ) async {
+  Future<List<DriverAssignment>> getDriverHistory(int driverId) async {
     final db = await _db;
 
     final result = await db.query(
@@ -256,21 +240,19 @@ class AssignmentRepository {
       orderBy: 'assigned_from DESC',
     );
 
-    return result
-        .map((e) => DriverAssignment.fromMap(e))
-        .toList();
+    return result.map((e) => DriverAssignment.fromMap(e)).toList();
   }
 
   // ------------------------------------------------------------
   // Vehicle History
   // ------------------------------------------------------------
-Future<List<Map<String, dynamic>>> getVehicleAssignmentHistory(
-  int vehicleId,
-) async {
-  final db = await _db;
+  Future<List<Map<String, dynamic>>> getVehicleAssignmentHistory(
+    int vehicleId,
+  ) async {
+    final db = await _db;
 
-  return await db.rawQuery(
-    '''
+    return await db.rawQuery(
+      '''
     SELECT
       da.id,
       da.driver_id,
@@ -287,12 +269,11 @@ Future<List<Map<String, dynamic>>> getVehicleAssignmentHistory(
     WHERE da.vehicle_id = ?
     ORDER BY da.assigned_from DESC
     ''',
-    [vehicleId],
-  );
-}
-  Future<List<DriverAssignment>> getVehicleHistory(
-    int vehicleId,
-  ) async {
+      [vehicleId],
+    );
+  }
+
+  Future<List<DriverAssignment>> getVehicleHistory(int vehicleId) async {
     final db = await _db;
 
     final result = await db.query(
@@ -302,8 +283,6 @@ Future<List<Map<String, dynamic>>> getVehicleAssignmentHistory(
       orderBy: 'assigned_from DESC',
     );
 
-    return result
-        .map((e) => DriverAssignment.fromMap(e))
-        .toList();
+    return result.map((e) => DriverAssignment.fromMap(e)).toList();
   }
 }

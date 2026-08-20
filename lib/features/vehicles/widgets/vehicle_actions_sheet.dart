@@ -4,11 +4,11 @@ class VehicleActionsSheet extends StatelessWidget {
   const VehicleActionsSheet({
     super.key,
     required this.onEdit,
-    required this.onDelete,
+    required this.onDeactivate,
   });
 
   final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final VoidCallback onDeactivate;
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +22,8 @@ class VehicleActionsSheet extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.delete),
-            title: const Text('Delete Vehicle'),
-            onTap: onDelete,
+            title: const Text('Deactivate Vehicle'),
+            onTap: onDeactivate,
           ),
           const Divider(),
           ListTile(

@@ -12,27 +12,20 @@ import '../models/vehicle.dart';
 import 'edit_vehicle_screen.dart';
 
 class VehicleDetailsScreen extends StatefulWidget {
-  const VehicleDetailsScreen({
-    super.key,
-    required this.vehicle,
-  });
+  const VehicleDetailsScreen({super.key, required this.vehicle});
 
   final Vehicle vehicle;
 
   @override
-  State<VehicleDetailsScreen> createState() =>
-      _VehicleDetailsScreenState();
+  State<VehicleDetailsScreen> createState() => _VehicleDetailsScreenState();
 }
 
-class _VehicleDetailsScreenState
-    extends State<VehicleDetailsScreen> {
+class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   late Vehicle _vehicle;
 
-  final AssignmentRepository _repository =
-      AssignmentRepository.instance;
+  final AssignmentRepository _repository = AssignmentRepository.instance;
 
-  final PermissionService _permissions =
-      PermissionService.instance;
+  final PermissionService _permissions = PermissionService.instance;
 
   Driver? _assignedDriver;
 
@@ -46,10 +39,7 @@ class _VehicleDetailsScreenState
   Future<void> _loadAssignedDriver() async {
     if (_vehicle.id == null) return;
 
-    final driver =
-        await _repository.getAssignedDriver(
-      _vehicle.id!,
-    );
+    final driver = await _repository.getAssignedDriver(_vehicle.id!);
 
     if (!mounted) return;
 
@@ -63,9 +53,7 @@ class _VehicleDetailsScreenState
 
     final driver = await Navigator.push<Driver>(
       context,
-      MaterialPageRoute(
-        builder: (_) => const AssignDriverScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const AssignDriverScreen()),
     );
 
     if (!mounted || driver == null) return;
@@ -80,32 +68,22 @@ class _VehicleDetailsScreenState
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${driver.fullName} assigned successfully.',
-        ),
-      ),
+      SnackBar(content: Text('${driver.fullName} assigned successfully.')),
     );
   }
 
   Future<void> _endAssignment() async {
     if (_vehicle.id == null) return;
 
-    await _repository.unassignVehicle(
-      _vehicle.id!,
-    );
+    await _repository.unassignVehicle(_vehicle.id!);
 
     await _loadAssignedDriver();
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Driver assignment ended.',
-        ),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Driver assignment ended.')));
   }
 
   Widget _detailTile({
@@ -132,12 +110,9 @@ class _VehicleDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
-
     if (!_permissions.canViewVehicles) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Access Denied'),
-        ),
+        appBar: AppBar(title: const Text('Access Denied')),
         body: const Center(
           child: Text(
             'You do not have permission to view this vehicle.',
@@ -163,22 +138,16 @@ class _VehicleDetailsScreenState
                   Icon(
                     Icons.local_shipping,
                     size: 64,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(height: 12),
                   Text(
                     _vehicle.registration,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall,
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   Text(
                     _vehicle.fleetNumber,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ],
               ),
@@ -193,11 +162,7 @@ class _VehicleDetailsScreenState
             value: _vehicle.make,
           ),
 
-          _detailTile(
-            icon: Icons.badge,
-            title: 'Model',
-            value: _vehicle.model,
-          ),
+          _detailTile(icon: Icons.badge, title: 'Model', value: _vehicle.model),
 
           _detailTile(
             icon: Icons.calendar_today,
@@ -229,26 +194,20 @@ class _VehicleDetailsScreenState
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Driver Assignment',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge,
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
 
                   const SizedBox(height: 16),
 
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const CircleAvatar(
-                      child: Icon(Icons.person),
-                    ),
+                    leading: const CircleAvatar(child: Icon(Icons.person)),
                     title: Text(
-                      _assignedDriver?.fullName ??
-                          'No Driver Assigned',
+                      _assignedDriver?.fullName ?? 'No Driver Assigned',
                     ),
                     subtitle: Text(
                       _assignedDriver == null
@@ -258,15 +217,13 @@ class _VehicleDetailsScreenState
                   ),
 
                   const SizedBox(height: 12),
-                                    Row(
+                  Row(
                     children: [
-                      if (_permissions.canManageVehicles)
+                      if (_permissions.canManageVehicles && _vehicle.active)
                         Expanded(
                           child: FilledButton.icon(
                             onPressed: _assignDriver,
-                            icon: const Icon(
-                              Icons.person_add,
-                            ),
+                            icon: const Icon(Icons.person_add),
                             label: Text(
                               _assignedDriver == null
                                   ? 'Assign Driver'
@@ -282,9 +239,7 @@ class _VehicleDetailsScreenState
                           child: OutlinedButton.icon(
                             onPressed: _endAssignment,
                             icon: const Icon(Icons.link_off),
-                            label: const Text(
-                              'End Assignment',
-                            ),
+                            label: const Text('End Assignment'),
                           ),
                         ),
                       ],
@@ -300,18 +255,14 @@ class _VehicleDetailsScreenState
           if (_permissions.canManageVehicles)
             FilledButton.icon(
               onPressed: () async {
-                final updatedVehicle =
-                    await Navigator.push<Vehicle>(
+                final updatedVehicle = await Navigator.push<Vehicle>(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => EditVehicleScreen(
-                      vehicle: _vehicle,
-                    ),
+                    builder: (_) => EditVehicleScreen(vehicle: _vehicle),
                   ),
                 );
 
-                if (!mounted ||
-                    updatedVehicle == null) {
+                if (!mounted || updatedVehicle == null) {
                   return;
                 }
 
@@ -322,13 +273,10 @@ class _VehicleDetailsScreenState
                 await _loadAssignedDriver();
               },
               icon: const Icon(Icons.edit),
-              label: const Text(
-                'Edit Vehicle',
-              ),
+              label: const Text('Edit Vehicle'),
             ),
 
-          if (_permissions.canManageVehicles)
-            const SizedBox(height: 12),
+          if (_permissions.canManageVehicles) const SizedBox(height: 12),
 
           OutlinedButton.icon(
             onPressed: () async {
@@ -340,18 +288,14 @@ class _VehicleDetailsScreenState
                 context,
                 MaterialPageRoute(
                   builder: (_) =>
-                      AssignmentHistoryScreen(
-                    vehicleId: _vehicle.id!,
-                  ),
+                      AssignmentHistoryScreen(vehicleId: _vehicle.id!),
                 ),
               );
 
               await _loadAssignedDriver();
             },
             icon: const Icon(Icons.history),
-            label: const Text(
-              'Assignment History',
-            ),
+            label: const Text('Assignment History'),
           ),
         ],
       ),

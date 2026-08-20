@@ -12,18 +12,15 @@ class DriverAssignmentService {
     DriverAssignmentRepository? repository,
     DriverService? driverService,
     VehicleService? vehicleService,
-  })  : _repository =
-            repository ?? DriverAssignmentRepository(),
-        _driverService =
-            driverService ?? DriverService(),
-        _vehicleService =
-            vehicleService ?? VehicleService();
+  }) : _repository = repository ?? DriverAssignmentRepository(),
+       _driverService = driverService ?? DriverService(),
+       _vehicleService = vehicleService ?? VehicleService();
 
   final DriverAssignmentRepository _repository;
   final DriverService _driverService;
   final VehicleService _vehicleService;
   final AssignmentActivityMapper _activityMapper =
-    const AssignmentActivityMapper();
+      const AssignmentActivityMapper();
 
   Future<List<DriverVehicleAssignment>> getAssignments() async {
     return _repository.getAllAssignments();
@@ -45,35 +42,25 @@ class DriverAssignmentService {
     return _repository.getCurrentAssignmentForVehicle(vehicleId);
   }
 
-  Future<Driver?> getAssignedDriver(
-    int vehicleId,
-  ) async {
-    final assignment =
-        await getCurrentAssignmentForVehicle(vehicleId);
+  Future<Driver?> getAssignedDriver(int vehicleId) async {
+    final assignment = await getCurrentAssignmentForVehicle(vehicleId);
 
     if (assignment == null) {
       return null;
     }
 
-    return _driverService.getDriverById(
-      assignment.driverId,
-    );
+    return _driverService.getDriverById(assignment.driverId);
   }
 
   /// NEW: Returns the vehicle currently assigned to a driver.
-  Future<Vehicle?> getAssignedVehicle(
-    int driverId,
-  ) async {
-    final assignment =
-        await getCurrentAssignmentForDriver(driverId);
+  Future<Vehicle?> getAssignedVehicle(int driverId) async {
+    final assignment = await getCurrentAssignmentForDriver(driverId);
 
     if (assignment == null) {
       return null;
     }
 
-    return _vehicleService.getVehicleById(
-      assignment.vehicleId,
-    );
+    return _vehicleService.getVehicleById(assignment.vehicleId);
   }
 
   /// Main API used by the UI.
@@ -86,37 +73,36 @@ class DriverAssignmentService {
     }
 
     if (driver.id == null) {
-      throw Exception(
-        'Driver must be saved before it can be assigned.',
-      );
+      throw Exception('Driver must be saved before it can be assigned.');
     }
 
-    await assignOrUpdate(
-      driverId: driver.id!,
-      vehicleId: vehicleId,
-    );
+    await assignOrUpdate(driverId: driver.id!, vehicleId: vehicleId);
   }
 
   Future<void> assignDriver({
     required int driverId,
     required int vehicleId,
   }) async {
-    final driverAssignment =
-        await getCurrentAssignmentForDriver(driverId);
-
-    if (driverAssignment != null) {
-      throw Exception(
-        'Driver already has an active assignment.',
-      );
+    final driver = await _driverService.getDriverById(driverId);
+    if (driver == null || !driver.isActive) {
+      throw StateError('An active driver is required for an assignment.');
     }
 
-    final vehicleAssignment =
-        await getCurrentAssignmentForVehicle(vehicleId);
+    final vehicle = await _vehicleService.getVehicleById(vehicleId);
+    if (vehicle == null || !vehicle.active) {
+      throw StateError('An active vehicle is required for an assignment.');
+    }
+
+    final driverAssignment = await getCurrentAssignmentForDriver(driverId);
+
+    if (driverAssignment != null) {
+      throw Exception('Driver already has an active assignment.');
+    }
+
+    final vehicleAssignment = await getCurrentAssignmentForVehicle(vehicleId);
 
     if (vehicleAssignment != null) {
-      throw Exception(
-        'Vehicle already has an active assignment.',
-      );
+      throw Exception('Vehicle already has an active assignment.');
     }
 
     await _repository.insertAssignment(
@@ -133,24 +119,17 @@ class DriverAssignmentService {
     required int driverId,
     required int vehicleId,
   }) async {
-    final current =
-        await getCurrentAssignmentForVehicle(vehicleId);
+    final current = await getCurrentAssignmentForVehicle(vehicleId);
 
     if (current != null) {
       await endAssignment(current);
     }
 
-    await assignDriver(
-      driverId: driverId,
-      vehicleId: vehicleId,
-    );
+    await assignDriver(driverId: driverId, vehicleId: vehicleId);
   }
 
-  Future<void> removeAssignment(
-    int vehicleId,
-  ) async {
-    final current =
-        await getCurrentAssignmentForVehicle(vehicleId);
+  Future<void> removeAssignment(int vehicleId) async {
+    final current = await getCurrentAssignmentForVehicle(vehicleId);
 
     if (current == null) {
       return;
@@ -159,56 +138,43 @@ class DriverAssignmentService {
     await endAssignment(current);
   }
 
-  Future<void> endAssignment(
-    DriverVehicleAssignment assignment,
-  ) async {
+  Future<void> endAssignment(DriverVehicleAssignment assignment) async {
     await _repository.updateAssignment(
-      assignment.copyWith(
-        assignedTo: DateTime.now(),
-        active: false,
-      ),
+      assignment.copyWith(assignedTo: DateTime.now(), active: false),
     );
   }
 
-Future<List<DashboardActivity>> getRecentActivities({
-  int limit = 5,
-}) async {
-  final assignments = await getAssignments();
+  Future<List<DashboardActivity>> getRecentActivities({int limit = 5}) async {
+    final assignments = await getAssignments();
 
-  final driverMap =
-      await _driverService.getDriverMap();
+    final driverMap = await _driverService.getDriverMap();
 
-  final vehicleMap =
-      await _vehicleService.getVehicleMap();
+    final vehicleMap = await _vehicleService.getVehicleMap();
 
-  final activities = <DashboardActivity>[];
+    final activities = <DashboardActivity>[];
 
-  for (final assignment in assignments) {
-    final driver =
-        driverMap[assignment.driverId];
+    for (final assignment in assignments) {
+      final driver = driverMap[assignment.driverId];
 
-    final vehicle =
-        vehicleMap[assignment.vehicleId];
+      final vehicle = vehicleMap[assignment.vehicleId];
 
-    if (driver == null || vehicle == null) {
-      continue;
+      if (driver == null || vehicle == null) {
+        continue;
+      }
+
+      activities.add(
+        _activityMapper.toActivity(
+          assignment: assignment,
+          driver: driver,
+          vehicle: vehicle,
+        ),
+      );
     }
 
-    activities.add(
-      _activityMapper.toActivity(
-        assignment: assignment,
-        driver: driver,
-        vehicle: vehicle,
-      ),
-    );
+    return activities.take(limit).toList();
   }
 
-  return activities.take(limit).toList();
-}
-
-  Future<void> deleteAssignment(
-    int id,
-  ) async {
+  Future<void> deleteAssignment(int id) async {
     await _repository.deleteAssignment(id);
   }
 }

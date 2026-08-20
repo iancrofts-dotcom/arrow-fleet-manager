@@ -1,15 +1,19 @@
 import '../../../database/database_service.dart';
 import '../../../database/vehicle_repository.dart';
+import '../../drivers/repositories/driver_assignment_repository.dart';
 import '../models/vehicle.dart';
 
 class VehicleService {
-  VehicleService({VehicleRepository? repository})
-      : _repository = repository ??
-            VehicleRepository(
-              databaseService: DatabaseService(),
-            );
+  VehicleService({
+    VehicleRepository? repository,
+    DriverAssignmentRepository? assignmentRepository,
+  }) : _repository =
+           repository ?? VehicleRepository(databaseService: DatabaseService()),
+       _assignmentRepository =
+           assignmentRepository ?? DriverAssignmentRepository();
 
   final VehicleRepository _repository;
+  final DriverAssignmentRepository _assignmentRepository;
 
   Future<List<Vehicle>> getVehicles() async {
     return _repository.getVehicles();
@@ -28,17 +32,13 @@ class VehicleService {
     return _repository.getVehicleCount();
   }
 
-  Future<Vehicle?> getVehicleById(
-    int id,
-  ) async {
+  Future<Vehicle?> getVehicleById(int id) async {
     return _repository.getVehicleById(id);
   }
 
   /// Adds a vehicle and returns the saved record,
   /// including the generated database ID.
-  Future<Vehicle> addVehicle(
-    Vehicle vehicle,
-  ) async {
+  Future<Vehicle> addVehicle(Vehicle vehicle) async {
     final insertedId = await _repository.addVehicle(vehicle);
     final savedVehicle = await _repository.getVehicleById(insertedId);
     if (savedVehicle == null) {
@@ -47,19 +47,26 @@ class VehicleService {
     return savedVehicle;
   }
 
-  Future<void> updateVehicle(
-    Vehicle vehicle,
-  ) async {
-    await _repository.updateVehicle(
-      vehicle,
-    );
+  Future<void> updateVehicle(Vehicle vehicle) async {
+    await _repository.updateVehicle(vehicle);
   }
 
-  Future<void> deleteVehicle(
-    int id,
-  ) async {
-    await _repository.deleteVehicle(
-      id,
-    );
+  /// Deactivates a vehicle while retaining its operational history.
+  Future<void> deactivateVehicle(int id) async {
+    final vehicle = await _repository.getVehicleById(id);
+    if (vehicle == null) {
+      throw StateError('Vehicle $id could not be found.');
+    }
+
+    final activeAssignment = await _assignmentRepository
+        .getCurrentAssignmentForVehicle(id);
+    if (activeAssignment != null) {
+      await _assignmentRepository.updateAssignment(
+        activeAssignment.copyWith(assignedTo: DateTime.now(), active: false),
+      );
+    }
+
+    vehicle.active = false;
+    await _repository.updateVehicle(vehicle);
   }
 }

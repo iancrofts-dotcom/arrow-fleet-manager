@@ -1,6 +1,7 @@
 import '../models/driver.dart';
 import '../models/driver_creation_request.dart';
 import '../models/driver_entity.dart';
+import '../repositories/driver_assignment_repository.dart';
 import '../repositories/driver_repository.dart';
 import '../../auth/services/user_sync_service.dart';
 
@@ -8,11 +9,15 @@ class DriverService {
   DriverService({
     DriverRepository? repository,
     UserSyncService? userSyncService,
+    DriverAssignmentRepository? assignmentRepository,
   }) : _repository = repository ?? DriverRepository(),
-       _userSyncService = userSyncService ?? UserSyncService.instance;
+       _userSyncService = userSyncService ?? UserSyncService.instance,
+       _assignmentRepository =
+           assignmentRepository ?? DriverAssignmentRepository();
 
   final DriverRepository _repository;
   final UserSyncService _userSyncService;
+  final DriverAssignmentRepository _assignmentRepository;
 
   Future<List<Driver>> getDrivers() async {
     final entities = await _repository.getAllDrivers();
@@ -97,9 +102,23 @@ class DriverService {
     await _userSyncService.syncDriver(driver);
   }
 
-  Future<void> deleteDriver(int id) async {
-    await _repository.deleteDriver(id);
+  /// Deactivates a driver while retaining their account and historical records.
+  Future<void> deactivateDriver(int id) async {
+    final entity = await _repository.getDriverById(id);
+    if (entity == null) {
+      throw StateError('Driver $id could not be found.');
+    }
 
-    await _userSyncService.deleteDriverUser(id);
+    final activeAssignment = await _assignmentRepository
+        .getCurrentAssignmentForDriver(id);
+    if (activeAssignment != null) {
+      await _assignmentRepository.updateAssignment(
+        activeAssignment.copyWith(assignedTo: DateTime.now(), active: false),
+      );
+    }
+
+    final inactiveDriver = entity.toDriver().copyWith(isActive: false);
+    await _repository.updateDriver(DriverEntity.fromDriver(inactiveDriver));
+    await _userSyncService.syncDriver(inactiveDriver);
   }
 }

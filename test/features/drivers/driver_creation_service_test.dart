@@ -124,17 +124,20 @@ void main() {
     );
     final sync = UserSyncService(userService: service);
 
-    await sync.syncDriver(_driver(id: 1, username: 'driver.renamed'));
+    await sync.syncDriver(
+      _driver(id: 1, username: 'driver.renamed', isActive: false),
+    );
     final updatedUser = users.userForDriver(1);
 
     expect(updatedUser!.username, 'driver.renamed');
     expect(updatedUser.passwordHash, passwordHash);
+    expect(updatedUser.isActive, isFalse);
     expect(
       await service.login(
         username: 'driver.renamed',
         password: 'existing-password',
       ),
-      isNotNull,
+      isNull,
     );
   });
 }
@@ -246,10 +249,12 @@ class _FailingUserSyncService extends _RecordingUserSyncService {
   }
 }
 
-Driver _driver({int? id, required String username}) => Driver(
-  id: id,
-  firstName: 'Alex',
-  lastName: 'Driver',
-  licenceNumber: 'LIC-100',
-  username: username,
-);
+Driver _driver({int? id, required String username, bool isActive = true}) =>
+    Driver(
+      id: id,
+      firstName: 'Alex',
+      lastName: 'Driver',
+      licenceNumber: 'LIC-100',
+      username: username,
+      isActive: isActive,
+    );
