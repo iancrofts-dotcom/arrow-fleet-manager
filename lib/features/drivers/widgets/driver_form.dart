@@ -8,13 +8,9 @@ import 'login_details_section.dart';
 
 class DriverForm extends StatefulWidget {
   final Driver? driver;
-  final ValueChanged<Driver> onSubmit;
+  final Future<void> Function(Driver driver, String password) onSubmit;
 
-  const DriverForm({
-    super.key,
-    this.driver,
-    required this.onSubmit,
-  });
+  const DriverForm({super.key, this.driver, required this.onSubmit});
 
   @override
   State<DriverForm> createState() => _DriverFormState();
@@ -43,29 +39,17 @@ class _DriverFormState extends State<DriverForm> {
 
     final driver = widget.driver;
 
-    _firstName = TextEditingController(
-      text: driver?.firstName ?? '',
-    );
+    _firstName = TextEditingController(text: driver?.firstName ?? '');
 
-    _lastName = TextEditingController(
-      text: driver?.lastName ?? '',
-    );
+    _lastName = TextEditingController(text: driver?.lastName ?? '');
 
-    _licenceNumber = TextEditingController(
-      text: driver?.licenceNumber ?? '',
-    );
+    _licenceNumber = TextEditingController(text: driver?.licenceNumber ?? '');
 
-    _phone = TextEditingController(
-      text: driver?.phone ?? '',
-    );
+    _phone = TextEditingController(text: driver?.phone ?? '');
 
-    _email = TextEditingController(
-      text: driver?.email ?? '',
-    );
+    _email = TextEditingController(text: driver?.email ?? '');
 
-    _username = TextEditingController(
-      text: driver?.username ?? '',
-    );
+    _username = TextEditingController(text: driver?.username ?? '');
 
     _password = TextEditingController();
 
@@ -94,8 +78,7 @@ class _DriverFormState extends State<DriverForm> {
     final picked = await showDatePicker(
       context: context,
       initialDate:
-          _licenceExpiry ??
-          DateTime.now().add(const Duration(days: 365)),
+          _licenceExpiry ?? DateTime.now().add(const Duration(days: 365)),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
@@ -107,33 +90,25 @@ class _DriverFormState extends State<DriverForm> {
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    widget.onSubmit(
+    await widget.onSubmit(
       Driver(
         id: widget.driver?.id,
         firstName: _firstName.text.trim(),
         lastName: _lastName.text.trim(),
         licenceNumber: _licenceNumber.text.trim(),
         licenceExpiry: _licenceExpiry,
-        phone: _phone.text.trim().isEmpty
-            ? null
-            : _phone.text.trim(),
-        email: _email.text.trim().isEmpty
-            ? null
-            : _email.text.trim(),
-        username: _username.text.trim().isEmpty
-            ? null
-            : _username.text.trim(),
+        phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
+        email: _email.text.trim().isEmpty ? null : _email.text.trim(),
+        username: _username.text.trim().isEmpty ? null : _username.text.trim(),
         isActive: _isActive,
       ),
+      _password.text,
     );
-
-    // Password creation/update will be handled
-    // by UserService in Phase 5.
   }
 
   @override

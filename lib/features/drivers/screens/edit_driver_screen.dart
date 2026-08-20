@@ -69,7 +69,10 @@ class _EditDriverScreenState extends State<EditDriverScreen> {
         children: [
           IgnorePointer(
             ignoring: _saving,
-            child: DriverForm(driver: widget.driver, onSubmit: _saveDriver),
+            child: DriverForm(
+              driver: widget.driver,
+              onSubmit: (driver, _) => _saveDriver(driver),
+            ),
           ),
           if (_saving)
             const Positioned.fill(

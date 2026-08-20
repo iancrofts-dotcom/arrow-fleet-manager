@@ -5,15 +5,17 @@ import '../repositories/user_repository.dart';
 import 'password_service.dart';
 
 class UserService {
-  UserService._();
+  UserService({UserRepository? repository, PasswordService? passwordService})
+    : _repository = repository ?? UserRepository(),
+      _passwordService = passwordService ?? const PasswordService();
 
-  static final UserService instance = UserService._();
+  static final UserService instance = UserService();
 
-  final UserRepository _repository = UserRepository();
-  final PasswordService _passwordService = const PasswordService();
+  final UserRepository _repository;
+  final PasswordService _passwordService;
 
   /// Attempts to authenticate a user.
-/// Attempts to authenticate a user.
+  /// Attempts to authenticate a user.
   Future<User?> login({
     required String username,
     required String password,
@@ -39,13 +41,12 @@ class UserService {
 
     return user;
   }
+
   /// Returns all users.
   Future<List<User>> getUsers() async {
-       final entities = await _repository.getAllUsers();
+    final entities = await _repository.getAllUsers();
 
-    return entities
-        .map((entity) => entity.toUser())
-        .toList(growable: false);
+    return entities.map((entity) => entity.toUser()).toList(growable: false);
   }
 
   /// Generic user finder.
@@ -64,11 +65,7 @@ class UserService {
     final users = await getUsers();
 
     return users
-        .where(
-          (user) =>
-              user.role == role &&
-              (!activeOnly || user.isActive),
-        )
+        .where((user) => user.role == role && (!activeOnly || user.isActive))
         .toList(growable: false);
   }
 
@@ -129,78 +126,53 @@ class UserService {
     }
   }
 
-  Future<User?> getUserById(
-    String id,
-  ) async {
+  Future<User?> getUserById(String id) async {
     final entity = await _repository.getUserById(id);
 
     return entity?.toUser();
   }
 
-  Future<User?> getUserByUsername(
-    String username,
-  ) async {
-    final entity =
-        await _repository.getUserByUsername(username);
+  Future<User?> getUserByUsername(String username) async {
+    final entity = await _repository.getUserByUsername(username);
 
     return entity?.toUser();
   }
 
-  Future<User?> getUserByDriverId(
-    int driverId,
-  ) async {
-    final entity =
-        await _repository.getUserByDriverId(driverId);
+  Future<User?> getUserByDriverId(int driverId) async {
+    final entity = await _repository.getUserByDriverId(driverId);
 
     return entity?.toUser();
   }
+
   /// Adds a new user with a bcrypt password hash.
-  Future<void> addUser(
-    User user, {
-    required String password,
-  }) async {
+  Future<void> addUser(User user, {required String password}) async {
     final userWithPasswordHash = user.copyWith(
       passwordHash: _passwordService.hash(password),
     );
 
-    await _repository.insertUser(
-      UserEntity.fromUser(userWithPasswordHash),
-    );
+    await _repository.insertUser(UserEntity.fromUser(userWithPasswordHash));
   }
 
   /// Updates an existing user and only changes the stored password when a
   /// replacement plaintext password is supplied.
-  Future<void> updateUser(
-    User user, {
-    String? newPassword,
-  }) async {
+  Future<void> updateUser(User user, {String? newPassword}) async {
     final userWithPasswordHash = newPassword == null
         ? user
-        : user.copyWith(
-            passwordHash: _passwordService.hash(newPassword),
-          );
+        : user.copyWith(passwordHash: _passwordService.hash(newPassword));
 
-    await _repository.updateUser(
-      UserEntity.fromUser(userWithPasswordHash),
-    );
+    await _repository.updateUser(UserEntity.fromUser(userWithPasswordHash));
   }
 
   /// Saves a user.
   ///
   /// Updates an existing user if it already exists,
   /// otherwise creates a new one.
-  Future<void> saveUser(
-    User user,
-  ) async {
-    await _repository.saveUser(
-      UserEntity.fromUser(user),
-    );
+  Future<void> saveUser(User user) async {
+    await _repository.saveUser(UserEntity.fromUser(user));
   }
 
   /// Deletes a user.
-  Future<void> deleteUser(
-    String id,
-  ) async {
+  Future<void> deleteUser(String id) async {
     await _repository.deleteUser(id);
   }
 }

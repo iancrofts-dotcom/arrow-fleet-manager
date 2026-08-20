@@ -3,34 +3,25 @@ import 'package:flutter/material.dart';
 import '../../auth/services/permission_service.dart';
 
 import '../models/driver.dart';
+import '../models/driver_creation_request.dart';
 import '../services/driver_service.dart';
 import '../widgets/driver_form.dart';
 
 class AddDriverScreen extends StatefulWidget {
-  const AddDriverScreen({
-    super.key,
-  });
+  const AddDriverScreen({super.key});
 
   @override
-  State<AddDriverScreen> createState() =>
-      _AddDriverScreenState();
+  State<AddDriverScreen> createState() => _AddDriverScreenState();
 }
 
-class _AddDriverScreenState
-    extends State<AddDriverScreen> {
+class _AddDriverScreenState extends State<AddDriverScreen> {
+  final PermissionService _permissions = PermissionService.instance;
 
-  final PermissionService _permissions =
-      PermissionService.instance;
-
-  final DriverService _driverService =
-      DriverService();
+  final DriverService _driverService = DriverService();
 
   bool _saving = false;
 
-  Future<void> _saveDriver(
-    Driver driver,
-  ) async {
-
+  Future<void> _saveDriver(Driver driver, String password) async {
     if (_saving) return;
 
     setState(() {
@@ -38,30 +29,19 @@ class _AddDriverScreenState
     });
 
     try {
-
-      final savedDriver =
-          await _driverService.addDriver(
-        driver,
+      final savedDriver = await _driverService.addDriver(
+        DriverCreationRequest(driver: driver, password: password),
       );
 
       if (!mounted) return;
 
-      Navigator.pop(
-        context,
-        savedDriver,
-      );
-
+      Navigator.pop(context, savedDriver);
     } catch (e) {
-
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Unable to save driver.\n$e',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unable to save driver.\n$e')));
 
       setState(() {
         _saving = false;
@@ -71,37 +51,24 @@ class _AddDriverScreenState
 
   @override
   Widget build(BuildContext context) {
-
     if (!_permissions.canManageDrivers) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'Access Denied',
-          ),
-        ),
+        appBar: AppBar(title: const Text('Access Denied')),
         body: const Center(
           child: Text(
             'You do not have permission to add drivers.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 18,
-            ),
+            style: TextStyle(fontSize: 18),
           ),
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Add Driver',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Add Driver')),
       body: IgnorePointer(
         ignoring: _saving,
-        child: DriverForm(
-          onSubmit: _saveDriver,
-                  ),
+        child: DriverForm(onSubmit: _saveDriver),
       ),
     );
   }

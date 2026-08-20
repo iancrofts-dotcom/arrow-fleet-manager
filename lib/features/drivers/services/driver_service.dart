@@ -1,4 +1,5 @@
 import '../models/driver.dart';
+import '../models/driver_creation_request.dart';
 import '../models/driver_entity.dart';
 import '../repositories/driver_repository.dart';
 import '../../auth/services/user_sync_service.dart';
@@ -6,16 +7,17 @@ import '../../auth/services/user_sync_service.dart';
 class DriverService {
   DriverService({
     DriverRepository? repository,
-  }) : _repository = repository ?? DriverRepository();
+    UserSyncService? userSyncService,
+  }) : _repository = repository ?? DriverRepository(),
+       _userSyncService = userSyncService ?? UserSyncService.instance;
 
   final DriverRepository _repository;
+  final UserSyncService _userSyncService;
 
   Future<List<Driver>> getDrivers() async {
     final entities = await _repository.getAllDrivers();
 
-    return entities
-        .map((entity) => entity.toDriver())
-        .toList(growable: false);
+    return entities.map((entity) => entity.toDriver()).toList(growable: false);
   }
 
   Future<Map<int, Driver>> getDriverMap() async {
@@ -39,48 +41,65 @@ class DriverService {
 
   /// Adds a driver and returns the saved database record,
   /// including the generated ID.
-  Future<Driver> addDriver(
-    Driver driver,
-  ) async {
-    await _repository.insertDriver(
-      DriverEntity.fromDriver(driver),
-    );
+  Future<Driver> addDriver(DriverCreationRequest request) async {
+    final driver = request.driver;
+    final username = driver.username;
+    if (username == null || username.isEmpty) {
+      throw ArgumentError('A username is required to create a driver account.');
+    }
+    if (request.password.isEmpty) {
+      throw ArgumentError('A password is required to create a driver account.');
+    }
 
-    final drivers = await getDrivers();
+    if (await _userSyncService.isUsernameInUse(username)) {
+      throw StateError('Username already exists.');
+    }
 
-    final savedDriver = drivers.lastWhere(
-      (d) =>
-          d.firstName == driver.firstName &&
-          d.lastName == driver.lastName &&
-          d.licenceNumber == driver.licenceNumber,
-    );
+    int? insertedDriverId;
+    try {
+      insertedDriverId = await _repository.insertDriver(
+        DriverEntity.fromDriver(driver),
+      );
 
-    await UserSyncService.instance.syncDriver(
-      savedDriver,
-    );
+      final savedEntity = await _repository.getDriverById(insertedDriverId);
+      if (savedEntity == null) {
+        throw StateError(
+          'Inserted driver $insertedDriverId could not be retrieved.',
+        );
+      }
 
-    return savedDriver;
+      final savedDriver = savedEntity.toDriver();
+      await _userSyncService.createDriverUser(
+        savedDriver,
+        password: request.password,
+      );
+
+      return savedDriver;
+    } catch (error, stackTrace) {
+      if (insertedDriverId != null) {
+        try {
+          await _repository.deleteDriver(insertedDriverId);
+        } catch (cleanupError) {
+          throw StateError(
+            'Driver creation failed: $error. '
+            'Unable to remove the newly created driver: $cleanupError.',
+          );
+        }
+      }
+
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 
-  Future<void> updateDriver(
-    Driver driver,
-  ) async {
-    await _repository.updateDriver(
-      DriverEntity.fromDriver(driver),
-    );
+  Future<void> updateDriver(Driver driver) async {
+    await _repository.updateDriver(DriverEntity.fromDriver(driver));
 
-    await UserSyncService.instance.syncDriver(
-      driver,
-    );
+    await _userSyncService.syncDriver(driver);
   }
 
-  Future<void> deleteDriver(
-    int id,
-  ) async {
+  Future<void> deleteDriver(int id) async {
     await _repository.deleteDriver(id);
 
-    await UserSyncService.instance.deleteDriverUser(
-      id,
-    );
+    await _userSyncService.deleteDriverUser(id);
   }
 }
