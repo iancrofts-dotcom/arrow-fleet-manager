@@ -22,7 +22,13 @@ class FleetFilterBar extends StatelessWidget {
       ),
       child: Wrap(
         spacing: 8,
-        children: VehicleFilter.values.map((filter) {
+        children: VehicleFilter.values
+            .where(
+              (filter) =>
+                  filter != VehicleFilter.workshop &&
+                  filter != VehicleFilter.retired,
+            )
+            .map((filter) {
           return FilterChip(
             label: Text(_label(filter)),
             selected: selectedFilter == filter,
