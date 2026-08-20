@@ -18,10 +18,10 @@ class VehicleRepository {
     return (result.first['total'] as int?) ?? 0;
   }
 
-  Future<void> addVehicle(Vehicle vehicle) async {
+  Future<int> addVehicle(Vehicle vehicle) async {
     final db = await databaseService.database.database();
 
-    await db.insert(
+    return db.insert(
       'vehicles',
       vehicle.toMap(),
     );

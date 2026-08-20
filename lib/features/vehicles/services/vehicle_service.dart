@@ -3,10 +3,11 @@ import '../../../database/vehicle_repository.dart';
 import '../models/vehicle.dart';
 
 class VehicleService {
-  VehicleService()
-      : _repository = VehicleRepository(
-          databaseService: DatabaseService(),
-        );
+  VehicleService({VehicleRepository? repository})
+      : _repository = repository ??
+            VehicleRepository(
+              databaseService: DatabaseService(),
+            );
 
   final VehicleRepository _repository;
 
@@ -38,20 +39,11 @@ class VehicleService {
   Future<Vehicle> addVehicle(
     Vehicle vehicle,
   ) async {
-    await _repository.addVehicle(
-      vehicle,
-    );
-
-    final vehicles = await getVehicles();
-
-    final savedVehicle = vehicles.lastWhere(
-      (v) =>
-          v.registration ==
-              vehicle.registration &&
-          v.make == vehicle.make &&
-          v.model == vehicle.model,
-    );
-
+    final insertedId = await _repository.addVehicle(vehicle);
+    final savedVehicle = await _repository.getVehicleById(insertedId);
+    if (savedVehicle == null) {
+      throw StateError('Inserted vehicle $insertedId could not be retrieved.');
+    }
     return savedVehicle;
   }
 
