@@ -238,6 +238,57 @@ class WorkshopReportFilter {
   final RepairJobStatus? status;
   final RepairPriority? priority;
   final int? templateId;
+
+  factory WorkshopReportFilter.scoped({
+    required WorkshopReportFilterScope scope,
+    DateTime? start,
+    DateTime? end,
+    int? vehicleId,
+    String? technicianId,
+    RepairJobStatus? status,
+    RepairPriority? priority,
+  }) {
+    return switch (scope) {
+      WorkshopReportFilterScope.repairJobs => WorkshopReportFilter(
+          start: start,
+          end: end,
+          vehicleId: vehicleId,
+          technicianId: technicianId,
+          status: status,
+          priority: priority,
+        ),
+      WorkshopReportFilterScope.vehicleHistory => WorkshopReportFilter(
+          start: start,
+          end: end,
+          vehicleId: vehicleId,
+        ),
+      WorkshopReportFilterScope.technicianWork => WorkshopReportFilter(
+          start: start,
+          end: end,
+          technicianId: technicianId,
+        ),
+      WorkshopReportFilterScope.costs => WorkshopReportFilter(
+          start: start,
+          end: end,
+          vehicleId: vehicleId,
+          status: status,
+          priority: priority,
+        ),
+      WorkshopReportFilterScope.inspection => WorkshopReportFilter(
+          start: start,
+          end: end,
+          vehicleId: vehicleId,
+        ),
+    };
+  }
+}
+
+enum WorkshopReportFilterScope {
+  repairJobs,
+  vehicleHistory,
+  technicianWork,
+  costs,
+  inspection,
 }
 
 class TechnicianWorkSummary {

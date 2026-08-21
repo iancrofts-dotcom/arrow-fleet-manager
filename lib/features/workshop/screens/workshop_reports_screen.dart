@@ -77,7 +77,8 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
         DateTimeRange(start: today.subtract(const Duration(days: 29)), end: today),
       _ReportPeriod.custom => _customRange,
     };
-    return WorkshopReportFilter(
+    return WorkshopReportFilter.scoped(
+      scope: _filterScope,
       start: range?.start,
       end: range?.end,
       vehicleId: _vehicleId,
@@ -86,6 +87,16 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
       priority: _priority,
     );
   }
+
+  WorkshopReportFilterScope get _filterScope => switch (_type) {
+        _WorkshopReportType.repairJobs => WorkshopReportFilterScope.repairJobs,
+        _WorkshopReportType.vehicleHistory =>
+          WorkshopReportFilterScope.vehicleHistory,
+        _WorkshopReportType.technicianWork =>
+          WorkshopReportFilterScope.technicianWork,
+        _WorkshopReportType.costs => WorkshopReportFilterScope.costs,
+        _WorkshopReportType.inspection => WorkshopReportFilterScope.inspection,
+      };
 
   Future<void> _selectCustomRange() async {
     final now = DateTime.now();
@@ -278,12 +289,13 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
       .showSnackBar(SnackBar(content: Text(message)));
 
   String _filterSummary(_ReportPageData data) {
+    final filter = _filter();
     final vehicles = data.source.inspections
-        .where((inspection) => inspection.vehicleId == _vehicleId)
+        .where((inspection) => inspection.vehicleId == filter.vehicleId)
         .map((inspection) => inspection.registration)
         .toList(growable: false);
     final vehicle = vehicles.isEmpty ? null : vehicles.first;
-    return [_period.label(_customRange), vehicle ?? 'All vehicles', _technicianLabel(data, _technicianId), _status?.name ?? 'All statuses', _priority?.name ?? 'All priorities'].join(' • ');
+    return [_period.label(_customRange), vehicle ?? 'All vehicles', _technicianLabel(data, filter.technicianId), filter.status?.name ?? 'All statuses', filter.priority?.name ?? 'All priorities'].join(' • ');
   }
 
   @override
@@ -368,7 +380,8 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
     if (_type == _WorkshopReportType.technicianWork && _technicianId == null) return const Text('Select a Technician account to view assigned work.');
     if (_type == _WorkshopReportType.inspection && _inspectionId == null) return const Text('Select a Workshop inspection to create its detailed report.');
     if (_type == _WorkshopReportType.vehicleHistory) {
-      final key = '$_vehicleId|${_period.name}|${_customRange?.start}|${_customRange?.end}|${_status?.name}|${_priority?.name}';
+      final filter = _filter();
+      final key = '${filter.vehicleId}|${filter.start}|${filter.end}';
       if (_vehicleHistoryKey != key) {
         _vehicleHistoryKey = key;
         _vehicleHistoryFuture = _loadVehicleHistory(data, jobs, inspections);

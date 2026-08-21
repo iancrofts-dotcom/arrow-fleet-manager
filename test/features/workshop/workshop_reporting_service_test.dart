@@ -50,6 +50,73 @@ void main() {
       expect(filtered.single.jobNumber, 'RJ-1');
     });
 
+    test('vehicle history scope ignores hidden repair job filters', () {
+      final filter = WorkshopReportFilter.scoped(
+        scope: WorkshopReportFilterScope.vehicleHistory,
+        start: DateTime(2026, 8, 19),
+        end: DateTime(2026, 8, 19),
+        vehicleId: 1,
+        technicianId: 'tech-a',
+        status: RepairJobStatus.completed,
+        priority: RepairPriority.high,
+      );
+
+      final filtered = service.filterJobs([
+        _job('RJ-1', technicianId: 'tech-b'),
+        _job('RJ-2', technicianId: 'tech-a').copyWith(vehicleId: 2),
+      ], filter);
+
+      expect(filtered.map((job) => job.jobNumber), ['RJ-1']);
+      expect(filter.technicianId, isNull);
+      expect(filter.status, isNull);
+      expect(filter.priority, isNull);
+    });
+
+    test('technician work scope ignores hidden vehicle status and priority', () {
+      final filter = WorkshopReportFilter.scoped(
+        scope: WorkshopReportFilterScope.technicianWork,
+        start: DateTime(2026, 8, 19),
+        end: DateTime(2026, 8, 19),
+        vehicleId: 1,
+        technicianId: 'tech-a',
+        status: RepairJobStatus.completed,
+        priority: RepairPriority.high,
+      );
+
+      final filtered = service.filterJobs([
+        _job('RJ-1', technicianId: 'tech-a'),
+        _job('RJ-2', technicianId: 'tech-a')
+            .copyWith(vehicleId: 2, priority: RepairPriority.low),
+        _job('RJ-3', technicianId: 'tech-b'),
+      ], filter);
+
+      expect(filtered.map((job) => job.jobNumber), ['RJ-1', 'RJ-2']);
+      expect(filter.vehicleId, isNull);
+      expect(filter.status, isNull);
+      expect(filter.priority, isNull);
+    });
+
+    test('repair job scope retains visible filters and date range', () {
+      final start = DateTime(2026, 8, 19);
+      final end = DateTime(2026, 8, 20);
+      final filter = WorkshopReportFilter.scoped(
+        scope: WorkshopReportFilterScope.repairJobs,
+        start: start,
+        end: end,
+        vehicleId: 1,
+        technicianId: 'tech-a',
+        status: RepairJobStatus.open,
+        priority: RepairPriority.medium,
+      );
+
+      expect(filter.start, start);
+      expect(filter.end, end);
+      expect(filter.vehicleId, 1);
+      expect(filter.technicianId, 'tech-a');
+      expect(filter.status, RepairJobStatus.open);
+      expect(filter.priority, RepairPriority.medium);
+    });
+
     test('rejects an invalid custom range', () {
       expect(
         () => WorkshopReportFilter(
