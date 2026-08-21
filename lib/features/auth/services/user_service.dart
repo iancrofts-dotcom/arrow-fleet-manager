@@ -14,6 +14,11 @@ class UserService {
   final UserRepository _repository;
   final PasswordService _passwordService;
 
+  static const _legacySeedCredentials = <String, String>{
+    'admin': 'admin',
+    'manager': 'manager',
+  };
+
   /// Attempts to authenticate a user.
   /// Attempts to authenticate a user.
   Future<User?> login({
@@ -31,6 +36,12 @@ class UserService {
       return null;
     }
 
+    // Detect historical seeded credentials before the legacy plaintext
+    // migration can turn them into a normal bcrypt hash.
+    if (requiresPasswordChange(user)) {
+      return user;
+    }
+
     if (_passwordService.needsMigration(user.passwordHash)) {
       final migratedUser = user.copyWith(
         passwordHash: _passwordService.hash(password),
@@ -40,6 +51,21 @@ class UserService {
     }
 
     return user;
+  }
+
+  /// True only for the historical fixed bootstrap account/password pairs.
+  /// A same-named user who has changed their password is not flagged.
+  bool requiresPasswordChange(User user) {
+    final historicalPassword = _legacySeedCredentials[user.username];
+    return historicalPassword != null &&
+        _passwordService.verify(
+          plainTextPassword: historicalPassword,
+          storedValue: user.passwordHash,
+        );
+  }
+
+  Future<bool> requiresFirstAdministratorSetup() {
+    return _repository.hasActiveAdministrator().then((exists) => !exists);
   }
 
   /// Returns all users.
@@ -151,6 +177,27 @@ class UserService {
     );
 
     await _repository.insertUser(UserEntity.fromUser(userWithPasswordHash));
+  }
+
+  /// Atomically provisions the first usable Administrator.
+  ///
+  /// The persisted role, active flag and driver link are fixed here rather
+  /// than trusting presentation-layer input.
+  Future<bool> createFirstAdministrator(
+    User user, {
+    required String password,
+  }) async {
+    final administrator = User(
+      id: user.id,
+      username: user.username,
+      passwordHash: _passwordService.hash(password),
+      role: UserRole.admin,
+      isActive: true,
+    );
+
+    return _repository.insertFirstAdministrator(
+      UserEntity.fromUser(administrator),
+    );
   }
 
   /// Updates an existing user and only changes the stored password when a

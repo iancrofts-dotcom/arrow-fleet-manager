@@ -12,10 +12,13 @@ class AuthService {
   final SessionService _sessionService = SessionService.instance;
 
   User? _currentUser;
+  bool _requiresPasswordChange = false;
 
   User? get currentUser => _currentUser;
 
   bool get isLoggedIn => _currentUser != null;
+
+  bool get requiresPasswordChange => _requiresPasswordChange;
 
   Future<bool> login({
     required String username,
@@ -31,6 +34,7 @@ class AuthService {
     }
 
     _currentUser = user;
+    _requiresPasswordChange = _userService.requiresPasswordChange(user);
 
     // Save session
     await _sessionService.saveUserId(user.id);
@@ -53,20 +57,23 @@ class AuthService {
     }
 
     _currentUser = user;
+    _requiresPasswordChange = _userService.requiresPasswordChange(user);
     return true;
   }
 
   Future<void> logout() async {
     _currentUser = null;
+    _requiresPasswordChange = false;
     await _sessionService.clearSession();
   }
 
   Future<void> refreshCurrentUser() async {
     if (_currentUser == null) return;
 
-    _currentUser = await _userService.getUserById(
-      _currentUser!.id,
-    );
+    _currentUser = await _userService.getUserById(_currentUser!.id);
+    final user = _currentUser;
+    _requiresPasswordChange =
+        user != null && _userService.requiresPasswordChange(user);
   }
 
   bool hasRole(UserRole role) {

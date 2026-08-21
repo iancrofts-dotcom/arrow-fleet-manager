@@ -1,43 +1,15 @@
-import '../models/user.dart';
-import '../models/user_role.dart';
 import 'user_service.dart';
 
 class AuthInitializer {
-  AuthInitializer._();
+  AuthInitializer({UserService? userService})
+    : _userService = userService ?? UserService.instance;
 
-  static final AuthInitializer instance = AuthInitializer._();
+  static final AuthInitializer instance = AuthInitializer();
 
-  final UserService _userService = UserService.instance;
+  final UserService _userService;
 
-  Future<void> initialize() async {
-    // Create admin if missing
-    final adminUser = await _userService.getUserByUsername('admin');
-    if (adminUser == null) {
-      await _userService.addUser(
-        const User(
-          id: 'admin',
-          username: 'admin',
-          passwordHash: '',
-          role: UserRole.admin,
-        ),
-        // Development-only bootstrap credential. It is hashed before storage.
-        password: 'admin',
-      );
-    }
-
-    // Create manager if missing
-    final managerUser = await _userService.getUserByUsername('manager');
-    if (managerUser == null) {
-      await _userService.addUser(
-        const User(
-          id: 'manager',
-          username: 'manager',
-          passwordHash: '',
-          role: UserRole.manager,
-        ),
-        // Development-only bootstrap credential. It is hashed before storage.
-        password: 'manager',
-      );
-    }
+  /// Whether the application must provision its first active Administrator.
+  Future<bool> requiresFirstAdministratorSetup() {
+    return _userService.requiresFirstAdministratorSetup();
   }
 }

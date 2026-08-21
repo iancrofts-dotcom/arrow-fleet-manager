@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../dashboard/dashboard_screen.dart';
 import '../services/auth_service.dart';
+import 'forced_password_change_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -48,14 +49,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid username or password'),
-        ),
+        const SnackBar(content: Text('Invalid username or password')),
       );
       return;
     }
 
     final user = AuthService.instance.currentUser!;
+
+    if (AuthService.instance.requiresPasswordChange) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ForcedPasswordChangeScreen(user: user),
+        ),
+      );
+      return;
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -69,9 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => const DashboardScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const DashboardScreen()),
     );
   }
 
@@ -163,9 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   )
                                 : const Icon(Icons.login),
                             label: Text(
-                              _isLoading
-                                  ? 'Signing In...'
-                                  : 'Sign In',
+                              _isLoading ? 'Signing In...' : 'Sign In',
                             ),
                           ),
                         ),
