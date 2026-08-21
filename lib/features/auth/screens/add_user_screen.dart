@@ -16,17 +16,12 @@ class AddUserScreen extends StatelessWidget {
     UserRole role,
     bool isActive,
   ) async {
-    final existing =
-        await UserService.instance.getUserByUsername(username);
-
-    if (existing != null) {
+    if (!await UserService.instance.isUsernameAvailable(username)) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Username already exists'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Username already exists')));
 
       return;
     }
@@ -40,7 +35,19 @@ class AddUserScreen extends StatelessWidget {
       isActive: isActive,
     );
 
-    await UserService.instance.addUser(user, password: password);
+    try {
+      await UserService.instance.addUser(user, password: password);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to create user. The username may already exist.',
+          ),
+        ),
+      );
+      return;
+    }
 
     if (!context.mounted) return;
 
@@ -59,23 +66,10 @@ class AddUserScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add User'),
-      ),
+      appBar: AppBar(title: const Text('Add User')),
       body: UserForm(
-        onSave: (
-          username,
-          password,
-          role,
-          isActive,
-        ) async {
-          await _saveUser(
-            context,
-            username,
-            password,
-            role,
-            isActive,
-          );
+        onSave: (username, password, role, isActive) async {
+          await _saveUser(context, username, password, role, isActive);
         },
       ),
     );

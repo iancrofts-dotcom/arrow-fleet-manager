@@ -4,11 +4,7 @@ import '../models/user.dart';
 import '../models/user_role.dart';
 
 class UserForm extends StatefulWidget {
-  const UserForm({
-    super.key,
-    this.user,
-    required this.onSave,
-  });
+  const UserForm({super.key, this.user, required this.onSave});
 
   final User? user;
   final Future<void> Function(
@@ -16,7 +12,8 @@ class UserForm extends StatefulWidget {
     String password,
     UserRole role,
     bool isActive,
-  ) onSave;
+  )
+  onSave;
 
   @override
   State<UserForm> createState() => _UserFormState();
@@ -58,7 +55,7 @@ class _UserFormState extends State<UserForm> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
+    if (_saving || !_formKey.currentState!.validate()) {
       return;
     }
 
@@ -66,18 +63,25 @@ class _UserFormState extends State<UserForm> {
       _saving = true;
     });
 
-    await widget.onSave(
-      _usernameController.text.trim(),
-      _passwordController.text,
-      _role,
-      _isActive,
-    );
-
-    if (!mounted) return;
-
-    setState(() {
-      _saving = false;
-    });
+    try {
+      await widget.onSave(
+        _usernameController.text.trim(),
+        _passwordController.text,
+        _role,
+        _isActive,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to save the user. Try again.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -89,9 +93,7 @@ class _UserFormState extends State<UserForm> {
         children: [
           TextFormField(
             controller: _usernameController,
-            decoration: const InputDecoration(
-              labelText: 'Username',
-            ),
+            decoration: const InputDecoration(labelText: 'Username'),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Please enter a username';
@@ -107,13 +109,10 @@ class _UserFormState extends State<UserForm> {
             controller: _passwordController,
             obscureText: true,
             decoration: InputDecoration(
-              labelText: _isEdit
-                  ? 'New Password (optional)'
-                  : 'Password',
+              labelText: _isEdit ? 'New Password (optional)' : 'Password',
             ),
             validator: (value) {
-              if (!_isEdit &&
-                  (value == null || value.length < 4)) {
+              if (!_isEdit && (value == null || value.length < 4)) {
                 return 'Password must be at least 4 characters';
               }
 
@@ -125,9 +124,7 @@ class _UserFormState extends State<UserForm> {
 
           DropdownButtonFormField<UserRole>(
             initialValue: _role,
-            decoration: const InputDecoration(
-              labelText: 'Role',
-            ),
+            decoration: const InputDecoration(labelText: 'Role'),
             items: UserRole.values.map((role) {
               return DropdownMenuItem<UserRole>(
                 value: role,
@@ -164,8 +161,8 @@ class _UserFormState extends State<UserForm> {
               _saving
                   ? 'Saving...'
                   : _isEdit
-                      ? 'Save Changes'
-                      : 'Create User',
+                  ? 'Save Changes'
+                  : 'Create User',
             ),
           ),
         ],

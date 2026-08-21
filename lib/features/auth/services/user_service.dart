@@ -164,6 +164,14 @@ class UserService {
     return entity?.toUser();
   }
 
+  Future<bool> isUsernameAvailable(
+    String username, {
+    String? excludingUserId,
+  }) async {
+    final existing = await getUserByUsername(username);
+    return existing == null || existing.id == excludingUserId;
+  }
+
   Future<User?> getUserByDriverId(int driverId) async {
     final entity = await _repository.getUserByDriverId(driverId);
 

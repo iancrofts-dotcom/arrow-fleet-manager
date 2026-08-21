@@ -19,6 +19,18 @@ class EditUserScreen extends StatelessWidget {
     UserRole role,
     bool isActive,
   ) async {
+    if (username != user.username &&
+        !await UserService.instance.isUsernameAvailable(
+          username,
+          excludingUserId: user.id,
+        )) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Username already exists')));
+      return;
+    }
+
     final updatedUser = User(
       id: user.id,
       username: username,
@@ -39,6 +51,14 @@ class EditUserScreen extends StatelessWidget {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(error.message)));
+      return;
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to save user. The username may already exist.'),
+        ),
+      );
       return;
     }
 
