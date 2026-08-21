@@ -32,6 +32,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   bool _loading = true;
   bool _saving = false;
   String? _error;
+  int _loadRequest = 0;
   DriverCompliance? _compliance;
   final DriverComplianceService _complianceService = DriverComplianceService();
 
@@ -49,6 +50,14 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   }
 
   Future<void> _loadCurrentDriver() async {
+    final request = ++_loadRequest;
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
+
     final currentUser = AuthService.instance.currentUser;
     if (!PermissionService.instance.canViewOwnAccount ||
         currentUser == null ||
@@ -61,37 +70,46 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       return;
     }
 
-    final user = await UserService.instance.getUserById(currentUser.id);
+    try {
+      final user = await UserService.instance.getUserById(currentUser.id);
+      if (user == null ||
+          user.id != currentUser.id ||
+          user.role != UserRole.driver) {
+        if (!mounted || request != _loadRequest) return;
+        setState(() {
+          _loading = false;
+          _error = 'Your Driver account could not be verified.';
+        });
+        return;
+      }
 
-    if (!mounted) return;
+      final driverId = user.driverId;
+      final compliance = driverId == null
+          ? null
+          : await _complianceService.getByDriverId(driverId);
+      if (!mounted || request != _loadRequest) return;
 
-    if (user == null || user.id != currentUser.id || user.role != UserRole.driver) {
+      setState(() {
+        _user = user;
+        _compliance = compliance;
+        _usernameController.text = user.username;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted || request != _loadRequest) return;
       setState(() {
         _loading = false;
-        _error = 'Your Driver account could not be verified.';
+        _error = 'Unable to load your account. Please try again.';
       });
-      return;
     }
-
-    final driverId = user.driverId;
-    final compliance = driverId == null
-        ? null
-        : await _complianceService.getByDriverId(driverId);
-    if (!mounted) return;
-
-    setState(() {
-      _user = user;
-      _compliance = compliance;
-      _usernameController.text = user.username;
-      _loading = false;
-    });
   }
 
   Future<void> _save() async {
     final user = _user;
     final currentUser = AuthService.instance.currentUser;
 
-    if (!_formKey.currentState!.validate() ||
+    if (_saving ||
+        !_formKey.currentState!.validate() ||
         user == null ||
         currentUser == null ||
         user.id != currentUser.id ||
@@ -99,54 +117,70 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       return;
     }
 
-    final username = _usernameController.text.trim();
-    if (username != user.username) {
-      final existing = await UserService.instance.getUserByUsername(username);
-      if (existing != null && existing.id != user.id) {
+    setState(() {
+      _saving = true;
+    });
+
+    try {
+      final username = _usernameController.text.trim();
+      if (username != user.username &&
+          !await UserService.instance.isUsernameAvailable(
+            username,
+            excludingUserId: user.id,
+          )) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Username already exists.')),
         );
         return;
       }
-    }
 
-    setState(() {
-      _saving = true;
-    });
+      final latestUser = await UserService.instance.getUserById(currentUser.id);
+      if (latestUser == null ||
+          latestUser.id != currentUser.id ||
+          latestUser.role != UserRole.driver) {
+        if (!mounted) return;
+        setState(() {
+          _error = 'Your Driver account could not be verified.';
+        });
+        return;
+      }
 
-    final latestUser = await UserService.instance.getUserById(currentUser.id);
-    if (latestUser == null ||
-        latestUser.id != currentUser.id ||
-        latestUser.role != UserRole.driver) {
+      await UserService.instance.updateUser(
+        latestUser.copyWith(username: username),
+        newPassword: _passwordController.text.isEmpty
+            ? null
+            : _passwordController.text,
+      );
+      await AuthService.instance.refreshCurrentUser();
+      final savedUser = await UserService.instance.getUserById(currentUser.id);
+      if (savedUser == null || savedUser.id != currentUser.id) {
+        throw StateError('Saved account could not be reloaded.');
+      }
+
       if (!mounted) return;
       setState(() {
-        _saving = false;
-        _error = 'Your Driver account could not be verified.';
+        _user = savedUser;
+        _usernameController.text = savedUser.username;
+        _passwordController.clear();
       });
-      return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your account has been updated.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to save your account. Try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
     }
-
-    await UserService.instance.updateUser(
-      latestUser.copyWith(
-        username: username,
-      ),
-      newPassword: _passwordController.text.isEmpty
-          ? null
-          : _passwordController.text,
-    );
-    await AuthService.instance.refreshCurrentUser();
-
-    if (!mounted) return;
-
-    setState(() {
-      _user = AuthService.instance.currentUser;
-      _passwordController.clear();
-      _saving = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Your account has been updated.')),
-    );
   }
 
   @override
@@ -161,7 +195,10 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     if (_error != null || _user == null) {
       return AppPageScaffold(
         title: 'My Account',
-        child: AppErrorState(message: _error ?? 'Unable to load your account.'),
+        child: AppErrorState(
+          message: _error ?? 'Unable to load your account.',
+          onRetry: _loadCurrentDriver,
+        ),
       );
     }
 
@@ -177,7 +214,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Account Details', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                  Text(
+                    'Account Details',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _usernameController,
@@ -190,8 +232,11 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'New Password (optional)'),
-                    validator: (value) => value != null && value.isNotEmpty && value.length < 4
+                    decoration: const InputDecoration(
+                      labelText: 'New Password (optional)',
+                    ),
+                    validator: (value) =>
+                        value != null && value.isNotEmpty && value.length < 4
                         ? 'Password must be at least 4 characters.'
                         : null,
                   ),
@@ -211,7 +256,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('My Compliance', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                  Text(
+                    'My Compliance',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   _complianceTile('Licence', _compliance?.licenceExpiry),
                   _complianceTile('CPC', _compliance?.cpcExpiry),
@@ -245,9 +295,11 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(title),
-      subtitle: Text(expiry == null
-          ? 'Not recorded'
-          : '${expiry.day}/${expiry.month}/${expiry.year}'),
+      subtitle: Text(
+        expiry == null
+            ? 'Not recorded'
+            : '${expiry.day}/${expiry.month}/${expiry.year}',
+      ),
       trailing: _statusBadge(service.status(expiry)),
     );
   }
