@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../models/user_role.dart';
 import '../services/permission_service.dart';
+import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'add_user_screen.dart';
 import 'edit_user_screen.dart';
@@ -12,18 +13,14 @@ class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
 
   @override
-  State<UserManagementScreen> createState() =>
-      _UserManagementScreenState();
+  State<UserManagementScreen> createState() => _UserManagementScreenState();
 }
 
-class _UserManagementScreenState
-    extends State<UserManagementScreen> {
+class _UserManagementScreenState extends State<UserManagementScreen> {
   final UserService _userService = UserService.instance;
- final PermissionService _permissions =
-    PermissionService.instance;
+  final PermissionService _permissions = PermissionService.instance;
 
-  final TextEditingController _searchController =
-      TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   List<User> _users = [];
   List<User> _filteredUsers = [];
@@ -57,17 +54,12 @@ class _UserManagementScreenState
   }
 
   void _filterUsers() {
-    final query =
-        _searchController.text.trim().toLowerCase();
+    final query = _searchController.text.trim().toLowerCase();
 
     setState(() {
       _filteredUsers = _users.where((user) {
-        return user.username
-                .toLowerCase()
-                .contains(query) ||
-            user.role.name
-                .toLowerCase()
-                .contains(query);
+        return user.username.toLowerCase().contains(query) ||
+            user.role.name.toLowerCase().contains(query);
       }).toList();
     });
   }
@@ -77,11 +69,9 @@ class _UserManagementScreenState
   }
 
   Future<void> _editUser(User user) async {
-    final updated = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => EditUserScreen(user: user),
-      ),
-    );
+    final updated = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => EditUserScreen(user: user)));
 
     if (!mounted) return;
 
@@ -95,27 +85,23 @@ class _UserManagementScreenState
 
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => DeleteUserDialog(
-        username: user.username,
-      ),
+      builder: (_) => DeleteUserDialog(username: user.username),
     );
 
     if (!mounted) return;
 
     if (confirm != true) return;
 
-    if (user.username == 'admin') {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-            'The default Administrator cannot be deleted.',
-          ),
-        ),
+    try {
+      await _userService.deleteManagedUser(
+        user.id,
+        actingUserId: AuthService.instance.requireLogin().id,
       );
+    } on UserManagementException catch (error) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(error.message)));
       return;
     }
-
-    await _userService.deleteUser(user.id);
 
     if (!mounted) return;
 
@@ -124,11 +110,7 @@ class _UserManagementScreenState
     if (!mounted) return;
 
     messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          '${user.username} deleted.',
-        ),
-      ),
+      SnackBar(content: Text('${user.username} deleted.')),
     );
   }
 
@@ -136,19 +118,12 @@ class _UserManagementScreenState
   Widget build(BuildContext context) {
     if (!_permissions.canManageUsers) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Access Denied'),
-        ),
+        appBar: AppBar(title: const Text('Access Denied')),
         body: const Center(
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.lock,
-                size: 64,
-                color: Colors.red,
-              ),
+              Icon(Icons.lock, size: 64, color: Colors.red),
               SizedBox(height: 20),
               Text(
                 'You do not have permission\n'
@@ -163,18 +138,12 @@ class _UserManagementScreenState
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('User Management'),
-      ),
+      appBar: AppBar(title: const Text('User Management')),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () async {
-          final created =
-              await Navigator.of(context).push<bool>(
-            MaterialPageRoute(
-              builder: (_) =>
-                  const AddUserScreen(),
-            ),
+          final created = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(builder: (_) => const AddUserScreen()),
           );
 
           if (!mounted) return;
@@ -199,30 +168,21 @@ class _UserManagementScreenState
           ),
           Expanded(
             child: _loading
-                ? const Center(
-                    child:
-                        CircularProgressIndicator(),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
                     onRefresh: _refresh,
                     child: _filteredUsers.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'No users found.',
-                            ),
-                          )
+                        ? const Center(child: Text('No users found.'))
                         : ListView.builder(
-                            itemCount:
-                                _filteredUsers.length,
-                            itemBuilder:
-                                (context, index) {
-                              final user =
-                                  _filteredUsers[index];
+                            itemCount: _filteredUsers.length,
+                            itemBuilder: (context, index) {
+                              final user = _filteredUsers[index];
+                              final isCurrentUser =
+                                  user.id == AuthService.instance.currentUserId;
+                              final isDriverLinked = user.driverId != null;
 
                               return Card(
-                                margin:
-                                    const EdgeInsets
-                                        .symmetric(
+                                margin: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 8,
                                 ),
@@ -234,41 +194,38 @@ class _UserManagementScreenState
                                           .toUpperCase(),
                                     ),
                                   ),
-                                  title:
-                                      Text(user.username),
+                                  title: Text(user.username),
                                   subtitle: Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment
-                                            .start,
+                                        CrossAxisAlignment.start,
                                     children: [
+                                      Text(user.role.displayName),
                                       Text(
-                                        user.role
-                                            .displayName,
-                                      ),
-                                      Text(
-                                        user.isActive
-                                            ? 'Active'
-                                            : 'Inactive',
+                                        user.isActive ? 'Active' : 'Inactive',
                                       ),
                                     ],
                                   ),
                                   trailing: Row(
-                                    mainAxisSize:
-                                        MainAxisSize.min,
-                                    children: [                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.edit,
-                                        ),
-                                        onPressed: () =>
-                                            _editUser(user),
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit),
+                                        onPressed: () => _editUser(user),
                                       ),
                                       IconButton(
                                         icon: const Icon(
                                           Icons.delete,
                                           color: Colors.red,
                                         ),
-                                        onPressed: () =>
-                                            _deleteUser(user),
+                                        tooltip: isDriverLinked
+                                            ? 'Managed through Driver Management'
+                                            : isCurrentUser
+                                            ? 'You cannot delete your own account'
+                                            : 'Delete user',
+                                        onPressed:
+                                            isCurrentUser || isDriverLinked
+                                            ? null
+                                            : () => _deleteUser(user),
                                       ),
                                     ],
                                   ),

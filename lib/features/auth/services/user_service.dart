@@ -210,6 +210,97 @@ class UserService {
     await _repository.updateUser(UserEntity.fromUser(userWithPasswordHash));
   }
 
+  /// Applies changes made through User Management while retaining the account
+  /// and Driver lifecycle invariants enforced by that feature.
+  Future<void> updateManagedUser(
+    User user, {
+    required String actingUserId,
+    String? newPassword,
+  }) async {
+    final existing = await getUserById(user.id);
+    if (existing == null) {
+      throw UserManagementException('The user account no longer exists.');
+    }
+
+    if (existing.id == actingUserId &&
+        (!user.isActive || user.role != existing.role)) {
+      throw UserManagementException(
+        'You cannot deactivate or change the role of your own account.',
+      );
+    }
+
+    _ensureLinkedDriverUserRemainsManagedByDriver(existing, user);
+    await _ensureActiveAdministratorIsRetained(existing, user);
+
+    await updateUser(user, newPassword: newPassword);
+  }
+
+  /// Deletes an unlinked user from User Management only when doing so keeps
+  /// an active Administrator available and does not remove the actor.
+  Future<void> deleteManagedUser(
+    String userId, {
+    required String actingUserId,
+  }) async {
+    final existing = await getUserById(userId);
+    if (existing == null) {
+      throw UserManagementException('The user account no longer exists.');
+    }
+
+    if (existing.id == actingUserId) {
+      throw UserManagementException('You cannot delete your own account.');
+    }
+
+    if (existing.driverId != null) {
+      throw UserManagementException(
+        'Driver-linked accounts are managed through Driver Management.',
+      );
+    }
+
+    if (existing.role == UserRole.admin &&
+        existing.isActive &&
+        !await _repository.hasAnotherActiveAdministrator(existing.id)) {
+      throw UserManagementException(
+        'At least one active Administrator is required.',
+      );
+    }
+
+    await _repository.deleteUser(existing.id);
+  }
+
+  void _ensureLinkedDriverUserRemainsManagedByDriver(
+    User existing,
+    User updated,
+  ) {
+    if (existing.driverId == null) return;
+
+    final lifecycleChanged =
+        updated.driverId != existing.driverId ||
+        updated.username != existing.username ||
+        updated.role != existing.role ||
+        updated.isActive != existing.isActive;
+    if (lifecycleChanged) {
+      throw UserManagementException(
+        'Driver-linked accounts are managed through Driver Management.',
+      );
+    }
+  }
+
+  Future<void> _ensureActiveAdministratorIsRetained(
+    User existing,
+    User updated,
+  ) async {
+    final remainsActiveAdministrator =
+        updated.role == UserRole.admin && updated.isActive;
+    if (existing.role == UserRole.admin &&
+        existing.isActive &&
+        !remainsActiveAdministrator &&
+        !await _repository.hasAnotherActiveAdministrator(existing.id)) {
+      throw UserManagementException(
+        'At least one active Administrator is required.',
+      );
+    }
+  }
+
   /// Saves a user.
   ///
   /// Updates an existing user if it already exists,
@@ -222,4 +313,13 @@ class UserService {
   Future<void> deleteUser(String id) async {
     await _repository.deleteUser(id);
   }
+}
+
+class UserManagementException implements Exception {
+  const UserManagementException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }

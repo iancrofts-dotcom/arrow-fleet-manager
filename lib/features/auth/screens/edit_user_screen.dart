@@ -3,14 +3,12 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../models/user_role.dart';
 import '../services/permission_service.dart';
+import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../widgets/user_form.dart';
 
 class EditUserScreen extends StatelessWidget {
-  const EditUserScreen({
-    super.key,
-    required this.user,
-  });
+  const EditUserScreen({super.key, required this.user});
 
   final User user;
 
@@ -30,10 +28,19 @@ class EditUserScreen extends StatelessWidget {
       isActive: isActive,
     );
 
-    await UserService.instance.updateUser(
-      updatedUser,
-      newPassword: password.isEmpty ? null : password,
-    );
+    try {
+      await UserService.instance.updateManagedUser(
+        updatedUser,
+        actingUserId: AuthService.instance.requireLogin().id,
+        newPassword: password.isEmpty ? null : password,
+      );
+    } on UserManagementException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+      return;
+    }
 
     if (!context.mounted) return;
 
@@ -52,24 +59,11 @@ class EditUserScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit User'),
-      ),
+      appBar: AppBar(title: const Text('Edit User')),
       body: UserForm(
         user: user,
-        onSave: (
-          username,
-          password,
-          role,
-          isActive,
-        ) async {
-          await _saveUser(
-            context,
-            username,
-            password,
-            role,
-            isActive,
-          );
+        onSave: (username, password, role, isActive) async {
+          await _saveUser(context, username, password, role, isActive);
         },
       ),
     );

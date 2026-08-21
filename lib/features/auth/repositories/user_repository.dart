@@ -95,6 +95,19 @@ class UserRepository {
     return result.isNotEmpty;
   }
 
+  Future<bool> hasAnotherActiveAdministrator(String excludedUserId) async {
+    final db = await _db;
+    final result = await db.query(
+      'users',
+      columns: const ['id'],
+      where: 'role = ? AND is_active = ? AND id != ?',
+      whereArgs: [UserRole.admin.name, 1, excludedUserId],
+      limit: 1,
+    );
+
+    return result.isNotEmpty;
+  }
+
   /// Creates the initial Administrator only while none exists.
   ///
   /// The check and insert share a transaction so simultaneous first-run
