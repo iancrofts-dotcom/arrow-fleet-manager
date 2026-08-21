@@ -12,6 +12,7 @@ import '../../auth/services/auth_service.dart';
 import '../../auth/services/permission_service.dart';
 import '../../auth/services/user_service.dart';
 import '../../reports/services/pdf_export_service.dart';
+import '../../reports/services/report_operation_gate.dart';
 import '../models/repair_job.dart';
 import '../models/inspection_item.dart';
 import '../models/inspection_photo.dart';
@@ -23,35 +24,29 @@ class RepairJobsScreen extends StatefulWidget {
   final int? inspectionId;
   final String? technicianId;
 
-  const RepairJobsScreen({
-    super.key,
-    this.inspectionId,
-    this.technicianId,
-  }) : assert(
-          (inspectionId == null) != (technicianId == null),
-          'Provide either inspectionId or technicianId.',
-        );
+  const RepairJobsScreen({super.key, this.inspectionId, this.technicianId})
+    : assert(
+        (inspectionId == null) != (technicianId == null),
+        'Provide either inspectionId or technicianId.',
+      );
 
   @override
-  State<RepairJobsScreen> createState() =>
-      _RepairJobsScreenState();
+  State<RepairJobsScreen> createState() => _RepairJobsScreenState();
 }
 
-class _RepairJobsScreenState
-    extends State<RepairJobsScreen> {
-  final WorkshopRepository _repository =
-      WorkshopRepository();
+class _RepairJobsScreenState extends State<RepairJobsScreen> {
+  final WorkshopRepository _repository = WorkshopRepository();
   final InspectionPhotoRepository _photoRepository =
       InspectionPhotoRepository();
   final WorkshopJobCardPdfService _jobCardPdfService =
       const WorkshopJobCardPdfService();
   final PdfExportService _pdfExportService = const PdfExportService();
+  final ReportOperationGate _jobCardOperationGate = ReportOperationGate();
 
   late Future<List<RepairJob>> _future;
 
   bool get _isTechnicianView =>
-      PermissionService.instance.isTechnician &&
-      widget.technicianId != null;
+      PermissionService.instance.isTechnician && widget.technicianId != null;
 
   bool _isAssignedToCurrentTechnician(RepairJob job) {
     final currentTechnicianId = AuthService.instance.currentUserId;
@@ -77,9 +72,7 @@ class _RepairJobsScreenState
       return _repository.getRepairJobsForTechnician(technicianId);
     }
 
-    return _repository.getRepairJobs(
-      widget.inspectionId!,
-    );
+    return _repository.getRepairJobs(widget.inspectionId!);
   }
 
   Future<void> _refresh() async {
@@ -150,27 +143,49 @@ class _RepairJobsScreenState
     );
   }
 
-  Future<void> _previewJobCard(RepairJob job) async {
-    final bytes = await _jobCardBytes(job);
-    if (!mounted || bytes == null) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => PdfPreview(build: (_) async => bytes),
-      ),
-    );
+  Future<void> _runJobCardOperation({
+    required String failureMessage,
+    required Future<void> Function() operation,
+  }) async {
+    if (_jobCardOperationGate.isRunning) return;
+
+    final running = _jobCardOperationGate.run(operation);
+    setState(() {});
+    try {
+      await running;
+    } catch (_) {
+      _showMessage(failureMessage);
+    } finally {
+      if (mounted) setState(() {});
+    }
   }
 
-  Future<void> _printOrSaveJobCard(RepairJob job) async {
-    final bytes = await _jobCardBytes(job);
-    if (!mounted || bytes == null) return;
-    await Printing.layoutPdf(onLayout: (_) async => bytes);
-    final file = await _pdfExportService.savePdf(
-      bytes,
-      'job_card_${job.jobNumber}_${DateTime.now().millisecondsSinceEpoch}',
-    );
-    if (!mounted) return;
-    _showMessage('Job card saved to ${file.path}');
-  }
+  Future<void> _previewJobCard(RepairJob job) => _runJobCardOperation(
+    failureMessage: 'Unable to generate job card.',
+    operation: () async {
+      final bytes = await _jobCardBytes(job);
+      if (!mounted || bytes == null) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PdfPreview(build: (_) async => bytes),
+        ),
+      );
+    },
+  );
+
+  Future<void> _printOrSaveJobCard(RepairJob job) => _runJobCardOperation(
+    failureMessage: 'Unable to print or save job card.',
+    operation: () async {
+      final bytes = await _jobCardBytes(job);
+      if (!mounted || bytes == null) return;
+      await Printing.layoutPdf(onLayout: (_) async => bytes);
+      final file = await _pdfExportService.savePdf(
+        bytes,
+        'job_card_${job.jobNumber}_${DateTime.now().millisecondsSinceEpoch}',
+      );
+      if (mounted) _showMessage('Job card saved to ${file.path}');
+    },
+  );
 
   String _statusText(RepairJobStatus status) {
     switch (status) {
@@ -222,7 +237,6 @@ class _RepairJobsScreenState
         return Colors.grey;
     }
   }
-
 
   Future<void> _editJob(RepairJob job) async {
     if (!PermissionService.instance.canManageWorkshop) {
@@ -279,8 +293,7 @@ class _RepairJobsScreenState
       return;
     }
 
-    if (job.id == null ||
-        job.status != RepairJobStatus.awaitingInspection) {
+    if (job.id == null || job.status != RepairJobStatus.awaitingInspection) {
       return;
     }
 
@@ -347,7 +360,9 @@ class _RepairJobsScreenState
       switch (job.status) {
         case RepairJobStatus.open:
           if (job.technicianId == null) {
-            _showMessage('Assign an active technician before assigning this job.');
+            _showMessage(
+              'Assign an active technician before assigning this job.',
+            );
             return;
           }
           nextStatus = RepairJobStatus.assigned;
@@ -382,9 +397,7 @@ class _RepairJobsScreenState
     await _repository.updateRepairJob(updatedJob);
 
     if (!mounted) return;
-    _showMessage(
-      'Job status changed to ${_statusText(nextStatus)}.',
-    );
+    _showMessage('Job status changed to ${_statusText(nextStatus)}.');
     await _refresh();
   }
 
@@ -406,9 +419,7 @@ class _RepairJobsScreenState
       return;
     }
 
-    final updatedJob = job.copyWith(
-      status: RepairJobStatus.awaitingParts,
-    );
+    final updatedJob = job.copyWith(status: RepairJobStatus.awaitingParts);
 
     await _repository.updateRepairJob(updatedJob);
 
@@ -438,14 +449,9 @@ class _RepairJobsScreenState
     final description = '${job.description}\n\nCancellation reason: $reason';
 
     await _repository.updateRepairJob(
-      job.copyWith(
-        status: RepairJobStatus.cancelled,
-        description: description,
-      ),
+      job.copyWith(status: RepairJobStatus.cancelled, description: description),
     );
-    await _repository.completeInspectionWhenRepairsResolved(
-      job.inspectionId,
-    );
+    await _repository.completeInspectionWhenRepairsResolved(job.inspectionId);
 
     if (!mounted) return;
     _showMessage('Repair job cancelled.');
@@ -518,10 +524,7 @@ class _RepairJobsScreenState
     await _refresh();
   }
 
-  Widget _workflowActions(
-    BuildContext context,
-    RepairJob job,
-  ) {
+  Widget _workflowActions(BuildContext context, RepairJob job) {
     if (job.status == RepairJobStatus.completed ||
         job.status == RepairJobStatus.cancelled) {
       return const SizedBox.shrink();
@@ -576,11 +579,9 @@ class _RepairJobsScreenState
         break;
     }
 
-    final isInspectionStage =
-        job.status == RepairJobStatus.awaitingInspection;
+    final isInspectionStage = job.status == RepairJobStatus.awaitingInspection;
     final canReview =
-        PermissionService.instance.canSignOffInspection &&
-        !_isTechnicianView;
+        PermissionService.instance.canSignOffInspection && !_isTechnicianView;
 
     return Container(
       margin: const EdgeInsets.only(top: 18),
@@ -603,10 +604,7 @@ class _RepairJobsScreenState
                   color: scheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  stageIcon,
-                  color: scheme.onPrimaryContainer,
-                ),
+                child: Icon(stageIcon, color: scheme.onPrimaryContainer),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -628,10 +626,7 @@ class _RepairJobsScreenState
                     ),
                     if (stageDescription.isNotEmpty) ...[
                       const SizedBox(height: 3),
-                      Text(
-                        stageDescription,
-                        style: theme.textTheme.bodySmall,
-                      ),
+                      Text(stageDescription, style: theme.textTheme.bodySmall),
                     ],
                   ],
                 ),
@@ -639,8 +634,7 @@ class _RepairJobsScreenState
             ],
           ),
           const SizedBox(height: 14),
-          if (primaryLabel.isNotEmpty &&
-              (!isInspectionStage || canReview))
+          if (primaryLabel.isNotEmpty && (!isInspectionStage || canReview))
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
@@ -651,8 +645,8 @@ class _RepairJobsScreenState
                   isInspectionStage
                       ? Icons.check_circle_outline
                       : job.status == RepairJobStatus.open
-                          ? Icons.person_add_alt_1
-                          : Icons.arrow_forward,
+                      ? Icons.person_add_alt_1
+                      : Icons.arrow_forward,
                 ),
                 label: Text(primaryLabel),
               ),
@@ -702,12 +696,11 @@ class _RepairJobsScreenState
     );
   }
 
-
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -728,11 +721,11 @@ class _RepairJobsScreenState
           ? 'Workshop work assigned to your technician account.'
           : 'Workshop repairs and technician work.',
       actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: _refresh,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: _refresh,
+          icon: const Icon(Icons.refresh_rounded),
+        ),
       ],
       child: FutureBuilder<List<RepairJob>>(
         future: _future,
@@ -774,10 +767,14 @@ class _RepairJobsScreenState
             );
           }
 
-          final totalHours =
-              jobs.fold<double>(0, (sum, job) => sum + job.estimatedHours);
-          final totalCost =
-              jobs.fold<double>(0, (sum, job) => sum + job.estimatedCost);
+          final totalHours = jobs.fold<double>(
+            0,
+            (sum, job) => sum + job.estimatedHours,
+          );
+          final totalCost = jobs.fold<double>(
+            0,
+            (sum, job) => sum + job.estimatedCost,
+          );
           final completed = jobs
               .where((job) => job.status == RepairJobStatus.completed)
               .length;
@@ -814,10 +811,7 @@ class _RepairJobsScreenState
     );
   }
 
-  Widget _technicianJobsBody(
-    BuildContext context,
-    List<RepairJob> jobs,
-  ) {
+  Widget _technicianJobsBody(BuildContext context, List<RepairJob> jobs) {
     return RefreshIndicator(
       onRefresh: _refresh,
       child: ListView(
@@ -850,12 +844,7 @@ class _RepairJobsScreenState
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    Widget step(
-      IconData icon,
-      String title,
-      String subtitle,
-      bool active,
-    ) {
+    Widget step(IconData icon, String title, String subtitle, bool active) {
       return Expanded(
         child: Column(
           children: [
@@ -877,15 +866,19 @@ class _RepairJobsScreenState
               ),
             ),
             const SizedBox(height: 7),
-            Text(title,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                )),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(subtitle,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall,
+            ),
           ],
         ),
       );
@@ -903,11 +896,19 @@ class _RepairJobsScreenState
           children: [
             step(Icons.assignment_outlined, 'Inspection', 'Source', true),
             Expanded(child: Divider(color: scheme.outlineVariant)),
-            step(Icons.build_outlined, 'Repairs',
-                outstanding > 0 ? 'Outstanding' : 'Clear', outstanding > 0),
+            step(
+              Icons.build_outlined,
+              'Repairs',
+              outstanding > 0 ? 'Outstanding' : 'Clear',
+              outstanding > 0,
+            ),
             Expanded(child: Divider(color: scheme.outlineVariant)),
-            step(Icons.check_circle_outline, 'Complete',
-                '$completed done', completed > 0),
+            step(
+              Icons.check_circle_outline,
+              'Complete',
+              '$completed done',
+              completed > 0,
+            ),
           ],
         ),
       ),
@@ -957,23 +958,35 @@ class _RepairJobsScreenState
                   children: [
                     SizedBox(
                       width: itemWidth,
-                      child: _summaryValue('Jobs', '$count',
-                          Icons.build_outlined),
+                      child: _summaryValue(
+                        'Jobs',
+                        '$count',
+                        Icons.build_outlined,
+                      ),
                     ),
                     SizedBox(
                       width: itemWidth,
-                      child: _summaryValue('Outstanding', '$outstanding',
-                          Icons.pending_actions_outlined),
+                      child: _summaryValue(
+                        'Outstanding',
+                        '$outstanding',
+                        Icons.pending_actions_outlined,
+                      ),
                     ),
                     SizedBox(
                       width: itemWidth,
-                      child: _summaryValue('Completed', '$completed',
-                          Icons.check_circle_outline),
+                      child: _summaryValue(
+                        'Completed',
+                        '$completed',
+                        Icons.check_circle_outline,
+                      ),
                     ),
                     SizedBox(
                       width: itemWidth,
-                      child: _summaryValue('Estimated',
-                          '£${cost.toStringAsFixed(2)}', Icons.payments_outlined),
+                      child: _summaryValue(
+                        'Estimated',
+                        '£${cost.toStringAsFixed(2)}',
+                        Icons.payments_outlined,
+                      ),
                     ),
                   ],
                 );
@@ -1005,14 +1018,17 @@ class _RepairJobsScreenState
         children: [
           Icon(icon, size: 22),
           const SizedBox(height: 6),
-          Text(value,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w900, fontSize: 17),
-              textAlign: TextAlign.center),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 2),
-          Text(label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12)),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12),
+          ),
         ],
       ),
     );
@@ -1056,23 +1072,21 @@ class _RepairJobsScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(job.title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          )),
+                      Text(
+                        job.title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                       if (job.jobNumber.trim().isNotEmpty) ...[
                         const SizedBox(height: 3),
-                        Text(job.jobNumber,
-                            style: theme.textTheme.bodySmall),
+                        Text(job.jobNumber, style: theme.textTheme.bodySmall),
                       ],
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                StatusBadge(
-                  label: _statusText(job.status),
-                  color: statusColor,
-                ),
+                StatusBadge(label: _statusText(job.status), color: statusColor),
               ],
             ),
             const SizedBox(height: 14),
@@ -1082,16 +1096,19 @@ class _RepairJobsScreenState
               spacing: 8,
               runSpacing: 8,
               children: [
-                _infoChip(context, Icons.priority_high_outlined,
-                    _priorityText(job.priority)),
+                _infoChip(
+                  context,
+                  Icons.priority_high_outlined,
+                  _priorityText(job.priority),
+                ),
                 _infoChip(
                   context,
                   Icons.person_outline,
                   job.technicianId == null
                       ? 'Unassigned'
                       : job.technicianName.trim().isEmpty
-                          ? 'Assigned technician'
-                          : job.technicianName,
+                      ? 'Assigned technician'
+                      : job.technicianName,
                 ),
                 _infoChip(
                   context,
@@ -1106,9 +1123,7 @@ class _RepairJobsScreenState
                 _infoChip(
                   context,
                   Icons.inventory_2_outlined,
-                  job.partsRequired
-                      ? 'Parts required'
-                      : 'No parts required',
+                  job.partsRequired ? 'Parts required' : 'No parts required',
                 ),
               ],
             ),
@@ -1123,9 +1138,7 @@ class _RepairJobsScreenState
               ),
             ],
             const SizedBox(height: 16),
-            _InspectionEvidenceSection(
-              evidence: _loadInspectionEvidence(job),
-            ),
+            _InspectionEvidenceSection(evidence: _loadInspectionEvidence(job)),
             const SizedBox(height: 16),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -1139,24 +1152,32 @@ class _RepairJobsScreenState
                   children: [
                     SizedBox(
                       width: itemWidth,
-                      child: _costValue('Estimated Hours',
-                          '${job.estimatedHours.toStringAsFixed(1)} hrs'),
+                      child: _costValue(
+                        'Estimated Hours',
+                        '${job.estimatedHours.toStringAsFixed(1)} hrs',
+                      ),
                     ),
                     SizedBox(
                       width: itemWidth,
-                      child: _costValue('Estimated Cost',
-                          '£${job.estimatedCost.toStringAsFixed(2)}'),
+                      child: _costValue(
+                        'Estimated Cost',
+                        '£${job.estimatedCost.toStringAsFixed(2)}',
+                      ),
                     ),
                     if (job.actualHours > 0 || job.actualCost > 0) ...[
                       SizedBox(
                         width: itemWidth,
-                        child: _costValue('Actual Hours',
-                            '${job.actualHours.toStringAsFixed(1)} hrs'),
+                        child: _costValue(
+                          'Actual Hours',
+                          '${job.actualHours.toStringAsFixed(1)} hrs',
+                        ),
                       ),
                       SizedBox(
                         width: itemWidth,
-                        child: _costValue('Actual Cost',
-                            '£${job.actualCost.toStringAsFixed(2)}'),
+                        child: _costValue(
+                          'Actual Cost',
+                          '£${job.actualCost.toStringAsFixed(2)}',
+                        ),
                       ),
                     ],
                   ],
@@ -1169,14 +1190,16 @@ class _RepairJobsScreenState
               runSpacing: 10,
               children: [
                 OutlinedButton.icon(
-                  onPressed: _canPrintJobCard(job)
+                  onPressed:
+                      _canPrintJobCard(job) && !_jobCardOperationGate.isRunning
                       ? () => _previewJobCard(job)
                       : null,
                   icon: const Icon(Icons.preview_outlined),
                   label: const Text('Preview Job Card'),
                 ),
                 FilledButton.tonalIcon(
-                  onPressed: _canPrintJobCard(job)
+                  onPressed:
+                      _canPrintJobCard(job) && !_jobCardOperationGate.isRunning
                       ? () => _printOrSaveJobCard(job)
                       : null,
                   icon: const Icon(Icons.print_outlined),
@@ -1212,11 +1235,7 @@ class _RepairJobsScreenState
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16),
-          const SizedBox(width: 6),
-          Text(label),
-        ],
+        children: [Icon(icon, size: 16), const SizedBox(width: 6), Text(label)],
       ),
     );
   }
@@ -1234,11 +1253,9 @@ class _RepairJobsScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
-          Text(value,
-              style: const TextStyle(fontWeight: FontWeight.w800)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -1256,9 +1273,7 @@ class _RepairJobsAccessDenied extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Access Denied')),
-      body: Center(
-        child: Text(message),
-      ),
+      body: Center(child: Text(message)),
     );
   }
 }
@@ -1276,9 +1291,7 @@ class _RepairEvidence {
 }
 
 class _InspectionEvidenceSection extends StatelessWidget {
-  const _InspectionEvidenceSection({
-    required this.evidence,
-  });
+  const _InspectionEvidenceSection({required this.evidence});
 
   final Future<_RepairEvidence> evidence;
 
@@ -1347,9 +1360,8 @@ class _InspectionEvidenceSection extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     itemCount: repairEvidence.photos.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) => _EvidenceThumbnail(
-                      photo: repairEvidence.photos[index],
-                    ),
+                    itemBuilder: (context, index) =>
+                        _EvidenceThumbnail(photo: repairEvidence.photos[index]),
                   ),
                 ),
             ],
@@ -1361,9 +1373,7 @@ class _InspectionEvidenceSection extends StatelessWidget {
 }
 
 class _EvidenceThumbnail extends StatelessWidget {
-  const _EvidenceThumbnail({
-    required this.photo,
-  });
+  const _EvidenceThumbnail({required this.photo});
 
   final InspectionPhoto photo;
 
@@ -1389,12 +1399,7 @@ class _EvidenceThumbnail extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.file(
-          file,
-          width: 96,
-          height: 96,
-          fit: BoxFit.cover,
-        ),
+        child: Image.file(file, width: 96, height: 96, fit: BoxFit.cover),
       ),
     );
   }
@@ -1412,9 +1417,7 @@ class _EvidenceThumbnail extends StatelessWidget {
                 child: InteractiveViewer(
                   minScale: 0.8,
                   maxScale: 4,
-                  child: Center(
-                    child: Image.file(file, fit: BoxFit.contain),
-                  ),
+                  child: Center(child: Image.file(file, fit: BoxFit.contain)),
                 ),
               ),
               Positioned(
@@ -1469,9 +1472,7 @@ class _ReturnRepairDialogState extends State<_ReturnRepairDialog> {
           child: const Text('Cancel'),
         ),
         FilledButton.icon(
-          onPressed: () => Navigator.of(context).pop(
-            _reasonController.text,
-          ),
+          onPressed: () => Navigator.of(context).pop(_reasonController.text),
           icon: const Icon(Icons.assignment_return_outlined),
           label: const Text('Return Job'),
         ),
@@ -1525,10 +1526,7 @@ class _CancelRepairDialogState extends State<_CancelRepairDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Keep Job'),
         ),
-        FilledButton(
-          onPressed: _cancel,
-          child: const Text('Cancel Job'),
-        ),
+        FilledButton(onPressed: _cancel, child: const Text('Cancel Job')),
       ],
     );
   }
@@ -1537,9 +1535,7 @@ class _CancelRepairDialogState extends State<_CancelRepairDialog> {
 class _TechnicianWorkUpdateDialog extends StatefulWidget {
   final RepairJob job;
 
-  const _TechnicianWorkUpdateDialog({
-    required this.job,
-  });
+  const _TechnicianWorkUpdateDialog({required this.job});
 
   @override
   State<_TechnicianWorkUpdateDialog> createState() =>
@@ -1578,9 +1574,7 @@ class _TechnicianWorkUpdateDialogState
 
     if (hours == null || hours < 0 || cost == null || cost < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter valid actual hours and cost.'),
-        ),
+        const SnackBar(content: Text('Enter valid actual hours and cost.')),
       );
       return;
     }
@@ -1647,17 +1641,13 @@ class _TechnicianWorkUpdateDialogState
 class _RepairJobEditDialog extends StatefulWidget {
   final RepairJob job;
 
-  const _RepairJobEditDialog({
-    required this.job,
-  });
+  const _RepairJobEditDialog({required this.job});
 
   @override
-  State<_RepairJobEditDialog> createState() =>
-      _RepairJobEditDialogState();
+  State<_RepairJobEditDialog> createState() => _RepairJobEditDialogState();
 }
 
-class _RepairJobEditDialogState
-    extends State<_RepairJobEditDialog> {
+class _RepairJobEditDialogState extends State<_RepairJobEditDialog> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _hoursController;
@@ -1678,14 +1668,11 @@ class _RepairJobEditDialogState
     final job = widget.job;
 
     _titleController = TextEditingController(text: job.title);
-    _descriptionController =
-        TextEditingController(text: job.description);
+    _descriptionController = TextEditingController(text: job.description);
     _hoursController = TextEditingController(
       text: job.estimatedHours.toString(),
     );
-    _costController = TextEditingController(
-      text: job.estimatedCost.toString(),
-    );
+    _costController = TextEditingController(text: job.estimatedCost.toString());
 
     _priority = job.priority;
     _status = job.status;
@@ -1734,34 +1721,24 @@ class _RepairJobEditDialogState
 
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter a repair job title.'),
-        ),
+        const SnackBar(content: Text('Enter a repair job title.')),
       );
       return;
     }
 
-    final hours = double.tryParse(
-      _hoursController.text.trim(),
-    );
-    final cost = double.tryParse(
-      _costController.text.trim(),
-    );
+    final hours = double.tryParse(_hoursController.text.trim());
+    final cost = double.tryParse(_costController.text.trim());
 
     if (hours == null || hours < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter a valid estimated hours value.'),
-        ),
+        const SnackBar(content: Text('Enter a valid estimated hours value.')),
       );
       return;
     }
 
     if (cost == null || cost < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter a valid estimated cost.'),
-        ),
+        const SnackBar(content: Text('Enter a valid estimated cost.')),
       );
       return;
     }
@@ -1788,7 +1765,9 @@ class _RepairJobEditDialogState
         widget.job.technicianId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Select an active technician before assigning this job.'),
+          content: Text(
+            'Select an active technician before assigning this job.',
+          ),
         ),
       );
       return;
@@ -1801,7 +1780,8 @@ class _RepairJobEditDialogState
         technicianId: selectedTechnician == null
             ? widget.job.technicianId
             : selectedTechnician.id,
-        technicianName: selectedTechnician?.username ?? widget.job.technicianName,
+        technicianName:
+            selectedTechnician?.username ?? widget.job.technicianName,
         priority: _priority,
         status: _status,
         partsRequired: _partsRequired,
@@ -1823,17 +1803,13 @@ class _RepairJobEditDialogState
             children: [
               TextField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Job Title',
-                ),
+                decoration: const InputDecoration(labelText: 'Job Title'),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _descriptionController,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                ),
+                decoration: const InputDecoration(labelText: 'Description'),
               ),
               const SizedBox(height: 12),
               if (_loadingTechnicians)
@@ -1844,9 +1820,7 @@ class _RepairJobEditDialogState
               else if (_technicianLoadError != null)
                 Text(
                   _technicianLoadError!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 )
               else
                 DropdownButtonFormField<String>(
@@ -1873,16 +1847,12 @@ class _RepairJobEditDialogState
               const SizedBox(height: 12),
               DropdownButtonFormField<RepairPriority>(
                 initialValue: _priority,
-                decoration: const InputDecoration(
-                  labelText: 'Priority',
-                ),
+                decoration: const InputDecoration(labelText: 'Priority'),
                 items: RepairPriority.values
                     .map(
                       (priority) => DropdownMenuItem(
                         value: priority,
-                        child: Text(
-                          priority.name.toUpperCase(),
-                        ),
+                        child: Text(priority.name.toUpperCase()),
                       ),
                     )
                     .toList(),
@@ -1897,9 +1867,7 @@ class _RepairJobEditDialogState
               const SizedBox(height: 12),
               DropdownButtonFormField<RepairJobStatus>(
                 initialValue: _status,
-                decoration: const InputDecoration(
-                  labelText: 'Status',
-                ),
+                decoration: const InputDecoration(labelText: 'Status'),
                 items: RepairJobStatus.values
                     .map(
                       (status) => DropdownMenuItem(
@@ -1937,9 +1905,7 @@ class _RepairJobEditDialogState
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
-                  labelText: 'Estimated Hours',
-                ),
+                decoration: const InputDecoration(labelText: 'Estimated Hours'),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -1973,17 +1939,14 @@ class _RepairJobEditDialogState
 class _CompleteRepairJobDialog extends StatefulWidget {
   final RepairJob job;
 
-  const _CompleteRepairJobDialog({
-    required this.job,
-  });
+  const _CompleteRepairJobDialog({required this.job});
 
   @override
   State<_CompleteRepairJobDialog> createState() =>
       _CompleteRepairJobDialogState();
 }
 
-class _CompleteRepairJobDialogState
-    extends State<_CompleteRepairJobDialog> {
+class _CompleteRepairJobDialogState extends State<_CompleteRepairJobDialog> {
   late final TextEditingController _hoursController;
   late final TextEditingController _costController;
 
@@ -2012,27 +1975,19 @@ class _CompleteRepairJobDialogState
   }
 
   void _complete() {
-    final hours = double.tryParse(
-      _hoursController.text.trim(),
-    );
-    final cost = double.tryParse(
-      _costController.text.trim(),
-    );
+    final hours = double.tryParse(_hoursController.text.trim());
+    final cost = double.tryParse(_costController.text.trim());
 
     if (hours == null || hours < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter valid actual hours.'),
-        ),
+        const SnackBar(content: Text('Enter valid actual hours.')),
       );
       return;
     }
 
     if (cost == null || cost < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter a valid actual cost.'),
-        ),
+        const SnackBar(content: Text('Enter a valid actual cost.')),
       );
       return;
     }
