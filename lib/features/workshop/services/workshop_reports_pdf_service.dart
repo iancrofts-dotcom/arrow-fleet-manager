@@ -283,7 +283,7 @@ class WorkshopReportsPdfService {
   }
 
   pw.Widget _detailSection(String title, List<pw.Widget> children) => pw.Container(margin: const pw.EdgeInsets.only(top: 14), padding: const pw.EdgeInsets.all(10), decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey400)), child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [pw.Text(title, style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)), pw.SizedBox(height: 5), ...children]));
-  pw.Widget _detailRow(String label, String value) => pw.Padding(padding: const pw.EdgeInsets.symmetric(vertical: 2), child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [pw.SizedBox(width: 140, child: pw.Text(label, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))), pw.Expanded(child: pw.Text(value.isEmpty ? '—' : value, style: const pw.TextStyle(fontSize: 9)))]));
+  pw.Widget _detailRow(String label, String value) => pw.Padding(padding: const pw.EdgeInsets.symmetric(vertical: 2), child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [pw.SizedBox(width: 140, child: pw.Text(label, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))), pw.Expanded(child: pw.Text(value.isEmpty ? '-' : value, style: const pw.TextStyle(fontSize: 9)))]));
 
   pw.Widget _summary(List<RepairJob> jobs, List<WorkshopInspection> inspections) {
     final completed = jobs.where((job) => job.status == RepairJobStatus.completed).length;
@@ -351,7 +351,7 @@ class WorkshopReportsPdfService {
       );
 
   static String _title(String value) => value.replaceAllMapped(RegExp(r'(?<=[a-z])(?=[A-Z])|_'), (match) => ' ').split(' ').map((part) => part.isEmpty ? '' : '${part[0].toUpperCase()}${part.substring(1)}').join(' ');
-  static String _money(double value) => '£${value.toStringAsFixed(2)}';
+  static String _money(double value) => 'GBP ${value.toStringAsFixed(2)}';
   static String _date(DateTime value) => '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
   static String _dateTime(DateTime value) => '${_date(value)} ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 }

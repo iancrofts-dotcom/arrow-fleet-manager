@@ -26,7 +26,7 @@ class PdfReportService {
         footer: (context) => pw.Align(
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
-            '${branding.footer} • ${branding.version}',
+            '${branding.footer} | ${branding.version}',
             style: const pw.TextStyle(
               fontSize: 10,
             ),

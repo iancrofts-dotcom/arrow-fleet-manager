@@ -394,7 +394,7 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
       _technicianLabel(data, filter.technicianId),
       filter.status?.name ?? 'All statuses',
       filter.priority?.name ?? 'All priorities',
-    ].join(' • ');
+    ].join(' | ');
   }
 
   @override
@@ -513,7 +513,7 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
               .map(
                 (vehicle) => _Option(
                   vehicle.vehicleId,
-                  '${vehicle.registration} • ${vehicle.fleetNumber}',
+                  '${vehicle.registration} | ${vehicle.fleetNumber}',
                 ),
               )
               .toList(),
@@ -558,7 +558,7 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
               .map(
                 (inspection) => _Option(
                   inspection.id!,
-                  '${inspection.inspectionNumber} • ${inspection.registration}',
+                  '${inspection.inspectionNumber} | ${inspection.registration}',
                 ),
               )
               .toList(),
@@ -701,10 +701,10 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.assignment_outlined),
                   title: Text(
-                    '${inspection.inspectionNumber} • ${inspection.registration}',
+                    '${inspection.inspectionNumber} | ${inspection.registration}',
                   ),
                   subtitle: Text(
-                    '${_readable(inspection.inspectionType.name)} • ${_readable(inspection.overallResult.name)} • ${_date(inspection.dateStarted)}',
+                    '${_readable(inspection.inspectionType.name)} | ${_readable(inspection.overallResult.name)} | ${_date(inspection.dateStarted)}',
                   ),
                   trailing: Text(_readable(inspection.status.name)),
                 ),
@@ -715,9 +715,9 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
                 (job) => ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.build_outlined),
-                  title: Text('${job.jobNumber} • ${job.title}'),
+                  title: Text('${job.jobNumber} | ${job.title}'),
                   subtitle: Text(
-                    '${job.vehicleRegistration} • ${_technicianLabel(data, job.technicianId)} • ${_readable(job.status.name)}',
+                    '${job.vehicleRegistration} | ${_technicianLabel(data, job.technicianId)} | ${_readable(job.status.name)}',
                   ),
                   trailing: Text(_money(job.actualCost)),
                 ),
@@ -805,7 +805,7 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
             : '${word[0].toUpperCase()}${word.substring(1)}',
       )
       .join(' ');
-  static String _money(double value) => '£${value.toStringAsFixed(2)}';
+  static String _money(double value) => 'GBP ${value.toStringAsFixed(2)}';
   static String _date(DateTime value) =>
       '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
 }
@@ -832,7 +832,7 @@ extension on _ReportPeriod {
     _ReportPeriod.custom =>
       range == null
           ? 'Choose custom range'
-          : '${_reportDate(range.start)} – ${_reportDate(range.end)}',
+          : '${_reportDate(range.start)} - ${_reportDate(range.end)}',
   };
 }
 

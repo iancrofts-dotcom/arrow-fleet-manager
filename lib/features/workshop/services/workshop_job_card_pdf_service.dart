@@ -35,7 +35,7 @@ class WorkshopJobCardPdfService {
         footer: (context) => pw.Align(
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
-            '${const ReportBrandingService().footer} • page ${context.pageNumber}',
+            '${const ReportBrandingService().footer} | page ${context.pageNumber}',
             style: const pw.TextStyle(fontSize: 9),
           ),
         ),
@@ -144,7 +144,7 @@ class WorkshopJobCardPdfService {
         padding: const pw.EdgeInsets.symmetric(vertical: 2),
         child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
           pw.SizedBox(width: 145, child: pw.Text(label, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
-          pw.Expanded(child: pw.Text(value.isEmpty ? '—' : value, style: const pw.TextStyle(fontSize: 9))),
+          pw.Expanded(child: pw.Text(value.isEmpty ? '-' : value, style: const pw.TextStyle(fontSize: 9))),
         ]),
       );
 
@@ -166,5 +166,5 @@ class WorkshopJobCardPdfService {
   static String _titleCase(String value) => value.replaceAllMapped(RegExp(r'(?<=[a-z])(?=[A-Z])|_'), (match) => match.group(0) == '_' ? ' ' : ' ').split(' ').map((part) => part.isEmpty ? '' : '${part[0].toUpperCase()}${part.substring(1)}').join(' ');
   static String _dateTime(DateTime value) => '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year} ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
   static String _hours(double value) => '${value.toStringAsFixed(1)} hrs';
-  static String _money(double value) => '£${value.toStringAsFixed(2)}';
+  static String _money(double value) => 'GBP ${value.toStringAsFixed(2)}';
 }
