@@ -4,6 +4,7 @@ import '../auth/models/user_role.dart';
 import '../auth/screens/login_screen.dart';
 import '../auth/services/auth_service.dart';
 import '../auth/services/permission_service.dart';
+import '../auth/widgets/protected_screen.dart';
 
 import 'builders/dashboard_router.dart';
 import 'sections/role_sections/driver_dashboard.dart';
@@ -14,14 +15,26 @@ import 'models/dashboard_context.dart';
 import 'services/dashboard_service.dart';
 import '../../shared/widgets/app_page_scaffold.dart';
 
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  Widget build(BuildContext context) {
+    return ProtectedScreen(
+      allow: (_) => true,
+      child: const _DashboardContent(),
+    );
+  }
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardContent extends StatefulWidget {
+  const _DashboardContent();
+
+  @override
+  State<_DashboardContent> createState() => _DashboardContentState();
+}
+
+class _DashboardContentState extends State<_DashboardContent> {
   late final DashboardService _dashboardService;
 
   Future<DashboardSummary>? summaryFuture;
@@ -55,9 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!mounted) return;
 
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
     );
   }
@@ -94,65 +105,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
       title: 'Dashboard',
       subtitle: 'Fleet overview and operational status.',
       actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshDashboard,
-          ),
-          IconButton(
-            tooltip: 'Logout',
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-          ),
-        ],
+        IconButton(
+          tooltip: 'Refresh',
+          icon: const Icon(Icons.refresh),
+          onPressed: _refreshDashboard,
+        ),
+        IconButton(
+          tooltip: 'Logout',
+          icon: const Icon(Icons.logout),
+          onPressed: _logout,
+        ),
+      ],
       child: dashboardRole == DashboardRole.driver
           ? const DriverDashboard()
           : dashboardRole == DashboardRole.technician
-              ? const TechnicianDashboard()
+          ? const TechnicianDashboard()
           : FutureBuilder<DashboardSummary>(
-        future: summaryFuture!,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+              future: summaryFuture!,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Error loading dashboard\n\n${snapshot.error}',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'Error loading dashboard\n\n${snapshot.error}',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }
 
-          if (!snapshot.hasData) {
-            return const Center(
-              child: Text('No dashboard data available'),
-            );
-          }
+                if (!snapshot.hasData) {
+                  return const Center(
+                    child: Text('No dashboard data available'),
+                  );
+                }
 
-          final summary = snapshot.data!;
+                final summary = snapshot.data!;
 
-          final fleetHealth =
-              _dashboardService.getFleetHealth(summary);
+                final fleetHealth = _dashboardService.getFleetHealth(summary);
 
-          final dashboardContext = DashboardContext(
-            summary: summary,
-            fleetHealth: fleetHealth,
-            onRefresh: _refreshDashboard,
-          );
+                final dashboardContext = DashboardContext(
+                  summary: summary,
+                  fleetHealth: fleetHealth,
+                  onRefresh: _refreshDashboard,
+                );
 
-          return DashboardRouter.build(
-            role: dashboardRole,
-            context: dashboardContext,
-          );
-        },
-      ),
+                return DashboardRouter.build(
+                  role: dashboardRole,
+                  context: dashboardContext,
+                );
+              },
+            ),
     );
   }
 }

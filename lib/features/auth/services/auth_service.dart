@@ -4,12 +4,14 @@ import 'session_service.dart';
 import 'user_service.dart';
 
 class AuthService {
-  AuthService._();
+  AuthService({UserService? userService, SessionService? sessionService})
+    : _userService = userService ?? UserService.instance,
+      _sessionService = sessionService ?? SessionService.instance;
 
-  static final AuthService instance = AuthService._();
+  static final AuthService instance = AuthService();
 
-  final UserService _userService = UserService.instance;
-  final SessionService _sessionService = SessionService.instance;
+  final UserService _userService;
+  final SessionService _sessionService;
 
   User? _currentUser;
   bool _requiresPasswordChange = false;
@@ -43,22 +45,8 @@ class AuthService {
   }
 
   Future<bool> restoreSession() async {
-    final userId = await _sessionService.getUserId();
-
-    if (userId == null) {
-      return false;
-    }
-
-    final user = await _userService.getUserById(userId);
-
-    if (user == null || !user.isActive) {
-      await _sessionService.clearSession();
-      return false;
-    }
-
-    _currentUser = user;
-    _requiresPasswordChange = _userService.requiresPasswordChange(user);
-    return true;
+    return (await revalidateCurrentSession()) ==
+        SessionValidationResult.authenticated;
   }
 
   Future<void> logout() async {
@@ -67,13 +55,36 @@ class AuthService {
     await _sessionService.clearSession();
   }
 
-  Future<void> refreshCurrentUser() async {
-    if (_currentUser == null) return;
+  /// Reloads the session user from persisted storage at an authorization
+  /// boundary. Missing and inactive accounts are invalidated; repository
+  /// failures intentionally retain the session but return [refreshFailed] so
+  /// callers can fail closed without treating a transient database issue as a
+  /// logout.
+  Future<SessionValidationResult> revalidateCurrentSession() async {
+    final userId = _currentUser?.id ?? await _sessionService.getUserId();
+    if (userId == null) {
+      return SessionValidationResult.unauthenticated;
+    }
 
-    _currentUser = await _userService.getUserById(_currentUser!.id);
-    final user = _currentUser;
-    _requiresPasswordChange =
-        user != null && _userService.requiresPasswordChange(user);
+    try {
+      final user = await _userService.getUserById(userId);
+      if (user == null || !user.isActive) {
+        _currentUser = null;
+        _requiresPasswordChange = false;
+        await _sessionService.clearSession();
+        return SessionValidationResult.unauthenticated;
+      }
+
+      _currentUser = user;
+      _requiresPasswordChange = _userService.requiresPasswordChange(user);
+      return SessionValidationResult.authenticated;
+    } catch (_) {
+      return SessionValidationResult.refreshFailed;
+    }
+  }
+
+  Future<void> refreshCurrentUser() async {
+    await revalidateCurrentSession();
   }
 
   bool hasRole(UserRole role) {
@@ -100,3 +111,5 @@ class AuthService {
     return user;
   }
 }
+
+enum SessionValidationResult { authenticated, unauthenticated, refreshFailed }
