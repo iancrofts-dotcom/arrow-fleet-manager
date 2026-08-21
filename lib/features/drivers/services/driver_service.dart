@@ -4,19 +4,24 @@ import '../models/driver_entity.dart';
 import '../repositories/driver_assignment_repository.dart';
 import '../repositories/driver_repository.dart';
 import '../../auth/services/user_sync_service.dart';
+import '../../auth/models/user.dart';
+import '../../auth/services/user_service.dart';
 
 class DriverService {
   DriverService({
     DriverRepository? repository,
     UserSyncService? userSyncService,
+    UserService? userService,
     DriverAssignmentRepository? assignmentRepository,
   }) : _repository = repository ?? DriverRepository(),
        _userSyncService = userSyncService ?? UserSyncService.instance,
+       _userService = userService ?? UserService.instance,
        _assignmentRepository =
            assignmentRepository ?? DriverAssignmentRepository();
 
   final DriverRepository _repository;
   final UserSyncService _userSyncService;
+  final UserService _userService;
   final DriverAssignmentRepository _assignmentRepository;
 
   Future<List<Driver>> getDrivers() async {
@@ -100,6 +105,74 @@ class DriverService {
     await _repository.updateDriver(DriverEntity.fromDriver(driver));
 
     await _userSyncService.syncDriver(driver);
+  }
+
+  /// Updates a Driver-linked account without allowing the two persisted
+  /// username fields to diverge.
+  ///
+  /// Driver and User repositories do not currently share a transaction
+  /// executor. The Driver write is therefore compensated with the exact
+  /// original record if the following User write fails.
+  Future<void> updateDriverLinkedAccount(
+    User user, {
+    required String username,
+    String? newPassword,
+  }) async {
+    final driverId = user.driverId;
+    if (driverId == null) {
+      throw ArgumentError('A linked Driver account is required.');
+    }
+
+    final persistedUser = await _userService.getUserById(user.id);
+    if (persistedUser == null || persistedUser.driverId != driverId) {
+      throw StateError('The linked Driver account could not be verified.');
+    }
+
+    if (!await _userService.isUsernameAvailable(
+      username,
+      excludingUserId: persistedUser.id,
+    )) {
+      throw StateError('Username already exists.');
+    }
+
+    final existingDriver = await getDriverById(driverId);
+    if (existingDriver == null) {
+      throw StateError('The linked Driver record could not be found.');
+    }
+
+    final updatedDriver = existingDriver.copyWith(username: username);
+    final updatedUser = persistedUser.copyWith(username: username);
+    var driverUpdated = false;
+
+    try {
+      final updatedRows = await _repository.updateDriver(
+        DriverEntity.fromDriver(updatedDriver),
+      );
+      if (updatedRows != 1) {
+        throw StateError('The linked Driver record could not be updated.');
+      }
+      driverUpdated = true;
+
+      await _userService.updateUser(updatedUser, newPassword: newPassword);
+    } catch (error, stackTrace) {
+      if (driverUpdated) {
+        try {
+          final restoredRows = await _repository.updateDriver(
+            DriverEntity.fromDriver(existingDriver),
+          );
+          if (restoredRows != 1) {
+            throw StateError('The linked Driver record could not be restored.');
+          }
+        } catch (rollbackError) {
+          throw StateError(
+            'Driver account update failed: $error. '
+            'Unable to restore the linked Driver: $rollbackError.',
+          );
+        }
+      }
+
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 
   /// Deactivates a driver while retaining their account and historical records.

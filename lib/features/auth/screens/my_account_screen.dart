@@ -7,6 +7,7 @@ import '../services/permission_service.dart';
 import '../services/user_service.dart';
 import '../../drivers/models/driver_compliance.dart';
 import '../../drivers/services/driver_compliance_service.dart';
+import '../../drivers/services/driver_service.dart';
 import '../../documents/screens/driver_compliance_documents_screen.dart';
 import '../../../shared/widgets/app_page_scaffold.dart';
 import '../../../shared/status_badge.dart';
@@ -35,6 +36,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   int _loadRequest = 0;
   DriverCompliance? _compliance;
   final DriverComplianceService _complianceService = DriverComplianceService();
+  final DriverService _driverService = DriverService();
 
   @override
   void initState() {
@@ -146,12 +148,21 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
         return;
       }
 
-      await UserService.instance.updateUser(
-        latestUser.copyWith(username: username),
-        newPassword: _passwordController.text.isEmpty
-            ? null
-            : _passwordController.text,
-      );
+      final newPassword = _passwordController.text.isEmpty
+          ? null
+          : _passwordController.text;
+      if (latestUser.driverId == null) {
+        await UserService.instance.updateUser(
+          latestUser.copyWith(username: username),
+          newPassword: newPassword,
+        );
+      } else {
+        await _driverService.updateDriverLinkedAccount(
+          latestUser,
+          username: username,
+          newPassword: newPassword,
+        );
+      }
       await AuthService.instance.refreshCurrentUser();
       final savedUser = await UserService.instance.getUserById(currentUser.id);
       if (savedUser == null || savedUser.id != currentUser.id) {
