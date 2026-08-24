@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
 import '../../../shared/widgets/app_page_scaffold.dart';
+import '../../../shared/widgets/form_section.dart';
 
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
@@ -9,21 +10,14 @@ import '../services/vehicle_service.dart';
 class EditVehicleScreen extends StatefulWidget {
   final Vehicle vehicle;
 
-  const EditVehicleScreen({
-    super.key,
-    required this.vehicle,
-  });
+  const EditVehicleScreen({super.key, required this.vehicle});
 
   @override
-  State<EditVehicleScreen> createState() =>
-      _EditVehicleScreenState();
+  State<EditVehicleScreen> createState() => _EditVehicleScreenState();
 }
 
-class _EditVehicleScreenState
-    extends State<EditVehicleScreen> {
-
-  final PermissionService _permissions =
-      PermissionService.instance;
+class _EditVehicleScreenState extends State<EditVehicleScreen> {
+  final PermissionService _permissions = PermissionService.instance;
 
   final VehicleService _vehicleService = VehicleService();
 
@@ -40,35 +34,21 @@ class _EditVehicleScreenState
   void initState() {
     super.initState();
 
-    fleetController =
-        TextEditingController(
-      text: widget.vehicle.fleetNumber,
-    );
+    fleetController = TextEditingController(text: widget.vehicle.fleetNumber);
 
-    registrationController =
-        TextEditingController(
+    registrationController = TextEditingController(
       text: widget.vehicle.registration,
     );
 
-    makeController =
-        TextEditingController(
-      text: widget.vehicle.make,
-    );
+    makeController = TextEditingController(text: widget.vehicle.make);
 
-    modelController =
-        TextEditingController(
-      text: widget.vehicle.model,
-    );
+    modelController = TextEditingController(text: widget.vehicle.model);
 
-    yearController =
-        TextEditingController(
+    yearController = TextEditingController(
       text: widget.vehicle.year.toString(),
     );
 
-    vinController =
-        TextEditingController(
-      text: widget.vehicle.vin,
-    );
+    vinController = TextEditingController(text: widget.vehicle.vin);
   }
 
   @override
@@ -90,24 +70,17 @@ class _EditVehicleScreenState
     });
 
     final vehicle = Vehicle(
-        id: widget.vehicle.id,
-        fleetNumber: fleetController.text.trim(),
-        registration:
-            registrationController.text
-                .trim()
-                .toUpperCase(),
-        make: makeController.text.trim(),
-        model: modelController.text.trim(),
-        year:
-            int.tryParse(
-                  yearController.text.trim(),
-                ) ??
-                widget.vehicle.year,
-        vin: vinController.text.trim(),
-        motExpiry: widget.vehicle.motExpiry,
-        serviceDue: widget.vehicle.serviceDue,
-        active: widget.vehicle.active,
-      );
+      id: widget.vehicle.id,
+      fleetNumber: fleetController.text.trim(),
+      registration: registrationController.text.trim().toUpperCase(),
+      make: makeController.text.trim(),
+      model: modelController.text.trim(),
+      year: int.tryParse(yearController.text.trim()) ?? widget.vehicle.year,
+      vin: vinController.text.trim(),
+      motExpiry: widget.vehicle.motExpiry,
+      serviceDue: widget.vehicle.serviceDue,
+      active: widget.vehicle.active,
+    );
 
     try {
       await _vehicleService.updateVehicle(vehicle);
@@ -119,9 +92,7 @@ class _EditVehicleScreenState
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Unable to update vehicle.\n$error'),
-        ),
+        SnackBar(content: Text('Unable to update vehicle.\n$error')),
       );
       setState(() {
         _saving = false;
@@ -138,12 +109,9 @@ class _EditVehicleScreenState
 
   @override
   Widget build(BuildContext context) {
-
     if (!_permissions.canManageVehicles) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Access Denied'),
-        ),
+        appBar: AppBar(title: const Text('Access Denied')),
         body: const Center(
           child: Text(
             'You do not have permission to edit vehicles.',
@@ -160,41 +128,46 @@ class _EditVehicleScreenState
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          TextField(
-            controller: fleetController,
-            decoration: input("Fleet Number"),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: registrationController,
-            decoration: input("Registration"),
-          ),
-          const SizedBox(height: 16),
-                    TextField(
-            controller: makeController,
-            decoration: input("Make"),
-          ),
-          const SizedBox(height: 16),
+          FormSection(
+            title: 'Vehicle identity',
+            subtitle: 'Registration and core fleet information.',
+            child: Column(
+              children: [
+                TextField(
+                  controller: fleetController,
+                  decoration: input("Fleet Number"),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: registrationController,
+                  decoration: input("Registration"),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: makeController,
+                  decoration: input("Make"),
+                ),
+                const SizedBox(height: 16),
 
-          TextField(
-            controller: modelController,
-            decoration: input("Model"),
-          ),
-          const SizedBox(height: 16),
+                TextField(
+                  controller: modelController,
+                  decoration: input("Model"),
+                ),
+                const SizedBox(height: 16),
 
-          TextField(
-            controller: yearController,
-            keyboardType: TextInputType.number,
-            decoration: input("Year"),
-          ),
-          const SizedBox(height: 16),
+                TextField(
+                  controller: yearController,
+                  keyboardType: TextInputType.number,
+                  decoration: input("Year"),
+                ),
+                const SizedBox(height: 16),
 
-          TextField(
-            controller: vinController,
-            decoration: input("VIN"),
+                TextField(controller: vinController, decoration: input("VIN")),
+              ],
+            ),
           ),
 
-          const SizedBox(height: 30),
+          const SizedBox(height: 4),
 
           FilledButton.icon(
             onPressed: _saving ? null : save,

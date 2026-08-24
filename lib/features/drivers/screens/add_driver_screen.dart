@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 import '../models/driver.dart';
 import '../models/driver_creation_request.dart';
@@ -64,11 +65,12 @@ class _AddDriverScreenState extends State<AddDriverScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Add Driver')),
-      body: IgnorePointer(
+    return AppPageScaffold(
+      title: 'Add Driver',
+      subtitle: 'Create a driver profile and portal account.',
+      child: IgnorePointer(
         ignoring: _saving,
-        child: DriverForm(onSubmit: _saveDriver),
+        child: DriverForm(onSubmit: _saveDriver, submitLabel: 'Add Driver'),
       ),
     );
   }

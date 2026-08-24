@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 import '../models/driver.dart';
 import '../services/driver_service.dart';
@@ -63,15 +64,17 @@ class _EditDriverScreenState extends State<EditDriverScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Edit Driver')),
-      body: Stack(
+    return AppPageScaffold(
+      title: 'Edit Driver',
+      subtitle: 'Update the existing driver profile.',
+      child: Stack(
         children: [
           IgnorePointer(
             ignoring: _saving,
             child: DriverForm(
               driver: widget.driver,
               onSubmit: (driver, _) => _saveDriver(driver),
+              submitLabel: 'Update Driver',
             ),
           ),
           if (_saving)

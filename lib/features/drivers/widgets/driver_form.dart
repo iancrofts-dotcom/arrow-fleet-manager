@@ -9,8 +9,14 @@ import 'login_details_section.dart';
 class DriverForm extends StatefulWidget {
   final Driver? driver;
   final Future<void> Function(Driver driver, String password) onSubmit;
+  final String submitLabel;
 
-  const DriverForm({super.key, this.driver, required this.onSubmit});
+  const DriverForm({
+    super.key,
+    this.driver,
+    required this.onSubmit,
+    this.submitLabel = 'Save Driver',
+  });
 
   @override
   State<DriverForm> createState() => _DriverFormState();
@@ -116,7 +122,7 @@ class _DriverFormState extends State<DriverForm> {
     return Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         children: [
           DriverDetailsSection(
             firstNameController: _firstName,
@@ -142,11 +148,11 @@ class _DriverFormState extends State<DriverForm> {
               });
             },
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 4),
           FilledButton.icon(
             onPressed: _submit,
             icon: const Icon(Icons.save),
-            label: const Text('Save Driver'),
+            label: Text(widget.submitLabel),
           ),
           const SizedBox(height: 24),
         ],
