@@ -184,27 +184,19 @@ class _Step2ChecklistState extends State<Step2Checklist> {
   }
 
   int get _completed {
-    return widget.data.checklistItems
-        .where((item) => item.completed)
-        .length;
+    return widget.data.checklistItems.where((item) => item.completed).length;
   }
 
   int get _passed {
-    return widget.data.checklistItems
-        .where((item) => item.passed)
-        .length;
+    return widget.data.checklistItems.where((item) => item.passed).length;
   }
 
   int get _advisory {
-    return widget.data.checklistItems
-        .where((item) => item.advisoryOnly)
-        .length;
+    return widget.data.checklistItems.where((item) => item.advisoryOnly).length;
   }
 
   int get _failed {
-    return widget.data.checklistItems
-        .where((item) => item.failed)
-        .length;
+    return widget.data.checklistItems.where((item) => item.failed).length;
   }
 
   double get _progress {
@@ -215,10 +207,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
     return _completed / widget.data.checklistItems.length;
   }
 
-  void _setStatus(
-    InspectionChecklistItem item,
-    ChecklistStatus status,
-  ) {
+  void _setStatus(InspectionChecklistItem item, ChecklistStatus status) {
     setState(() {
       item.status = status;
 
@@ -260,10 +249,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
     widget.onNext();
   }
 
-  void _setNotes(
-    InspectionChecklistItem item,
-    String notes,
-  ) {
+  void _setNotes(InspectionChecklistItem item, String notes) {
     item.notes = notes;
   }
 
@@ -271,9 +257,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
   // TAKE PHOTO
   // =========================================================================
 
-  Future<void> _takePhoto(
-    InspectionChecklistItem item,
-  ) async {
+  Future<void> _takePhoto(InspectionChecklistItem item) async {
     try {
       final XFile? photo = await _imagePicker.pickImage(
         source: ImageSource.camera,
@@ -308,9 +292,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
   // CHOOSE PHOTO
   // =========================================================================
 
-  Future<void> _choosePhoto(
-    InspectionChecklistItem item,
-  ) async {
+  Future<void> _choosePhoto(InspectionChecklistItem item) async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
@@ -339,13 +321,9 @@ class _Step2ChecklistState extends State<Step2Checklist> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Unable to select the photo.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unable to select the photo.')));
     }
   }
 
@@ -353,10 +331,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
   // REMOVE PHOTO
   // =========================================================================
 
-  void _removePhoto(
-    InspectionChecklistItem item,
-    String path,
-  ) {
+  void _removePhoto(InspectionChecklistItem item, String path) {
     setState(() {
       item.photos.remove(path);
     });
@@ -381,10 +356,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
       return Column(
         children: [
           Expanded(
-            child: AppErrorState(
-              message: _loadError!,
-              onRetry: _loadChecklist,
-            ),
+            child: AppErrorState(message: _loadError!, onRetry: _loadChecklist),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -408,10 +380,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
     final grouped = <String, List<InspectionChecklistItem>>{};
 
     for (final item in widget.data.checklistItems) {
-      grouped.putIfAbsent(
-        item.category,
-        () => [],
-      ).add(item);
+      grouped.putIfAbsent(item.category, () => []).add(item);
     }
 
     return Column(
@@ -419,25 +388,14 @@ class _Step2ChecklistState extends State<Step2Checklist> {
         // ===================================================================
         // TOP SUMMARY
         // ===================================================================
-
         Container(
-          padding: const EdgeInsets.fromLTRB(
-            24,
-            20,
-            24,
-            16,
-          ),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
           decoration: BoxDecoration(
             color: scheme.surface,
-            border: Border(
-              bottom: BorderSide(
-                color: scheme.outlineVariant,
-              ),
-            ),
+            border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
           ),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
                 children: [
@@ -446,8 +404,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
                     height: 48,
                     decoration: BoxDecoration(
                       color: scheme.primaryContainer,
-                      borderRadius:
-                          BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       Icons.fact_check_outlined,
@@ -459,24 +416,19 @@ class _Step2ChecklistState extends State<Step2Checklist> {
 
                   Expanded(
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Inspection Checklist',
-                          style: theme.textTheme
-                              .headlineSmall
-                              ?.copyWith(
+                          style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 3),
                         Text(
                           'Check each item, add notes and attach photos.',
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(
-                            color:
-                                scheme.onSurfaceVariant,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -486,8 +438,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
                   Text(
                     '$_completed / '
                     '${widget.data.checklistItems.length}',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: scheme.primary,
                     ),
@@ -498,12 +449,8 @@ class _Step2ChecklistState extends State<Step2Checklist> {
               const SizedBox(height: 16),
 
               ClipRRect(
-                borderRadius:
-                    BorderRadius.circular(20),
-                child: LinearProgressIndicator(
-                  value: _progress,
-                  minHeight: 8,
-                ),
+                borderRadius: BorderRadius.circular(20),
+                child: LinearProgressIndicator(value: _progress, minHeight: 8),
               ),
 
               const SizedBox(height: 14),
@@ -536,19 +483,16 @@ class _Step2ChecklistState extends State<Step2Checklist> {
         // ===================================================================
         // CHECKLIST
         // ===================================================================
-
         Expanded(
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
               for (final entry in grouped.entries) ...[
                 Padding(
-                  padding:
-                      const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
                     entry.key,
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(
+                    style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -558,16 +502,10 @@ class _Step2ChecklistState extends State<Step2Checklist> {
                   _ChecklistCard(
                     item: item,
                     onStatusChanged: (status) {
-                      _setStatus(
-                        item,
-                        status,
-                      );
+                      _setStatus(item, status);
                     },
                     onNotesChanged: (notes) {
-                      _setNotes(
-                        item,
-                        notes,
-                      );
+                      _setNotes(item, notes);
                     },
                     onResponseChanged: (value) => _setResponse(item, value),
                     onTakePhoto: () {
@@ -577,10 +515,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
                       _choosePhoto(item);
                     },
                     onRemovePhoto: (path) {
-                      _removePhoto(
-                        item,
-                        path,
-                      );
+                      _removePhoto(item, path);
                     },
                   ),
 
@@ -596,38 +531,25 @@ class _Step2ChecklistState extends State<Step2Checklist> {
         // ===================================================================
         // FOOTER
         // ===================================================================
-
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 16,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           decoration: BoxDecoration(
             color: scheme.surface,
-            border: Border(
-              top: BorderSide(
-                color: scheme.outlineVariant,
-              ),
-            ),
+            border: Border(top: BorderSide(color: scheme.outlineVariant)),
           ),
           child: Wrap(
-            alignment:
-                WrapAlignment.spaceBetween,
+            alignment: WrapAlignment.spaceBetween,
             runSpacing: 12,
             spacing: 12,
             children: [
               OutlinedButton.icon(
                 onPressed: widget.onPrevious,
-                icon: const Icon(
-                  Icons.arrow_back_rounded,
-                ),
+                icon: const Icon(Icons.arrow_back_rounded),
                 label: const Text('Back'),
               ),
               FilledButton.icon(
                 onPressed: _continue,
-                icon: const Icon(
-                  Icons.arrow_forward_rounded,
-                ),
+                icon: const Icon(Icons.arrow_forward_rounded),
                 label: const Text('Continue'),
               ),
             ],
@@ -655,33 +577,22 @@ class _StatusSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme =
-        Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest,
-        borderRadius:
-            BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 17,
-            color: scheme.primary,
-          ),
+          Icon(icon, size: 17, color: scheme.primary),
           const SizedBox(width: 6),
           Text(
             '$label $value',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -695,10 +606,8 @@ class _StatusSummary extends StatelessWidget {
 
 class _ChecklistCard extends StatefulWidget {
   final InspectionChecklistItem item;
-  final ValueChanged<ChecklistStatus>
-      onStatusChanged;
-  final ValueChanged<String>
-      onNotesChanged;
+  final ValueChanged<ChecklistStatus> onStatusChanged;
+  final ValueChanged<String> onNotesChanged;
   final ValueChanged<String> onResponseChanged;
   final VoidCallback onTakePhoto;
   final VoidCallback onChoosePhoto;
@@ -715,14 +624,11 @@ class _ChecklistCard extends StatefulWidget {
   });
 
   @override
-  State<_ChecklistCard> createState() =>
-      _ChecklistCardState();
+  State<_ChecklistCard> createState() => _ChecklistCardState();
 }
 
-class _ChecklistCardState
-    extends State<_ChecklistCard> {
-  late final TextEditingController
-      _notesController;
+class _ChecklistCardState extends State<_ChecklistCard> {
+  late final TextEditingController _notesController;
   late final TextEditingController _responseController;
 
   bool _showNotes = false;
@@ -732,19 +638,14 @@ class _ChecklistCardState
   void initState() {
     super.initState();
 
-    _notesController =
-        TextEditingController(
-      text: widget.item.notes,
-    );
+    _notesController = TextEditingController(text: widget.item.notes);
     _responseController = TextEditingController(
       text: widget.item.responseValue,
     );
 
-    _showNotes =
-        widget.item.notes.trim().isNotEmpty;
+    _showNotes = widget.item.notes.trim().isNotEmpty;
 
-    _showPhotos =
-        widget.item.photos.isNotEmpty;
+    _showPhotos = widget.item.photos.isNotEmpty;
   }
 
   @override
@@ -775,42 +676,32 @@ class _ChecklistCardState
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: scheme.surface,
-        borderRadius:
-            BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: widget.item.completed
-              ? scheme.primary
-                  .withValues(alpha: 0.45)
+              ? scheme.primary.withValues(alpha: 0.45)
               : scheme.outlineVariant,
-          width:
-              widget.item.completed ? 1.5 : 1,
+          width: widget.item.completed ? 1.5 : 1,
         ),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // =================================================================
           // HEADER
           // =================================================================
-
           Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color:
-                      scheme.primaryContainer,
-                  borderRadius:
-                      BorderRadius.circular(12),
+                  color: scheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  _priorityIcon(
-                    widget.item.priority,
-                  ),
+                  _priorityIcon(widget.item.priority),
                   color: scheme.primary,
                 ),
               ),
@@ -819,16 +710,12 @@ class _ChecklistCardState
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       widget.item.title,
-                      style: theme.textTheme
-                          .titleMedium
-                          ?.copyWith(
-                        fontWeight:
-                            FontWeight.w800,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -836,11 +723,8 @@ class _ChecklistCardState
                       widget.item.mandatory
                           ? 'Mandatory inspection item'
                           : 'Optional inspection item',
-                      style: theme.textTheme
-                          .bodySmall
-                          ?.copyWith(
-                        color:
-                            scheme.onSurfaceVariant,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
                     if (widget.item.description != null &&
@@ -857,20 +741,16 @@ class _ChecklistCardState
 
               if (widget.item.photos.isNotEmpty)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 9,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        scheme.primaryContainer,
-                    borderRadius:
-                        BorderRadius.circular(20),
+                    color: scheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
-                    mainAxisSize:
-                        MainAxisSize.min,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.photo_outlined,
@@ -882,8 +762,7 @@ class _ChecklistCardState
                         '${widget.item.photos.length}',
                         style: TextStyle(
                           color: scheme.primary,
-                          fontWeight:
-                              FontWeight.w700,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -897,17 +776,17 @@ class _ChecklistCardState
           // =================================================================
           // RESPONSE
           // =================================================================
-
           if (widget.item.responseType == InspectionResponseType.text ||
               widget.item.responseType == InspectionResponseType.numeric)
             TextField(
               controller: _responseController,
-              keyboardType: widget.item.responseType ==
-                      InspectionResponseType.numeric
+              keyboardType:
+                  widget.item.responseType == InspectionResponseType.numeric
                   ? const TextInputType.numberWithOptions(decimal: true)
                   : TextInputType.text,
               decoration: InputDecoration(
-                labelText: widget.item.responseType == InspectionResponseType.numeric
+                labelText:
+                    widget.item.responseType == InspectionResponseType.numeric
                     ? 'Numeric response'
                     : 'Response',
                 border: const OutlineInputBorder(),
@@ -919,76 +798,71 @@ class _ChecklistCardState
               spacing: 8,
               runSpacing: 8,
               children: [
-              _StatusButton(
-                label: widget.item.responseType ==
-                        InspectionResponseType.yesNoNotApplicable
-                    ? 'YES'
-                    : 'PASS',
-                icon: Icons.check,
-                selected:
-                    widget.item.status ==
-                        ChecklistStatus.pass,
-                onPressed: () {
-                  widget.onStatusChanged(
-                    ChecklistStatus.pass,
-                  );
-                },
-              ),
-
-              _StatusButton(
-                label: widget.item.responseType ==
-                        InspectionResponseType.yesNoNotApplicable
-                    ? 'NO'
-                    : 'ADVISORY',
-                icon: widget.item.responseType ==
-                        InspectionResponseType.yesNoNotApplicable
-                    ? Icons.close
-                    : Icons.warning_amber,
-                selected:
-                    widget.item.status ==
-                        (widget.item.responseType ==
-                                InspectionResponseType.yesNoNotApplicable
-                            ? ChecklistStatus.fail
-                            : ChecklistStatus.advisory),
-                onPressed: () {
-                  widget.onStatusChanged(
-                    widget.item.responseType ==
-                            InspectionResponseType.yesNoNotApplicable
-                        ? ChecklistStatus.fail
-                        : ChecklistStatus.advisory,
-                  );
-                },
-              ),
-
-              _StatusButton(
-                label: 'N/A',
-                icon: Icons.remove_circle_outline,
-                selected:
-                    widget.item.status ==
-                        ChecklistStatus.notApplicable,
-                onPressed: () {
-                  widget.onStatusChanged(
-                    ChecklistStatus.notApplicable,
-                  );
-                },
-              ),
-              if (widget.item.responseType ==
-                  InspectionResponseType.passFailNotApplicable)
                 _StatusButton(
-                  label: 'DEFECT',
-                  icon: Icons.close,
-                  selected: widget.item.status == ChecklistStatus.fail,
-                  onPressed: () => widget.onStatusChanged(ChecklistStatus.fail),
+                  label:
+                      widget.item.responseType ==
+                          InspectionResponseType.yesNoNotApplicable
+                      ? 'YES'
+                      : 'PASS',
+                  icon: Icons.check,
+                  selected: widget.item.status == ChecklistStatus.pass,
+                  onPressed: () {
+                    widget.onStatusChanged(ChecklistStatus.pass);
+                  },
                 ),
-            ],
-          ),
+
+                _StatusButton(
+                  label:
+                      widget.item.responseType ==
+                          InspectionResponseType.yesNoNotApplicable
+                      ? 'NO'
+                      : 'ADVISORY',
+                  icon:
+                      widget.item.responseType ==
+                          InspectionResponseType.yesNoNotApplicable
+                      ? Icons.close
+                      : Icons.warning_amber,
+                  selected:
+                      widget.item.status ==
+                      (widget.item.responseType ==
+                              InspectionResponseType.yesNoNotApplicable
+                          ? ChecklistStatus.fail
+                          : ChecklistStatus.advisory),
+                  onPressed: () {
+                    widget.onStatusChanged(
+                      widget.item.responseType ==
+                              InspectionResponseType.yesNoNotApplicable
+                          ? ChecklistStatus.fail
+                          : ChecklistStatus.advisory,
+                    );
+                  },
+                ),
+
+                _StatusButton(
+                  label: 'N/A',
+                  icon: Icons.remove_circle_outline,
+                  selected: widget.item.status == ChecklistStatus.notApplicable,
+                  onPressed: () {
+                    widget.onStatusChanged(ChecklistStatus.notApplicable);
+                  },
+                ),
+                if (widget.item.responseType ==
+                    InspectionResponseType.passFailNotApplicable)
+                  _StatusButton(
+                    label: 'DEFECT',
+                    icon: Icons.close,
+                    selected: widget.item.status == ChecklistStatus.fail,
+                    onPressed: () =>
+                        widget.onStatusChanged(ChecklistStatus.fail),
+                  ),
+              ],
+            ),
 
           const SizedBox(height: 12),
 
           // =================================================================
           // NOTES / PHOTO ACTIONS
           // =================================================================
-
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -997,16 +871,14 @@ class _ChecklistCardState
                 OutlinedButton.icon(
                   onPressed: _toggleNotes,
                   icon: Icon(
-                    _showNotes
-                        ? Icons.expand_less
-                        : Icons.edit_note_outlined,
+                    _showNotes ? Icons.expand_less : Icons.edit_note_outlined,
                   ),
                   label: Text(
                     _showNotes
                         ? 'Hide notes'
                         : widget.item.notes.trim().isEmpty
-                            ? 'Add note'
-                            : 'Edit note',
+                        ? 'Add note'
+                        : 'Edit note',
                   ),
                 ),
 
@@ -1019,8 +891,8 @@ class _ChecklistCardState
                 ),
                 label: Text(
                   widget.item.photos.isEmpty
-                      ? 'Photos'
-                      : 'Photos (${widget.item.photos.length})',
+                      ? 'Evidence'
+                      : 'Evidence (${widget.item.photos.length})',
                 ),
               ),
             ],
@@ -1029,77 +901,53 @@ class _ChecklistCardState
           // =================================================================
           // NOTES
           // =================================================================
-
           if (_showNotes) ...[
             const SizedBox(height: 12),
 
             TextField(
-              controller:
-                  _notesController,
+              controller: _notesController,
               minLines: 3,
               maxLines: 6,
-              textCapitalization:
-                  TextCapitalization.sentences,
-              decoration:
-                  InputDecoration(
-                labelText:
-                    'Technician notes',
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                labelText: 'Technician notes',
                 hintText:
                     'Enter observations, measurements '
                     'or additional information...',
-                alignLabelWithHint:
-                    true,
-                border:
-                    OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(12),
+                alignLabelWithHint: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onChanged:
-                  widget.onNotesChanged,
+              onChanged: widget.onNotesChanged,
             ),
           ],
 
           // =================================================================
           // PHOTOS
           // =================================================================
-
           if (_showPhotos) ...[
             const SizedBox(height: 12),
 
             Container(
-              padding:
-                  const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color:
-                    scheme.surfaceContainerLow,
-                borderRadius:
-                    BorderRadius.circular(14),
-                border: Border.all(
-                  color:
-                      scheme.outlineVariant,
-                ),
+                color: scheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: scheme.outlineVariant),
               ),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        Icons.photo_camera_outlined,
-                        color: scheme.primary,
-                      ),
+                      Icon(Icons.photo_camera_outlined, color: scheme.primary),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Inspection photographs',
-                          style: theme
-                              .textTheme
-                              .titleSmall
-                              ?.copyWith(
-                            fontWeight:
-                                FontWeight.w800,
+                          'Inspection evidence',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
@@ -1111,33 +959,20 @@ class _ChecklistCardState
                   // ---------------------------------------------------------
                   // PHOTO BUTTONS
                   // ---------------------------------------------------------
-
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
                       FilledButton.icon(
-                        onPressed:
-                            widget.onTakePhoto,
-                        icon: const Icon(
-                          Icons.camera_alt_outlined,
-                        ),
-                        label:
-                            const Text(
-                          'Take Photo',
-                        ),
+                        onPressed: widget.onTakePhoto,
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: const Text('Take Photo'),
                       ),
 
                       OutlinedButton.icon(
-                        onPressed:
-                            widget.onChoosePhoto,
-                        icon: const Icon(
-                          Icons.folder_open_outlined,
-                        ),
-                        label:
-                            const Text(
-                          'Choose Photo',
-                        ),
+                        onPressed: widget.onChoosePhoto,
+                        icon: const Icon(Icons.folder_open_outlined),
+                        label: const Text('Add Evidence'),
                       ),
                     ],
                   ),
@@ -1145,37 +980,22 @@ class _ChecklistCardState
                   // ---------------------------------------------------------
                   // PHOTO PREVIEW
                   // ---------------------------------------------------------
-
-                  if (widget.item.photos
-                      .isNotEmpty) ...[
+                  if (widget.item.photos.isNotEmpty) ...[
                     const SizedBox(height: 14),
 
                     SizedBox(
                       height: 110,
                       child: ListView.separated(
-                        scrollDirection:
-                            Axis.horizontal,
-                        itemCount:
-                            widget.item.photos
-                                .length,
-                        separatorBuilder:
-                            (_, _) =>
-                                const SizedBox(
-                          width: 10,
-                        ),
-                        itemBuilder:
-                            (context, index) {
-                          final path =
-                              widget.item.photos[
-                                  index];
+                        scrollDirection: Axis.horizontal,
+                        itemCount: widget.item.photos.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 10),
+                        itemBuilder: (context, index) {
+                          final path = widget.item.photos[index];
 
                           return _PhotoThumbnail(
                             path: path,
                             onRemove: () {
-                              widget
-                                  .onRemovePhoto(
-                                path,
-                              );
+                              widget.onRemovePhoto(path);
                             },
                           );
                         },
@@ -1190,41 +1010,27 @@ class _ChecklistCardState
           // =================================================================
           // DEFECT MESSAGE
           // =================================================================
-
-          if (widget.item.status ==
-              ChecklistStatus.fail) ...[
+          if (widget.item.status == ChecklistStatus.fail) ...[
             const SizedBox(height: 12),
 
             Container(
-              padding:
-                  const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color:
-                    scheme.errorContainer,
-                borderRadius:
-                    BorderRadius.circular(12),
+                color: scheme.errorContainer,
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.build_outlined,
-                    color: scheme.error,
-                  ),
+                  Icon(Icons.build_outlined, color: scheme.error),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Defect recorded. Repair information '
+                      'Fail recorded. Repair details '
                       'will be available in Step 4.',
-                      style: theme
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                        color:
-                            scheme.onErrorContainer,
-                        fontWeight:
-                            FontWeight.w600,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onErrorContainer,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -1237,9 +1043,7 @@ class _ChecklistCardState
     );
   }
 
-  IconData _priorityIcon(
-    ChecklistPriority priority,
-  ) {
+  IconData _priorityIcon(ChecklistPriority priority) {
     switch (priority) {
       case ChecklistPriority.low:
         return Icons.circle_outlined;
@@ -1264,35 +1068,24 @@ class _PhotoThumbnail extends StatelessWidget {
   final String path;
   final VoidCallback onRemove;
 
-  const _PhotoThumbnail({
-    required this.path,
-    required this.onRemove,
-  });
+  const _PhotoThumbnail({required this.path, required this.onRemove});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         ClipRRect(
-          borderRadius:
-              BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12),
           child: SizedBox(
             width: 110,
             height: 110,
             child: Image.file(
               File(path),
               fit: BoxFit.cover,
-              errorBuilder:
-                  (context, error, stackTrace) {
+              errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest,
-                  child: const Center(
-                    child: Icon(
-                      Icons.broken_image_outlined,
-                    ),
-                  ),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  child: const Center(child: Icon(Icons.broken_image_outlined)),
                 );
               },
             ),
@@ -1304,19 +1097,13 @@ class _PhotoThumbnail extends StatelessWidget {
           right: 5,
           child: Material(
             color: Colors.black54,
-            borderRadius:
-                BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(20),
             child: InkWell(
-              borderRadius:
-                  BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(20),
               onTap: onRemove,
               child: const Padding(
                 padding: EdgeInsets.all(5),
-                child: Icon(
-                  Icons.close,
-                  size: 18,
-                  color: Colors.white,
-                ),
+                child: Icon(Icons.close, size: 18, color: Colors.white),
               ),
             ),
           ),

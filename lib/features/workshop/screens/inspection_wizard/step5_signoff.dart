@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/widgets/app_page_scaffold.dart';
 import '../../models/inspection_wizard_data.dart';
 import '../../../auth/services/auth_service.dart';
 
@@ -16,22 +17,17 @@ class Step5Signoff extends StatefulWidget {
   });
 
   @override
-  State<Step5Signoff> createState() =>
-      _Step5SignoffState();
+  State<Step5Signoff> createState() => _Step5SignoffState();
 }
 
-class _Step5SignoffState
-    extends State<Step5Signoff> {
+class _Step5SignoffState extends State<Step5Signoff> {
   final _formKey = GlobalKey<FormState>();
 
-  late final TextEditingController
-      _technicianController;
+  late final TextEditingController _technicianController;
 
-  late final TextEditingController
-      _managerController;
+  late final TextEditingController _managerController;
 
-  late final TextEditingController
-      _notesController;
+  late final TextEditingController _notesController;
 
   bool _saving = false;
 
@@ -39,31 +35,20 @@ class _Step5SignoffState
   void initState() {
     super.initState();
 
-    _technicianController =
-        TextEditingController(
-      text: widget.data.technicianName ??
-          widget.data.technician ??
-          '',
+    _technicianController = TextEditingController(
+      text: widget.data.technicianName ?? widget.data.technician ?? '',
     );
 
-    final currentUser =
-        AuthService.instance.currentUser;
+    final currentUser = AuthService.instance.currentUser;
 
     final managerUsername =
-        currentUser?.username ??
-        widget.data.workshopManager ??
-        '';
+        currentUser?.username ?? widget.data.workshopManager ?? '';
 
-    widget.data.workshopManager =
-        managerUsername;
+    widget.data.workshopManager = managerUsername;
 
-    _managerController =
-        TextEditingController(
-      text: managerUsername,
-    );
+    _managerController = TextEditingController(text: managerUsername);
 
-    _notesController =
-        TextEditingController(
+    _notesController = TextEditingController(
       text: widget.data.finalNotes ?? '',
     );
   }
@@ -81,17 +66,13 @@ class _Step5SignoffState
       return;
     }
 
-    widget.data.technician =
-        _technicianController.text.trim();
+    widget.data.technician = _technicianController.text.trim();
 
-    widget.data.technicianName =
-        _technicianController.text.trim();
+    widget.data.technicianName = _technicianController.text.trim();
 
-    widget.data.workshopManager =
-        _managerController.text.trim();
+    widget.data.workshopManager = _managerController.text.trim();
 
-    widget.data.finalNotes =
-        _notesController.text.trim();
+    widget.data.finalNotes = _notesController.text.trim();
 
     setState(() {
       _saving = true;
@@ -116,72 +97,50 @@ class _Step5SignoffState
         children: [
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24),
               children: [
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Inspection Sign-off',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall,
+                SectionCard(
+                  title: 'Complete Inspection',
+                  subtitle:
+                      'Confirm the sign-off details before saving this inspection.',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextFormField(
+                        controller: _technicianController,
+                        decoration: const InputDecoration(
+                          labelText: 'Technician',
+                          border: OutlineInputBorder(),
                         ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Enter technician name';
+                          }
+                          return null;
+                        },
+                      ),
 
-                        const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
-                        TextFormField(
-                          controller:
-                              _technicianController,
-                          decoration:
-                              const InputDecoration(
-                            labelText: 'Technician',
-                            border:
-                                OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value == null ||
-                                value.trim().isEmpty) {
-                              return 'Enter technician name';
-                            }
-                            return null;
-                          },
+                      TextFormField(
+                        controller: _managerController,
+                        decoration: const InputDecoration(
+                          labelText: 'Workshop Manager',
+                          border: OutlineInputBorder(),
                         ),
+                      ),
 
-                        const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                        TextFormField(
-                          controller:
-                              _managerController,
-                          decoration:
-                              const InputDecoration(
-                            labelText:
-                                'Workshop Manager',
-                            border:
-                                OutlineInputBorder(),
-                          ),
+                      TextFormField(
+                        controller: _notesController,
+                        maxLines: 5,
+                        decoration: const InputDecoration(
+                          labelText: 'Final Notes',
+                          border: OutlineInputBorder(),
                         ),
-
-                        const SizedBox(height: 16),
-
-                        TextFormField(
-                          controller:
-                              _notesController,
-                          maxLines: 5,
-                          decoration:
-                              const InputDecoration(
-                            labelText:
-                                'Final Notes',
-                            border:
-                                OutlineInputBorder(),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -189,21 +148,13 @@ class _Step5SignoffState
           ),
 
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              16,
-              8,
-              16,
-              16,
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             child: Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _saving
-                        ? null
-                        : widget.onPrevious,
-                    icon:
-                        const Icon(Icons.arrow_back),
+                    onPressed: _saving ? null : widget.onPrevious,
+                    icon: const Icon(Icons.arrow_back),
                     label: const Text('Back'),
                   ),
                 ),
@@ -212,24 +163,15 @@ class _Step5SignoffState
 
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: _saving
-                        ? null
-                        : _finishInspection,
+                    onPressed: _saving ? null : _finishInspection,
                     icon: _saving
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child:
-                                CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.check),
-                    label: Text(
-                      _saving
-                          ? 'Saving...'
-                          : 'Finish Inspection',
-                    ),
+                    label: Text(_saving ? 'Saving...' : 'Complete Inspection'),
                   ),
                 ),
               ],

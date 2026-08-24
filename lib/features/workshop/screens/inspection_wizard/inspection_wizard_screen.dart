@@ -22,8 +22,7 @@ class InspectionWizardScreen extends StatefulWidget {
   const InspectionWizardScreen({super.key});
 
   @override
-  State<InspectionWizardScreen> createState() =>
-      _InspectionWizardScreenState();
+  State<InspectionWizardScreen> createState() => _InspectionWizardScreenState();
 }
 
 class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
@@ -57,9 +56,7 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Discard this inspection?'),
-        content: const Text(
-          'Your inspection changes will not be saved.',
-        ),
+        content: const Text('Your inspection changes will not be saved.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -110,11 +107,7 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
       await showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          icon: const Icon(
-            Icons.check_circle,
-            color: Colors.green,
-            size: 48,
-          ),
+          icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
           title: const Text('Inspection Saved'),
           content: Text(
             'Inspection #$inspectionId has been saved successfully.',
@@ -139,11 +132,7 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
       await showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          icon: const Icon(
-            Icons.error,
-            color: Colors.red,
-            size: 48,
-          ),
+          icon: const Icon(Icons.error, color: Colors.red, size: 48),
           title: const Text('Save Failed'),
           content: Text(e.toString()),
           actions: [
@@ -160,10 +149,7 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
   Widget buildStep() {
     switch (currentStep) {
       case 0:
-        return Step1VehicleDetails(
-          data: wizardData,
-          onNext: nextStep,
-        );
+        return Step1VehicleDetails(data: wizardData, onNext: nextStep);
 
       case 1:
         return Step2Checklist(
@@ -216,8 +202,8 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
     final subtitle = registration == null || registration.trim().isEmpty
         ? 'Create a new Workshop inspection.'
         : templateName == null || templateName.trim().isEmpty
-            ? registration
-            : '$registration • $templateName';
+        ? registration
+        : '$registration | $templateName';
 
     return PopScope(
       canPop: _allowPop,
@@ -227,7 +213,7 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
         }
       },
       child: AppPageScaffold(
-        title: 'Inspection Wizard',
+        title: 'Workshop Inspection',
         subtitle: subtitle,
         child: Column(
           children: [
@@ -258,10 +244,7 @@ class _ProgressStepper extends StatelessWidget {
   final int currentStep;
   final double progress;
 
-  const _ProgressStepper({
-    required this.currentStep,
-    required this.progress,
-  });
+  const _ProgressStepper({required this.currentStep, required this.progress});
 
   @override
   Widget build(BuildContext context) {
@@ -272,17 +255,17 @@ class _ProgressStepper extends StatelessWidget {
         Row(
           children: [
             Text(
-              'Inspection progress',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              'Step ${currentStep + 1} of ${_steps.length} | ${_steps[currentStep]}',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
             const Spacer(),
             Text(
               '${(progress * 100).round()}%',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: scheme.primary,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(color: scheme.primary),
             ),
           ],
         ),
@@ -290,80 +273,73 @@ class _ProgressStepper extends StatelessWidget {
         const SizedBox(height: 12),
 
         Row(
-          children: List.generate(
-            _steps.length,
-            (index) {
-              final complete = index < currentStep;
-              final active = index == currentStep;
+          children: List.generate(_steps.length, (index) {
+            final complete = index < currentStep;
+            final active = index == currentStep;
 
-              final color = complete || active
-                  ? scheme.primary
-                  : scheme.outlineVariant;
+            final color = complete || active
+                ? scheme.primary
+                : scheme.outlineVariant;
 
-              return Expanded(
-                child: Row(
-                  children: [
+            return Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            complete ? Icons.check : Icons.circle,
+                            size: complete
+                                ? 18
+                                : active
+                                ? 10
+                                : 8,
+                            color: complete || active
+                                ? scheme.onPrimary
+                                : scheme.outline,
+                          ),
+                        ),
+
+                        const SizedBox(height: 6),
+
+                        Text(
+                          _steps[index],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: active
+                                    ? scheme.primary
+                                    : scheme.onSurfaceVariant,
+                                fontWeight: active
+                                    ? FontWeight.w800
+                                    : FontWeight.w500,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  if (index != _steps.length - 1)
                     Expanded(
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              complete
-                                  ? Icons.check
-                                  : Icons.circle,
-                              size: complete
-                                  ? 18
-                                  : active
-                                      ? 10
-                                      : 8,
-                              color: complete || active
-                                  ? scheme.onPrimary
-                                  : scheme.outline,
-                            ),
-                          ),
-
-                          const SizedBox(height: 6),
-
-                          Text(
-                            _steps[index],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(
-                                  color: active
-                                      ? scheme.primary
-                                      : scheme.onSurfaceVariant,
-                                  fontWeight: active
-                                      ? FontWeight.w800
-                                      : FontWeight.w500,
-                                ),
-                          ),
-                        ],
+                      child: Container(
+                        height: 2,
+                        color: index < currentStep
+                            ? scheme.primary
+                            : scheme.outlineVariant,
                       ),
                     ),
-
-                    if (index != _steps.length - 1)
-                      Expanded(
-                        child: Container(
-                          height: 2,
-                          color: index < currentStep
-                              ? scheme.primary
-                              : scheme.outlineVariant,
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
+                ],
+              ),
+            );
+          }),
         ),
       ],
     );
