@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_page_scaffold.dart';
+import '../../../shared/status_badge.dart';
 import '../../auth/services/permission_service.dart';
 import '../models/workshop_inspection.dart';
 import '../repositories/workshop_repository.dart';
@@ -15,8 +16,7 @@ class WorkshopInspectionScreen extends StatefulWidget {
       _WorkshopInspectionScreenState();
 }
 
-class _WorkshopInspectionScreenState
-    extends State<WorkshopInspectionScreen> {
+class _WorkshopInspectionScreenState extends State<WorkshopInspectionScreen> {
   final WorkshopRepository _repository = WorkshopRepository();
 
   late Future<List<WorkshopInspection>> _future;
@@ -45,17 +45,18 @@ class _WorkshopInspectionScreenState
 
     return AppPageScaffold(
       title: 'Workshop Inspections',
-      subtitle: 'Vehicle inspections, Driver Daily submissions and sign-off status.',
+      subtitle:
+          'Vehicle inspections, Driver Daily submissions and sign-off status.',
       floatingActionButton: FloatingActionButton.extended(
-       onPressed: () async {
-  await Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => const NewWorkshopInspectionScreen(),
-    ),
-  );
+        onPressed: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const NewWorkshopInspectionScreen(),
+            ),
+          );
 
-  _refresh();
-},
+          _refresh();
+        },
         icon: const Icon(Icons.add),
         label: const Text('New Inspection'),
       ),
@@ -63,12 +64,15 @@ class _WorkshopInspectionScreenState
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const AppLoadingState(label: 'Loading Workshop inspections...');
+            return const AppLoadingState(
+              label: 'Loading Workshop inspections...',
+            );
           }
 
           if (snapshot.hasError) {
             return AppErrorState(
-              message: 'Unable to load inspections.\n\n${snapshot.error}',
+              title: 'Unable to load inspections',
+              message: 'Please try again.',
               onRetry: _refresh,
             );
           }
@@ -100,36 +104,48 @@ class _WorkshopInspectionScreenState
               itemBuilder: (context, index) {
                 final inspection = inspections[index];
                 final driverName = inspection.driverName;
-                final submittedBy = driverName != null &&
-                        driverName.trim().isNotEmpty
+                final submittedBy =
+                    driverName != null && driverName.trim().isNotEmpty
                     ? 'Driver: $driverName'
                     : 'Technician: ${inspection.technicianName}';
 
                 return Card(
-                  elevation: 2,
-                  child: ListTile(
-                    leading: const CircleAvatar(
-                      child: Icon(Icons.assignment),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
-                    title: Text(
-                      inspection.registration,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.assignment_outlined,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
+                    title: Text(
+                      inspection.inspectionNumber,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     subtitle: Text(
-                      '${inspection.inspectionNumber}\n'
+                      '${inspection.registration} | ${inspection.fleetNumber}\n'
                       '${inspection.templateName?.trim().isNotEmpty == true ? inspection.templateName : _inspectionTypeLabel(inspection.inspectionType)}\n'
                       '$submittedBy\n'
                       'Submitted: ${_dateTimeLabel(inspection.dateStarted)}\n'
                       'Result: ${inspection.overallResult.name} • Repairs: ${inspection.repairsRequired}',
                     ),
                     isThreeLine: false,
-                    trailing: Chip(
-                      label: Text(
-                        inspection.status.name,
-                      ),
-                    ),
+                    trailing: _statusBadge(inspection.status.name),
                     onTap: () {
                       final inspectionId = inspection.id;
 
@@ -146,8 +162,7 @@ class _WorkshopInspectionScreenState
 
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) =>
-                              WorkshopInspectionDetailsScreen(
+                          builder: (_) => WorkshopInspectionDetailsScreen(
                             inspectionId: inspectionId,
                           ),
                         ),
@@ -169,6 +184,25 @@ class _WorkshopInspectionScreenState
     }
 
     return type.name;
+  }
+
+  StatusBadge _statusBadge(String status) {
+    switch (status) {
+      case 'signedOff':
+        return StatusBadge.success('Signed Off');
+      case 'completed':
+        return StatusBadge.success('Completed');
+      case 'cancelled':
+        return StatusBadge.neutral('Cancelled');
+      case 'awaitingRepair':
+        return StatusBadge.warning('Awaiting Repair');
+      case 'draft':
+        return StatusBadge.neutral('Draft');
+      case 'inProgress':
+        return StatusBadge.info('In Progress');
+      default:
+        return StatusBadge.info(status);
+    }
   }
 
   String _dateTimeLabel(DateTime value) {

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../shared/widgets/app_page_scaffold.dart';
+import '../../../shared/status_badge.dart';
 import '../../auth/services/auth_service.dart';
 import '../../auth/services/permission_service.dart';
 
@@ -15,8 +16,7 @@ import '../repositories/inspection_photo_repository.dart';
 import '../repositories/workshop_repository.dart';
 import 'repair_jobs_screen.dart';
 
-class WorkshopInspectionDetailsScreen
-    extends StatefulWidget {
+class WorkshopInspectionDetailsScreen extends StatefulWidget {
   final int inspectionId;
 
   const WorkshopInspectionDetailsScreen({
@@ -31,8 +31,7 @@ class WorkshopInspectionDetailsScreen
 
 class _WorkshopInspectionDetailsScreenState
     extends State<WorkshopInspectionDetailsScreen> {
-  final WorkshopRepository _repository =
-      WorkshopRepository();
+  final WorkshopRepository _repository = WorkshopRepository();
 
   final InspectionPhotoRepository _photoRepository =
       InspectionPhotoRepository();
@@ -46,34 +45,19 @@ class _WorkshopInspectionDetailsScreenState
   }
 
   Future<_InspectionDetailsData> _load() async {
-    final inspection =
-        await _repository.getInspection(
-      widget.inspectionId,
-    );
+    final inspection = await _repository.getInspection(widget.inspectionId);
 
     if (inspection == null) {
-      throw Exception(
-        'Inspection ${widget.inspectionId} could not be found.',
-      );
+      throw Exception('Inspection ${widget.inspectionId} could not be found.');
     }
 
-    final items =
-        await _repository.getInspectionItems(
-      widget.inspectionId,
-    );
+    final items = await _repository.getInspectionItems(widget.inspectionId);
 
-    final photos =
-        await _photoRepository.getForInspection(
-      widget.inspectionId,
-    );
+    final photos = await _photoRepository.getForInspection(widget.inspectionId);
 
-    final repairJobs =
-        await _repository.getRepairJobs(
-      widget.inspectionId,
-    );
+    final repairJobs = await _repository.getRepairJobs(widget.inspectionId);
 
-    final repairStatus =
-        await _repository.getRepairCompletionStatus(
+    final repairStatus = await _repository.getRepairCompletionStatus(
       widget.inspectionId,
     );
 
@@ -92,24 +76,7 @@ class _WorkshopInspectionDetailsScreenState
     });
   }
 
-  Color _resultColor(
-    InspectionResult result,
-  ) {
-    switch (result) {
-      case InspectionResult.pass:
-        return Colors.green;
-      case InspectionResult.fail:
-        return Colors.red;
-      case InspectionResult.advisory:
-        return Colors.orange;
-      case InspectionResult.pending:
-        return Colors.grey;
-    }
-  }
-
-  String _resultText(
-    InspectionResult result,
-  ) {
+  String _resultText(InspectionResult result) {
     switch (result) {
       case InspectionResult.pass:
         return 'PASS';
@@ -122,9 +89,20 @@ class _WorkshopInspectionDetailsScreenState
     }
   }
 
-  Color _itemColor(
-    InspectionItemStatus status,
-  ) {
+  StatusBadge _resultBadge(InspectionResult result) {
+    switch (result) {
+      case InspectionResult.pass:
+        return StatusBadge.success('Pass');
+      case InspectionResult.fail:
+        return StatusBadge.error('Fail');
+      case InspectionResult.advisory:
+        return StatusBadge.warning('Advisory');
+      case InspectionResult.pending:
+        return StatusBadge.neutral('Pending');
+    }
+  }
+
+  Color _itemColor(InspectionItemStatus status) {
     switch (status) {
       case InspectionItemStatus.pass:
         return Colors.green;
@@ -137,18 +115,16 @@ class _WorkshopInspectionDetailsScreenState
     }
   }
 
-  String _itemStatusText(
-    InspectionItemStatus status,
-  ) {
+  StatusBadge _itemStatusBadge(InspectionItemStatus status) {
     switch (status) {
       case InspectionItemStatus.pass:
-        return 'PASS';
+        return StatusBadge.success('Pass');
       case InspectionItemStatus.fail:
-        return 'FAIL';
+        return StatusBadge.error('Fail');
       case InspectionItemStatus.advisory:
-        return 'ADVISORY';
+        return StatusBadge.warning('Advisory');
       case InspectionItemStatus.notApplicable:
-        return 'N/A';
+        return StatusBadge.neutral('N/A');
     }
   }
 
@@ -179,7 +155,8 @@ class _WorkshopInspectionDetailsScreenState
           return AppPageScaffold(
             title: 'Inspection Details',
             child: AppErrorState(
-              message: snapshot.error.toString(),
+              title: 'Unable to load inspection details',
+              message: 'Please try again.',
               onRetry: _refresh,
             ),
           );
@@ -231,10 +208,7 @@ class _WorkshopInspectionDetailsScreenState
     );
   }
 
-  Widget _buildHeader(
-    BuildContext context,
-    WorkshopInspection inspection,
-  ) {
+  Widget _buildHeader(BuildContext context, WorkshopInspection inspection) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -242,51 +216,27 @@ class _WorkshopInspectionDetailsScreenState
           children: [
             CircleAvatar(
               radius: 28,
-              child: const Icon(
-                Icons.assignment_turned_in_outlined,
-                size: 30,
-              ),
+              child: const Icon(Icons.assignment_turned_in_outlined, size: 30),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Inspection ${inspection.inspectionNumber}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge,
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    DateFormat(
-                      'dd MMM yyyy HH:mm',
-                    ).format(
-                      inspection.dateCompleted ??
-                          inspection.dateStarted,
+                    DateFormat('dd MMM yyyy HH:mm').format(
+                      inspection.dateCompleted ?? inspection.dateStarted,
                     ),
                   ),
                 ],
               ),
             ),
-            Chip(
-              label: Text(
-                _resultText(
-                  inspection.overallResult,
-                ),
-              ),
-              backgroundColor:
-                  _resultColor(
-                inspection.overallResult,
-              ).withValues(alpha: 0.15),
-              side: BorderSide(
-                color: _resultColor(
-                  inspection.overallResult,
-                ),
-              ),
-            ),
+            _resultBadge(inspection.overallResult),
           ],
         ),
       ),
@@ -302,18 +252,9 @@ class _WorkshopInspectionDetailsScreenState
       title: 'Vehicle',
       icon: Icons.local_shipping_outlined,
       children: [
-        _detailRow(
-          'Registration',
-          inspection.registration,
-        ),
-        _detailRow(
-          'Fleet Number',
-          inspection.fleetNumber,
-        ),
-        _detailRow(
-          'Mileage',
-          '${inspection.mileage}',
-        ),
+        _detailRow('Registration', inspection.registration),
+        _detailRow('Fleet Number', inspection.fleetNumber),
+        _detailRow('Mileage', '${inspection.mileage}'),
         _detailRow(
           'Inspection Type',
           _inspectionTypeLabel(inspection.inspectionType),
@@ -337,24 +278,18 @@ class _WorkshopInspectionDetailsScreenState
     return type.name;
   }
 
-  bool _hasManagerSignOff(
-    WorkshopInspection inspection,
-  ) {
-    return inspection.status ==
-            WorkshopInspectionStatus.signedOff ||
+  bool _hasManagerSignOff(WorkshopInspection inspection) {
+    return inspection.status == WorkshopInspectionStatus.signedOff ||
         (inspection.managerSignature != null &&
             inspection.managerSignature!.trim().isNotEmpty);
   }
 
-  Future<void> _signOffInspection(
-    WorkshopInspection inspection,
-  ) async {
+  Future<void> _signOffInspection(WorkshopInspection inspection) async {
     if (!_canSignOff) {
       return;
     }
 
-    if (inspection.status !=
-        WorkshopInspectionStatus.completed) {
+    if (inspection.status != WorkshopInspectionStatus.completed) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -386,15 +321,12 @@ class _WorkshopInspectionDetailsScreenState
       return;
     }
 
-    final currentUser =
-        AuthService.instance.currentUser;
+    final currentUser = AuthService.instance.currentUser;
 
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'You must be logged in to sign off an inspection.',
-          ),
+          content: Text('You must be logged in to sign off an inspection.'),
         ),
       );
       return;
@@ -413,13 +345,11 @@ class _WorkshopInspectionDetailsScreenState
           ),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(false),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancel'),
             ),
             FilledButton.icon(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(true),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
               icon: const Icon(Icons.verified_outlined),
               label: const Text('Sign Off'),
             ),
@@ -439,19 +369,14 @@ class _WorkshopInspectionDetailsScreenState
         updatedAt: DateTime.now(),
       );
 
-      final updatedRows =
-          await _repository.updateInspection(
-        updatedInspection,
-      );
+      final updatedRows = await _repository.updateInspection(updatedInspection);
 
       if (!mounted) {
         return;
       }
 
       if (updatedRows == 0) {
-        throw Exception(
-          'The inspection could not be updated.',
-        );
+        throw Exception('The inspection could not be updated.');
       }
 
       await _refresh();
@@ -462,9 +387,7 @@ class _WorkshopInspectionDetailsScreenState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Inspection signed off by ${currentUser.username}.',
-          ),
+          content: Text('Inspection signed off by ${currentUser.username}.'),
         ),
       );
     } catch (e) {
@@ -473,11 +396,7 @@ class _WorkshopInspectionDetailsScreenState
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Unable to sign off inspection: $e',
-          ),
-        ),
+        SnackBar(content: Text('Unable to sign off inspection: $e')),
       );
     }
   }
@@ -495,15 +414,9 @@ class _WorkshopInspectionDetailsScreenState
       title: 'Sign-Off',
       icon: Icons.people_outline,
       children: [
-        _detailRow(
-          'Technician',
-          inspection.technicianName,
-        ),
+        _detailRow('Technician', inspection.technicianName),
         if (driverName != null && driverName.trim().isNotEmpty)
-          _detailRow(
-            'Driver',
-            driverName,
-          ),
+          _detailRow('Driver', driverName),
         _detailRow(
           'Workshop Manager',
           inspection.workshopManager ?? 'Not recorded',
@@ -516,39 +429,29 @@ class _WorkshopInspectionDetailsScreenState
             decoration: BoxDecoration(
               color: Colors.green.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: Colors.green.withValues(alpha: 0.45),
-              ),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.45)),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.verified_outlined,
-                  color: Colors.green,
-                ),
+                const Icon(Icons.verified_outlined, color: Colors.green),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Signed off by ${inspection.managerSignature ?? inspection.workshopManager ?? 'Manager'}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
               ],
             ),
           ),
-        ] else if (inspection.status ==
-            WorkshopInspectionStatus.completed) ...[
+        ] else if (inspection.status == WorkshopInspectionStatus.completed) ...[
           const SizedBox(height: 12),
           if (repairStatus == RepairCompletionStatus.outstanding)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Row(
@@ -567,11 +470,8 @@ class _WorkshopInspectionDetailsScreenState
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: () =>
-                    _signOffInspection(inspection),
-                icon: const Icon(
-                  Icons.verified_outlined,
-                ),
+                onPressed: () => _signOffInspection(inspection),
+                icon: const Icon(Icons.verified_outlined),
                 label: const Text('Sign Off Inspection'),
               ),
             )
@@ -580,9 +480,7 @@ class _WorkshopInspectionDetailsScreenState
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Row(
@@ -608,49 +506,20 @@ class _WorkshopInspectionDetailsScreenState
     );
   }
 
-  Widget _buildResultCard(
-    BuildContext context,
-    WorkshopInspection inspection,
-  ) {
+  Widget _buildResultCard(BuildContext context, WorkshopInspection inspection) {
     return _sectionCard(
       context,
       title: 'Inspection Summary',
       icon: Icons.assessment_outlined,
       children: [
-        _detailRow(
-          'Vehicle Status',
-          inspection.vehicleStatus.name,
-        ),
-        _detailRow(
-          'Overall Result',
-          _resultText(
-            inspection.overallResult,
-          ),
-        ),
-        _detailRow(
-          'Inspection Score',
-          '${inspection.inspectionScore}',
-        ),
-        _detailRow(
-          'Critical Failures',
-          '${inspection.criticalFailures}',
-        ),
-        _detailRow(
-          'Advisories',
-          '${inspection.advisories}',
-        ),
-        _detailRow(
-          'Repairs Required',
-          '${inspection.repairsRequired}',
-        ),
-        _detailRow(
-          'Labour Hours',
-          inspection.labourHours.toStringAsFixed(2),
-        ),
-        _detailRow(
-          'Total Cost',
-          '£${inspection.totalCost.toStringAsFixed(2)}',
-        ),
+        _detailRow('Vehicle Status', inspection.vehicleStatus.name),
+        _detailRow('Overall Result', _resultText(inspection.overallResult)),
+        _detailRow('Inspection Score', '${inspection.inspectionScore}'),
+        _detailRow('Critical Failures', '${inspection.criticalFailures}'),
+        _detailRow('Advisories', '${inspection.advisories}'),
+        _detailRow('Repairs Required', '${inspection.repairsRequired}'),
+        _detailRow('Labour Hours', inspection.labourHours.toStringAsFixed(2)),
+        _detailRow('Total Cost', '£${inspection.totalCost.toStringAsFixed(2)}'),
       ],
     );
   }
@@ -667,21 +536,11 @@ class _WorkshopInspectionDetailsScreenState
       children: [
         if (items.isEmpty)
           const Padding(
-            padding: EdgeInsets.symmetric(
-              vertical: 12,
-            ),
-            child: Text(
-              'No checklist items were saved.',
-            ),
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Text('No checklist items were saved.'),
           )
         else
-          ...items.map(
-            (item) => _buildChecklistItem(
-              context,
-              item,
-              photos,
-            ),
-          ),
+          ...items.map((item) => _buildChecklistItem(context, item, photos)),
       ],
     );
   }
@@ -691,28 +550,22 @@ class _WorkshopInspectionDetailsScreenState
     InspectionItem item,
     List<InspectionPhoto> photos,
   ) {
-    final itemPhotos = photos.where(
-      (photo) =>
-          photo.inspectionItemId == item.id,
-    ).toList();
+    final itemPhotos = photos
+        .where((photo) => photo.inspectionItemId == item.id)
+        .toList();
 
     return Card(
-      margin: const EdgeInsets.only(
-        bottom: 10,
-      ),
+      margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
-                  item.status ==
-                          InspectionItemStatus.fail
+                  item.status == InspectionItemStatus.fail
                       ? Icons.cancel_outlined
                       : Icons.check_circle_outline,
                   color: _itemColor(item.status),
@@ -721,16 +574,10 @@ class _WorkshopInspectionDetailsScreenState
                 Expanded(
                   child: Text(
                     item.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
-                Chip(
-                  label: Text(
-                    _itemStatusText(item.status),
-                  ),
-                ),
+                _itemStatusBadge(item.status),
               ],
             ),
             if (item.sectionTitle != null &&
@@ -754,16 +601,11 @@ class _WorkshopInspectionDetailsScreenState
               const SizedBox(height: 8),
               const Row(
                 children: [
-                  Icon(
-                    Icons.build_outlined,
-                    size: 18,
-                  ),
+                  Icon(Icons.build_outlined, size: 18),
                   SizedBox(width: 6),
                   Text(
                     'Repair required',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -775,16 +617,11 @@ class _WorkshopInspectionDetailsScreenState
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: itemPhotos.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(width: 8),
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
                   itemBuilder: (context, index) {
-                    final photo =
-                        itemPhotos[index];
+                    final photo = itemPhotos[index];
 
-                    return _buildPhoto(
-                      context,
-                      photo.filePath,
-                    );
+                    return _buildPhoto(context, photo.filePath);
                   },
                 ),
               ),
@@ -792,9 +629,7 @@ class _WorkshopInspectionDetailsScreenState
               const SizedBox(height: 8),
               Text(
                 '${item.photoCount} photo(s) recorded',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ],
@@ -803,10 +638,7 @@ class _WorkshopInspectionDetailsScreenState
     );
   }
 
-  Widget _buildPhoto(
-    BuildContext context,
-    String path,
-  ) {
+  Widget _buildPhoto(BuildContext context, String path) {
     final file = File(path);
 
     if (!file.existsSync()) {
@@ -816,38 +648,23 @@ class _WorkshopInspectionDetailsScreenState
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Theme.of(context).dividerColor,
-          ),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
-        child: const Icon(
-          Icons.broken_image_outlined,
-        ),
+        child: const Icon(Icons.broken_image_outlined),
       );
     }
 
     return InkWell(
-      onTap: () => _showPhotoViewer(
-        context,
-        file,
-      ),
+      onTap: () => _showPhotoViewer(context, file),
       borderRadius: BorderRadius.circular(8),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.file(
-          file,
-          width: 90,
-          height: 90,
-          fit: BoxFit.cover,
-        ),
+        child: Image.file(file, width: 90, height: 90, fit: BoxFit.cover),
       ),
     );
   }
 
-  Future<void> _showPhotoViewer(
-    BuildContext context,
-    File file,
-  ) async {
+  Future<void> _showPhotoViewer(BuildContext context, File file) async {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -862,12 +679,7 @@ class _WorkshopInspectionDetailsScreenState
                   child: InteractiveViewer(
                     minScale: 0.8,
                     maxScale: 4.0,
-                    child: Center(
-                      child: Image.file(
-                        file,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
+                    child: Center(child: Image.file(file, fit: BoxFit.contain)),
                   ),
                 ),
                 Positioned(
@@ -881,10 +693,7 @@ class _WorkshopInspectionDetailsScreenState
                       onPressed: () {
                         Navigator.of(dialogContext).pop();
                       },
-                      icon: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                      ),
+                      icon: const Icon(Icons.close, color: Colors.white),
                     ),
                   ),
                 ),
@@ -916,17 +725,12 @@ class _WorkshopInspectionDetailsScreenState
       title: 'Repairs',
       icon: Icons.build_outlined,
       children: [
-        _buildRepairStatusRow(
-          context,
-          repairStatus,
-        ),
+        _buildRepairStatusRow(context, repairStatus),
         const SizedBox(height: 12),
         if (repairJobs.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
-            child: Text(
-              'No repair jobs were saved for this inspection.',
-            ),
+            child: Text('No repair jobs were saved for this inspection.'),
           )
         else ...[
           Row(
@@ -960,12 +764,7 @@ class _WorkshopInspectionDetailsScreenState
             ],
           ),
           const SizedBox(height: 12),
-          ...repairJobs.map(
-            (job) => _buildRepairJob(
-              context,
-              job,
-            ),
-          ),
+          ...repairJobs.map((job) => _buildRepairJob(context, job)),
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
@@ -973,9 +772,8 @@ class _WorkshopInspectionDetailsScreenState
               onPressed: () async {
                 await Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => RepairJobsScreen(
-                      inspectionId: widget.inspectionId,
-                    ),
+                    builder: (_) =>
+                        RepairJobsScreen(inspectionId: widget.inspectionId),
                   ),
                 );
 
@@ -1017,31 +815,20 @@ class _WorkshopInspectionDetailsScreenState
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         color: color.withValues(alpha: 0.10),
-        border: Border.all(
-          color: color.withValues(alpha: 0.45),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: color,
-          ),
+          Icon(icon, color: color),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w700, color: color),
             ),
           ),
         ],
@@ -1049,10 +836,7 @@ class _WorkshopInspectionDetailsScreenState
     );
   }
 
-  Widget _buildRepairJob(
-    BuildContext context,
-    RepairJob job,
-  ) {
+  Widget _buildRepairJob(BuildContext context, RepairJob job) {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
@@ -1068,14 +852,10 @@ class _WorkshopInspectionDetailsScreenState
                 Expanded(
                   child: Text(
                     job.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
-                Chip(
-                  label: Text(job.status.name),
-                ),
+                Chip(label: Text(job.status.name)),
               ],
             ),
             const SizedBox(height: 8),
@@ -1086,45 +866,27 @@ class _WorkshopInspectionDetailsScreenState
               runSpacing: 8,
               children: [
                 Chip(
-                  avatar: const Icon(
-                    Icons.priority_high,
-                    size: 18,
-                  ),
+                  avatar: const Icon(Icons.priority_high, size: 18),
                   label: Text(job.priority.name),
                 ),
                 Chip(
-                  avatar: const Icon(
-                    Icons.schedule,
-                    size: 18,
-                  ),
-                  label: Text(
-                    '${job.estimatedHours.toStringAsFixed(1)} hrs',
-                  ),
+                  avatar: const Icon(Icons.schedule, size: 18),
+                  label: Text('${job.estimatedHours.toStringAsFixed(1)} hrs'),
                 ),
                 Chip(
-                  avatar: const Icon(
-                    Icons.payments_outlined,
-                    size: 18,
-                  ),
-                  label: Text(
-                    '£${job.estimatedCost.toStringAsFixed(2)}',
-                  ),
+                  avatar: const Icon(Icons.payments_outlined, size: 18),
+                  label: Text('£${job.estimatedCost.toStringAsFixed(2)}'),
                 ),
                 if (job.partsRequired)
                   const Chip(
-                    avatar: Icon(
-                      Icons.inventory_2_outlined,
-                      size: 18,
-                    ),
+                    avatar: Icon(Icons.inventory_2_outlined, size: 18),
                     label: Text('Parts required'),
                   ),
               ],
             ),
             if (job.technicianName.trim().isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(
-                'Technician: ${job.technicianName}',
-              ),
+              Text('Technician: ${job.technicianName}'),
             ],
           ],
         ),
@@ -1142,42 +904,25 @@ class _WorkshopInspectionDetailsScreenState
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        color: Theme.of(context)
-            .colorScheme
-            .surfaceContainerHighest,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
       child: Column(
         children: [
           Icon(icon, size: 20),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            label,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall,
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
     );
   }
 
-  Widget _buildNotesCard(
-    BuildContext context,
-    String notes,
-  ) {
+  Widget _buildNotesCard(BuildContext context, String notes) {
     return _sectionCard(
       context,
       title: 'Final Notes',
       icon: Icons.notes_outlined,
-      children: [
-        Text(notes),
-      ],
+      children: [Text(notes)],
     );
   }
 
@@ -1196,10 +941,7 @@ class _WorkshopInspectionDetailsScreenState
             children: [
               Icon(icon),
               const SizedBox(width: 10),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
             ],
           ),
           const SizedBox(height: 12),
@@ -1209,30 +951,20 @@ class _WorkshopInspectionDetailsScreenState
     );
   }
 
-  Widget _detailRow(
-    String label,
-    String value,
-  ) {
+  Widget _detailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 145,
             child: Text(
               label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
-          Expanded(
-            child: Text(value),
-          ),
+          Expanded(child: Text(value)),
         ],
       ),
     );
