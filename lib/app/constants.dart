@@ -19,6 +19,13 @@ class AppConstants {
   static const double padding = 20.0;
   static const double borderRadius = 16.0;
 
+  static const double spaceXs = 8.0;
+  static const double spaceSm = 12.0;
+  static const double spaceMd = 16.0;
+  static const double spaceLg = 24.0;
+  static const double spaceXl = 32.0;
+  static const double contentMaxWidth = 1240.0;
+
   // Dashboard Demo Data
   static const int totalVehicles = 147;
   static const int inspectionsToday = 12;

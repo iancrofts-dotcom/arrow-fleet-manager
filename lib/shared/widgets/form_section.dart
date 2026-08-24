@@ -1,48 +1,30 @@
 import 'package:flutter/material.dart';
 
-class FormSection extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final Widget child;
+import 'app_page_scaffold.dart';
 
+class FormSection extends StatelessWidget {
   const FormSection({
     super.key,
     required this.title,
     required this.child,
     this.subtitle,
+    this.trailing,
+    this.padding = const EdgeInsets.all(20),
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  final String title;
+  final String? subtitle;
+  final Widget child;
+  final Widget? trailing;
+  final EdgeInsetsGeometry padding;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 20),
-      elevation: 0,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                subtitle!,
-                style: theme.textTheme.bodySmall,
-              ),
-            ],
-            const SizedBox(height: 20),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
+  @override
+  Widget build(BuildContext context) => SectionCard(
+    margin: const EdgeInsets.only(bottom: 20),
+    title: title,
+    subtitle: subtitle,
+    trailing: trailing,
+    padding: padding,
+    child: child,
+  );
 }
