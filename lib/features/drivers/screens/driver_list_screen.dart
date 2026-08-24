@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 import '../models/driver.dart';
 import '../services/driver_service.dart';
@@ -130,8 +131,9 @@ class _DriverListScreenState extends State<DriverListScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Drivers')),
+    return AppPageScaffold(
+      title: 'Drivers',
+      subtitle: 'Manage driver records and fleet access.',
       floatingActionButton: _permissions.canManageDrivers
           ? FloatingActionButton.extended(
               onPressed: _addDriver,
@@ -139,15 +141,19 @@ class _DriverListScreenState extends State<DriverListScreen> {
               label: const Text('Add Driver'),
             )
           : null,
-      body: FutureBuilder<List<Driver>>(
+      child: FutureBuilder<List<Driver>>(
         future: _driversFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppLoadingState(label: 'Loading drivers...');
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text(snapshot.error.toString()));
+            return AppErrorState(
+              title: 'Unable to load drivers',
+              message: 'Please try again.',
+              onRetry: _refresh,
+            );
           }
 
           final drivers = snapshot.data ?? const <Driver>[];
@@ -158,13 +164,12 @@ class _DriverListScreenState extends State<DriverListScreen> {
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: const [
-                  SizedBox(height: 150),
-                  Center(
-                    child: Text(
-                      'No drivers found.\nTap Add Driver to begin.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 18),
-                    ),
+                  SizedBox(height: 96),
+                  AppEmptyState(
+                    icon: Icons.people_outline,
+                    title: 'No drivers have been added',
+                    message:
+                        'Use Add Driver to begin building the driver team.',
                   ),
                 ],
               ),
@@ -183,10 +188,14 @@ class _DriverListScreenState extends State<DriverListScreen> {
                     key: ValueKey(driver.id),
                     direction: DismissDirection.endToStart,
                     background: Container(
-                      color: Colors.red,
+                      color: Theme.of(context).colorScheme.errorContainer,
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: const Icon(Icons.delete, color: Colors.white),
+                      child: Icon(
+                        Icons.person_off_outlined,
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                        semanticLabel: 'Deactivate driver',
+                      ),
                     ),
                     confirmDismiss: (_) async {
                       await _deactivateDriver(driver);

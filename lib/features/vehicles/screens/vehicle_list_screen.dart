@@ -19,55 +19,38 @@ import 'vehicle_details_screen.dart';
 class VehicleListScreen extends StatefulWidget {
   final VehicleFilter? initialFilter;
 
-  const VehicleListScreen({
-    super.key,
-    this.initialFilter,
-  });
+  const VehicleListScreen({super.key, this.initialFilter});
 
   @override
-  State<VehicleListScreen> createState() =>
-      _VehicleListScreenState();
+  State<VehicleListScreen> createState() => _VehicleListScreenState();
 }
 
-class _VehicleListScreenState
-    extends State<VehicleListScreen> {
-  final VehicleService _vehicleService =
-      VehicleService();
+class _VehicleListScreenState extends State<VehicleListScreen> {
+  final VehicleService _vehicleService = VehicleService();
 
-  final PermissionService _permissions =
-      PermissionService.instance;
+  final PermissionService _permissions = PermissionService.instance;
 
-  final VehicleSearchService _searchService =
-      const VehicleSearchService();
+  final VehicleSearchService _searchService = const VehicleSearchService();
 
-  final VehicleFilterService _filterService =
-      const VehicleFilterService();
+  final VehicleFilterService _filterService = const VehicleFilterService();
 
-  final VehicleSortService _sortService =
-      const VehicleSortService();
+  final VehicleSortService _sortService = const VehicleSortService();
 
-  VehicleFilter _selectedFilter =
-      VehicleFilter.all;
+  VehicleFilter _selectedFilter = VehicleFilter.all;
 
-  VehicleSort _selectedSort =
-      VehicleSort.registration;
+  VehicleSort _selectedSort = VehicleSort.registration;
 
-  final TextEditingController
-      _searchController =
-      TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   String _searchQuery = '';
 
-  late Future<List<Vehicle>>
-      vehiclesFuture;
+  late Future<List<Vehicle>> vehiclesFuture;
 
   @override
   void initState() {
     super.initState();
 
-    _selectedFilter =
-        widget.initialFilter ??
-            VehicleFilter.all;
+    _selectedFilter = widget.initialFilter ?? VehicleFilter.all;
 
     loadVehicles();
   }
@@ -79,8 +62,7 @@ class _VehicleListScreenState
   }
 
   void loadVehicles() {
-    vehiclesFuture =
-        _vehicleService.getVehicles();
+    vehiclesFuture = _vehicleService.getVehicles();
   }
 
   Future<void> refreshVehicles() async {
@@ -90,13 +72,9 @@ class _VehicleListScreenState
   }
 
   Future<void> addVehicle() async {
-    final vehicle =
-        await Navigator.push<Vehicle>(
+    final vehicle = await Navigator.push<Vehicle>(
       context,
-      MaterialPageRoute(
-        builder: (_) =>
-            AddVehicleScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => AddVehicleScreen()),
     );
 
     if (vehicle == null) return;
@@ -105,13 +83,8 @@ class _VehicleListScreenState
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-      SnackBar(
-        content: Text(
-          '${vehicle.registration} added successfully.',
-        ),
-      ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${vehicle.registration} added successfully.')),
     );
   }
 
@@ -119,21 +92,23 @@ class _VehicleListScreenState
     await refreshVehicles();
   }
 
+  void _clearSearchAndFilters() {
+    setState(() {
+      _searchController.clear();
+      _searchQuery = '';
+      _selectedFilter = VehicleFilter.all;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_permissions.canViewVehicles) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'Access Denied',
-          ),
-        ),
+        appBar: AppBar(title: const Text('Access Denied')),
         body: const Center(
           child: Text(
             'You do not have permission to view vehicles.',
-            style: TextStyle(
-              fontSize: 18,
-            ),
+            style: TextStyle(fontSize: 18),
           ),
         ),
       );
@@ -143,143 +118,134 @@ class _VehicleListScreenState
       title: 'Fleet Vehicles',
       subtitle: 'Search, filter and manage the fleet.',
       actions: [
-          FleetSortButton(
-            selectedSort:
-                _selectedSort,
-            onChanged: (sort) {
-              setState(() {
-                _selectedSort = sort;
-              });
-            },
-          ),
-        ],
-      floatingActionButton:
-          _permissions.canManageVehicles
-              ? FloatingActionButton.extended(
-                  onPressed:
-                      addVehicle,
-                  icon: const Icon(
-                    Icons.add,
-                  ),
-                  label: const Text(
-                    'Add Vehicle',
-                  ),
-                )
-              : null,
+        FleetSortButton(
+          selectedSort: _selectedSort,
+          onChanged: (sort) {
+            setState(() {
+              _selectedSort = sort;
+            });
+          },
+        ),
+      ],
+      floatingActionButton: _permissions.canManageVehicles
+          ? FloatingActionButton.extended(
+              onPressed: addVehicle,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Vehicle'),
+            )
+          : null,
       child: FutureBuilder<List<Vehicle>>(
         future: vehiclesFuture,
-        builder:
-            (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const AppLoadingState(label: 'Loading fleet vehicles...');
           }
 
           if (snapshot.hasError) {
             return AppErrorState(
-              message: '${snapshot.error}',
+              title: 'Unable to load fleet vehicles',
+              message: 'Please try again.',
               onRetry: refresh,
             );
           }
 
-          final searchedVehicles =
-              _searchService
-                  .filterVehicles(
-            vehicles:
-                snapshot.data ?? [],
+          final allVehicles = snapshot.data ?? const <Vehicle>[];
+
+          if (allVehicles.isEmpty) {
+            return const AppEmptyState(
+              icon: Icons.local_shipping_outlined,
+              title: 'No vehicles have been added',
+              message: 'Use Add Vehicle to begin building the fleet.',
+            );
+          }
+
+          final searchedVehicles = _searchService.filterVehicles(
+            vehicles: allVehicles,
             query: _searchQuery,
           );
 
-          final filteredVehicles =
-              _filterService
-                  .filterVehicles(
-            vehicles:
-                searchedVehicles,
-            filter:
-                _selectedFilter,
+          final filteredVehicles = _filterService.filterVehicles(
+            vehicles: searchedVehicles,
+            filter: _selectedFilter,
           );
 
-          final vehicles =
-              _sortService
-                  .sortVehicles(
-            vehicles:
-                filteredVehicles,
+          final vehicles = _sortService.sortVehicles(
+            vehicles: filteredVehicles,
             sort: _selectedSort,
           );
-
-          if (vehicles.isEmpty) {
-            return const AppEmptyState(
-              icon: Icons.local_shipping_outlined,
-              title: 'No vehicles found',
-              message: 'Tap Add Vehicle to begin building the fleet.',
-            );
-          }
 
           return Column(
             children: [
               SectionCard(
                 padding: const EdgeInsets.all(12),
-                child: Column(children: [
-                  FleetSearchBar(
-                    controller: _searchController,
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value;
-                      });
-                    },
-                  ),
-                  FleetFilterBar(
-                    selectedFilter: _selectedFilter,
-                    onChanged: (filter) {
-                      setState(() {
-                        _selectedFilter = filter;
-                      });
-                    },
-                  ),
-                ]),
+                child: Column(
+                  children: [
+                    FleetSearchBar(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                        });
+                      },
+                    ),
+                    FleetFilterBar(
+                      selectedFilter: _selectedFilter,
+                      onChanged: (filter) {
+                        setState(() {
+                          _selectedFilter = filter;
+                        });
+                      },
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
               Expanded(
-                child:
-                    RefreshIndicator(
+                child: RefreshIndicator(
                   onRefresh: refresh,
-                  child:
-                      ListView.builder(
-                    itemCount:
-                        vehicles.length,
-                    itemBuilder:
-                        (context,
-                            index) {
-                      final vehicle =
-                          vehicles[
-                              index];
-
-                      return VehicleCard(
-                        vehicle:
-                            vehicle,
-                        onTap:
-                            () async {
-                          await Navigator
-                              .push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  VehicleDetailsScreen(
-                                vehicle:
-                                    vehicle,
+                  child: vehicles.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            const SizedBox(height: 96),
+                            AppEmptyState(
+                              icon: Icons.search_off_outlined,
+                              title: 'No vehicles match your search or filters',
+                              message:
+                                  'Try a different search term or clear your filters.',
+                              action: OutlinedButton.icon(
+                                onPressed: _clearSearchAndFilters,
+                                icon: const Icon(Icons.filter_alt_off_outlined),
+                                label: const Text('Clear filters'),
                               ),
                             ),
-                          );
+                          ],
+                        )
+                      : ListView.builder(
+                          itemCount: vehicles.length,
+                          itemBuilder: (context, index) {
+                            final vehicle = vehicles[index];
 
-                          if (!mounted) {
-                            return;
-                          }
+                            return VehicleCard(
+                              vehicle: vehicle,
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        VehicleDetailsScreen(vehicle: vehicle),
+                                  ),
+                                );
 
-                          await refreshVehicles();
-                        },
-                      );
-                    },
-                  ),
+                                if (!mounted) {
+                                  return;
+                                }
+
+                                await refreshVehicles();
+                              },
+                            );
+                          },
+                        ),
                 ),
               ),
             ],
