@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../assignments/repositories/assignment_repository.dart';
 import '../../auth/services/permission_service.dart';
 import '../../../shared/widgets/app_page_scaffold.dart';
+import '../../../shared/status_badge.dart';
 
 import '../../drivers/models/driver.dart';
 import '../../drivers/screens/assign_driver_screen.dart';
@@ -92,6 +93,11 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
     required String value,
   }) {
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
       child: ListTile(
         leading: Icon(icon),
         title: Text(title),
@@ -130,7 +136,13 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           Card(
-            elevation: 2,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -149,6 +161,10 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                     _vehicle.fleetNumber,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
+                  const SizedBox(height: 12),
+                  _vehicle.active
+                      ? StatusBadge.success('Active')
+                      : StatusBadge.neutral('Inactive'),
                 ],
               ),
             ),
@@ -191,6 +207,13 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
           const SizedBox(height: 24),
 
           Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -217,34 +240,38 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                   ),
 
                   const SizedBox(height: 12),
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
                     children: [
                       if (_permissions.canManageVehicles && _vehicle.active)
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: _assignDriver,
-                            icon: const Icon(Icons.person_add),
-                            label: Text(
-                              _assignedDriver == null
-                                  ? 'Assign Driver'
-                                  : 'Change Driver',
-                            ),
+                        FilledButton.icon(
+                          onPressed: _assignDriver,
+                          icon: const Icon(Icons.person_add),
+                          label: Text(
+                            _assignedDriver == null
+                                ? 'Assign Driver'
+                                : 'Change Driver',
                           ),
                         ),
 
                       if (_permissions.canManageVehicles &&
                           _assignedDriver != null) ...[
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _endAssignment,
-                            icon: const Icon(Icons.link_off),
-                            label: const Text('End Assignment'),
-                          ),
+                        OutlinedButton.icon(
+                          onPressed: _endAssignment,
+                          icon: const Icon(Icons.link_off),
+                          label: const Text('End Assignment'),
                         ),
                       ],
                     ],
                   ),
+                  if (!_vehicle.active) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      'Inactive vehicles cannot receive new driver assignments.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
+import '../../../shared/status_badge.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 import 'driver_compliance_screen.dart';
 import '../models/driver.dart';
@@ -112,13 +114,20 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
 
     final driver = widget.driver;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(driver.fullName)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+    return AppPageScaffold(
+      title: driver.fullName,
+      subtitle: 'Driver profile, assignment and compliance records.',
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           Card(
-            elevation: 2,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -140,6 +149,10 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
                     driver.licenceNumber,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
+                  const SizedBox(height: 12),
+                  driver.isActive
+                      ? StatusBadge.success('Active')
+                      : StatusBadge.neutral('Inactive'),
                 ],
               ),
             ),
@@ -177,6 +190,13 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
                 : 'Not set',
           ),
           Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -190,7 +210,7 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
                   const SizedBox(height: 16),
 
                   if (_loadingVehicle)
-                    const Center(child: CircularProgressIndicator())
+                    const AppLoadingState(label: 'Loading assigned vehicle...')
                   else
                     ListTile(
                       contentPadding: EdgeInsets.zero,
@@ -209,34 +229,38 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
 
                   const SizedBox(height: 16),
 
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
                     children: [
-                      if (_permissions.canManageDrivers)
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: _assignVehicle,
-                            icon: const Icon(Icons.local_shipping),
-                            label: Text(
-                              _assignedVehicle == null
-                                  ? 'Assign Vehicle'
-                                  : 'Change Vehicle',
-                            ),
+                      if (_permissions.canManageDrivers && driver.isActive)
+                        FilledButton.icon(
+                          onPressed: _assignVehicle,
+                          icon: const Icon(Icons.local_shipping),
+                          label: Text(
+                            _assignedVehicle == null
+                                ? 'Assign Vehicle'
+                                : 'Change Vehicle',
                           ),
                         ),
 
                       if (_permissions.canManageDrivers &&
                           _assignedVehicle != null) ...[
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _endAssignment,
-                            icon: const Icon(Icons.link_off),
-                            label: const Text('End Assignment'),
-                          ),
+                        OutlinedButton.icon(
+                          onPressed: _endAssignment,
+                          icon: const Icon(Icons.link_off),
+                          label: const Text('End Assignment'),
                         ),
                       ],
                     ],
                   ),
+                  if (!driver.isActive) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      'Inactive drivers cannot receive new vehicle assignments.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -245,6 +269,13 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
           const SizedBox(height: 24),
 
           Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
             child: ListTile(
               leading: const Icon(Icons.verified_user),
               title: const Text('Driver Compliance'),
@@ -305,6 +336,11 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
     String value,
   ) {
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
       child: ListTile(
         leading: Icon(icon),
         title: Text(title),
