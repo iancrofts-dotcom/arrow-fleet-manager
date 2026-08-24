@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../shared/widgets/app_page_scaffold.dart';
 import '../../models/inspection_checklist_item.dart';
 import '../../models/inspection_item.dart';
 import '../../models/inspection_template_item.dart';
@@ -17,12 +18,14 @@ class Step2Checklist extends StatefulWidget {
   final InspectionWizardData data;
   final VoidCallback onNext;
   final VoidCallback onPrevious;
+  final InspectionTemplateRepository? templateRepository;
 
   const Step2Checklist({
     super.key,
     required this.data,
     required this.onNext,
     required this.onPrevious,
+    this.templateRepository,
   });
 
   @override
@@ -31,29 +34,58 @@ class Step2Checklist extends StatefulWidget {
 
 class _Step2ChecklistState extends State<Step2Checklist> {
   late final ChecklistTemplateService _templateService;
+  late final InspectionTemplateRepository _templateRepository;
   late final ImagePicker _imagePicker;
   bool _loadingChecklist = true;
+  String? _loadError;
+  int _loadRequest = 0;
+  int? _loadedTemplateId;
 
   @override
   void initState() {
     super.initState();
 
     _templateService = ChecklistTemplateService();
+    _templateRepository =
+        widget.templateRepository ?? InspectionTemplateRepository();
     _imagePicker = ImagePicker();
+    _loadedTemplateId = widget.data.checklistItems.isEmpty
+        ? null
+        : widget.data.templateId;
 
     _loadChecklist();
   }
 
+  @override
+  void didUpdateWidget(covariant Step2Checklist oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (_loadError == null && _loadedTemplateId != widget.data.templateId) {
+      _loadChecklist();
+    }
+  }
+
   Future<void> _loadChecklist() async {
-    if (widget.data.checklistItems.isEmpty) {
-      final templateId = widget.data.templateId;
+    final request = ++_loadRequest;
+    final templateId = widget.data.templateId;
+
+    setState(() {
+      _loadingChecklist = true;
+      _loadError = null;
+    });
+
+    try {
+      List<InspectionChecklistItem>? loadedItems;
+
       if (templateId == null) {
-        widget.data.checklistItems = _templateService.getDefaultTemplate();
-      } else {
-        final repository = InspectionTemplateRepository();
+        if (widget.data.checklistItems.isEmpty || _loadedTemplateId != null) {
+          loadedItems = _templateService.getDefaultTemplate();
+        }
+      } else if (widget.data.checklistItems.isEmpty ||
+          _loadedTemplateId != templateId) {
         final results = await Future.wait([
-          repository.getTemplateItems(templateId),
-          repository.getTemplateSections(templateId),
+          _templateRepository.getTemplateItems(templateId),
+          _templateRepository.getTemplateSections(templateId),
         ]);
         final items = results[0] as List<InspectionTemplateItem>;
         final sections = results[1] as List<InspectionTemplateSection>;
@@ -64,7 +96,7 @@ class _Step2ChecklistState extends State<Step2Checklist> {
             sectionNames[sectionId] = section.title;
           }
         }
-        widget.data.checklistItems = items
+        loadedItems = items
             .where((item) => item.isActive)
             .map(
               (item) => InspectionChecklistItem(
@@ -83,10 +115,42 @@ class _Step2ChecklistState extends State<Step2Checklist> {
             )
             .toList();
       }
-    }
 
-    if (!mounted) return;
-    setState(() => _loadingChecklist = false);
+      if (!mounted || request != _loadRequest) return;
+
+      if (loadedItems != null) {
+        widget.data.checklistItems = _preserveChecklistResponses(loadedItems);
+      }
+      _loadedTemplateId = templateId;
+      setState(() => _loadingChecklist = false);
+    } catch (_) {
+      if (!mounted || request != _loadRequest) return;
+      setState(() {
+        _loadingChecklist = false;
+        _loadError = 'Unable to load checklist.';
+      });
+    }
+  }
+
+  List<InspectionChecklistItem> _preserveChecklistResponses(
+    List<InspectionChecklistItem> loadedItems,
+  ) {
+    final existingItems = {
+      for (final item in widget.data.checklistItems) item.id: item,
+    };
+
+    return loadedItems.map((item) {
+      final existing = existingItems[item.id];
+      if (existing == null) return item;
+
+      item.status = existing.status;
+      item.priority = existing.priority;
+      item.repairRequired = existing.repairRequired;
+      item.responseValue = existing.responseValue;
+      item.notes = existing.notes;
+      item.photos = List<String>.from(existing.photos);
+      return item;
+    }).toList();
   }
 
   ChecklistStatus _checklistStatus(InspectionItemStatus status) {
@@ -308,7 +372,37 @@ class _Step2ChecklistState extends State<Step2Checklist> {
     final scheme = theme.colorScheme;
 
     if (_loadingChecklist) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: AppLoadingState(label: 'Loading checklist...'),
+      );
+    }
+
+    if (_loadError != null) {
+      return Column(
+        children: [
+          Expanded(
+            child: AppErrorState(
+              message: _loadError!,
+              onRetry: _loadChecklist,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              border: Border(top: BorderSide(color: scheme.outlineVariant)),
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: widget.onPrevious,
+                icon: const Icon(Icons.arrow_back_rounded),
+                label: const Text('Back'),
+              ),
+            ),
+          ),
+        ],
+      );
     }
 
     final grouped = <String, List<InspectionChecklistItem>>{};
