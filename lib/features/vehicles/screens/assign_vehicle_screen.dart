@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
+import '../../../shared/status_badge.dart';
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
 
@@ -58,9 +60,10 @@ class _AssignVehicleScreenState extends State<AssignVehicleScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Assign Vehicle')),
-      body: Column(
+    return AppPageScaffold(
+      title: 'Assign Vehicle',
+      subtitle: 'Select an active vehicle for this driver.',
+      child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -83,17 +86,30 @@ class _AssignVehicleScreenState extends State<AssignVehicleScreen> {
               future: _vehiclesFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const AppLoadingState(
+                    label: 'Loading active vehicles...',
+                  );
                 }
 
                 if (snapshot.hasError) {
-                  return Center(child: Text(snapshot.error.toString()));
+                  return AppErrorState(
+                    title: 'Unable to load vehicles',
+                    message: 'Please try again.',
+                    onRetry: () => setState(() {
+                      _vehiclesFuture = _vehicleService.getVehicles();
+                    }),
+                  );
                 }
 
                 final vehicles = _filterVehicles(snapshot.data ?? []);
 
                 if (vehicles.isEmpty) {
-                  return const Center(child: Text('No vehicles found.'));
+                  return const AppEmptyState(
+                    icon: Icons.local_shipping_outlined,
+                    title: 'No active vehicles available',
+                    message:
+                        'Only active vehicles can be assigned to a driver.',
+                  );
                 }
 
                 return ListView.builder(
@@ -102,19 +118,20 @@ class _AssignVehicleScreenState extends State<AssignVehicleScreen> {
                     final vehicle = vehicles[index];
 
                     return Card(
+                      elevation: 0,
                       margin: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 6,
                       ),
                       child: ListTile(
-                        leading: const Icon(Icons.local_shipping),
+                        leading: const Icon(Icons.local_shipping_outlined),
                         title: Text(vehicle.registration),
                         subtitle: Text(
                           '${vehicle.fleetNumber}\n'
                           '${vehicle.make} ${vehicle.model}',
                         ),
                         isThreeLine: true,
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: StatusBadge.success('Active'),
                         onTap: () {
                           Navigator.pop(context, vehicle);
                         },

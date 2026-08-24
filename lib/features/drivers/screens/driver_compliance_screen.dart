@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
 import '../../documents/screens/driver_compliance_documents_screen.dart';
+import '../../../shared/status_badge.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 import '../models/driver_compliance.dart';
 import '../services/driver_compliance_service.dart';
@@ -190,13 +192,18 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
     }
 
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const AppPageScaffold(
+        title: 'Driver Compliance',
+        subtitle: 'Licence, CPC, medical and DBS records.',
+        child: AppLoadingState(label: 'Loading compliance records...'),
+      );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Driver Compliance')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+    return AppPageScaffold(
+      title: 'Driver Compliance',
+      subtitle: 'Licence, CPC, medical and DBS records.',
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           _dateTile(
             title: 'Licence Expiry',
@@ -276,14 +283,12 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
     final color = _statusColor(status);
 
     return Card(
+      elevation: 0,
       child: ListTile(
         leading: Icon(Icons.verified_user, color: color),
         title: Text(title),
         subtitle: Text(date == null ? 'Not recorded' : _formatDate(date)),
-        trailing: Chip(
-          label: Text(status),
-          backgroundColor: color.withValues(alpha: 0.15),
-        ),
+        trailing: _statusBadge(status),
         onTap: _permissions.canManageDrivers ? onTap : null,
       ),
     );
@@ -302,6 +307,19 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
 
       default:
         return Colors.green;
+    }
+  }
+
+  StatusBadge _statusBadge(String status) {
+    switch (status) {
+      case 'Expired':
+        return StatusBadge.error('Expired');
+      case 'Due Soon':
+        return StatusBadge.warning('Due Soon');
+      case 'Not Recorded':
+        return StatusBadge.neutral('Not Recorded');
+      default:
+        return StatusBadge.success('Valid');
     }
   }
 

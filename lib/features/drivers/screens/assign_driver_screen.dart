@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/driver.dart';
 import '../services/driver_service.dart';
+import '../../../shared/status_badge.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 class AssignDriverScreen extends StatefulWidget {
   const AssignDriverScreen({super.key});
@@ -38,25 +40,35 @@ class _AssignDriverScreenState extends State<AssignDriverScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Assign Driver')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
+    return AppPageScaffold(
+      title: 'Assign Driver',
+      subtitle: 'Select an active driver for this vehicle.',
+      child: _loading
+          ? const AppLoadingState(label: 'Loading active drivers...')
           : _drivers.isEmpty
-          ? const Center(child: Text('No active drivers.'))
+          ? const AppEmptyState(
+              icon: Icons.people_outline,
+              title: 'No active drivers available',
+              message: 'Only active drivers can be assigned to a vehicle.',
+            )
           : ListView.builder(
               itemCount: _drivers.length,
               itemBuilder: (context, index) {
                 final driver = _drivers[index];
 
-                return ListTile(
-                  leading: const CircleAvatar(child: Icon(Icons.person)),
-                  title: Text(driver.fullName),
-                  subtitle: Text(driver.licenceNumber),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.pop(context, driver);
-                  },
+                return Card(
+                  elevation: 0,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    leading: const Icon(Icons.person_outline),
+                    title: Text(driver.fullName),
+                    subtitle: Text('Licence: ${driver.licenceNumber}'),
+                    trailing: StatusBadge.success('Active'),
+                    onTap: () => Navigator.pop(context, driver),
+                  ),
                 );
               },
             ),
