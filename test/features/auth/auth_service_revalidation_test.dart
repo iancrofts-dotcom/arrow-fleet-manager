@@ -4,6 +4,7 @@ import 'package:arrow_fleet_manager/features/auth/models/user_role.dart';
 import 'package:arrow_fleet_manager/features/auth/repositories/user_repository.dart';
 import 'package:arrow_fleet_manager/features/auth/services/auth_service.dart';
 import 'package:arrow_fleet_manager/features/auth/services/password_service.dart';
+import 'package:arrow_fleet_manager/features/auth/services/permissions.dart';
 import 'package:arrow_fleet_manager/features/auth/services/session_service.dart';
 import 'package:arrow_fleet_manager/features/auth/services/user_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,6 +47,38 @@ void main() {
       expect(result, SessionValidationResult.authenticated);
       expect(auth.currentUser!.role, UserRole.driver);
       expect(auth.currentRole, UserRole.driver);
+    },
+  );
+
+  test(
+    'revalidation removes Fleet Report access after a persisted role downgrade',
+    () async {
+      await signIn(_user('manager', UserRole.manager));
+      await userService.updateUser(
+        auth.currentUser!.copyWith(role: UserRole.driver),
+      );
+
+      expect(
+        await auth.revalidateCurrentSession(),
+        SessionValidationResult.authenticated,
+      );
+      expect(Permissions.canViewReports(auth.currentUser), isFalse);
+    },
+  );
+
+  test(
+    'revalidation removes Workshop Report access after a persisted role change',
+    () async {
+      await signIn(_user('workshop', UserRole.workshop));
+      await userService.updateUser(
+        auth.currentUser!.copyWith(role: UserRole.technician),
+      );
+
+      expect(
+        await auth.revalidateCurrentSession(),
+        SessionValidationResult.authenticated,
+      );
+      expect(Permissions.canManageRepairs(auth.currentUser), isFalse);
     },
   );
 

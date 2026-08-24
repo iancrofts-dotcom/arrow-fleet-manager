@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../features/drivers/screens/driver_list_screen.dart';
+import '../../features/auth/widgets/protected_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
 import '../../features/vehicles/models/vehicle_filter.dart';
 import '../../features/vehicles/screens/vehicle_list_screen.dart';
@@ -116,7 +117,10 @@ static Future<void> openRoute(
   static Future<void> openReports(BuildContext context) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const ReportsScreen(),
+        builder: (_) => ProtectedScreen(
+          allow: (permissions) => permissions.canViewReports,
+          child: const ReportsScreen(),
+        ),
       ),
     );
   }

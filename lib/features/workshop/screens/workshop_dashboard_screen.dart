@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/app_page_scaffold.dart';
 import '../../auth/services/auth_service.dart';
 import '../../auth/services/permission_service.dart';
+import '../../auth/widgets/protected_screen.dart';
 import '../models/workshop_activity.dart';
 import '../models/workshop_dashboard_data.dart';
 import '../repositories/workshop_repository.dart';
@@ -300,8 +301,11 @@ class _WorkshopDashboardScreenState
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        const WorkshopReportsScreen(),
+                                    builder: (_) => ProtectedScreen(
+                                      allow: (permissions) =>
+                                          permissions.canManageWorkshop,
+                                      child: const WorkshopReportsScreen(),
+                                    ),
                                   ),
                                 );
                               },
