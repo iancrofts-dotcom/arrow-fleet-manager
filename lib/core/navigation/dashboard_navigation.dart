@@ -23,8 +23,11 @@ class DashboardNavigation {
   static Future<void> openFleet(BuildContext context) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const VehicleListScreen(
-          initialFilter: VehicleFilter.all,
+        builder: (_) => ProtectedScreen(
+          allow: (permissions) => permissions.canViewVehicles,
+          child: const VehicleListScreen(
+            initialFilter: VehicleFilter.all,
+          ),
         ),
       ),
     );
@@ -33,8 +36,11 @@ class DashboardNavigation {
   static Future<void> openMotDue(BuildContext context) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const VehicleListScreen(
-          initialFilter: VehicleFilter.motDue,
+        builder: (_) => ProtectedScreen(
+          allow: (permissions) => permissions.canViewVehicles,
+          child: const VehicleListScreen(
+            initialFilter: VehicleFilter.motDue,
+          ),
         ),
       ),
     );
@@ -43,8 +49,11 @@ class DashboardNavigation {
   static Future<void> openServiceDue(BuildContext context) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const VehicleListScreen(
-          initialFilter: VehicleFilter.serviceDue,
+        builder: (_) => ProtectedScreen(
+          allow: (permissions) => permissions.canViewVehicles,
+          child: const VehicleListScreen(
+            initialFilter: VehicleFilter.serviceDue,
+          ),
         ),
       ),
     );
@@ -53,8 +62,11 @@ class DashboardNavigation {
   static Future<void> openOverdue(BuildContext context) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const VehicleListScreen(
-          initialFilter: VehicleFilter.overdue,
+        builder: (_) => ProtectedScreen(
+          allow: (permissions) => permissions.canViewVehicles,
+          child: const VehicleListScreen(
+            initialFilter: VehicleFilter.overdue,
+          ),
         ),
       ),
     );
@@ -63,8 +75,11 @@ class DashboardNavigation {
   static Future<void> openWorkshop(BuildContext context) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const VehicleListScreen(
-          initialFilter: VehicleFilter.workshop,
+        builder: (_) => ProtectedScreen(
+          allow: (permissions) => permissions.canViewVehicles,
+          child: const VehicleListScreen(
+            initialFilter: VehicleFilter.workshop,
+          ),
         ),
       ),
     );
@@ -105,7 +120,10 @@ static Future<void> openRoute(
   static Future<void> openDrivers(BuildContext context) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const DriverListScreen(),
+        builder: (_) => ProtectedScreen(
+          allow: (permissions) => permissions.canViewDrivers,
+          child: const DriverListScreen(),
+        ),
       ),
     );
   }

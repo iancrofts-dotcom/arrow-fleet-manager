@@ -82,6 +82,54 @@ void main() {
     },
   );
 
+  test(
+    'revalidation removes vehicle management after a persisted role change',
+    () async {
+      await signIn(_user('manager', UserRole.manager));
+      await userService.updateUser(
+        auth.currentUser!.copyWith(role: UserRole.workshop),
+      );
+
+      expect(
+        await auth.revalidateCurrentSession(),
+        SessionValidationResult.authenticated,
+      );
+      expect(Permissions.canManageFleet(auth.currentUser), isFalse);
+    },
+  );
+
+  test(
+    'revalidation removes driver management after a persisted role change',
+    () async {
+      await signIn(_user('manager', UserRole.manager));
+      await userService.updateUser(
+        auth.currentUser!.copyWith(role: UserRole.workshop),
+      );
+
+      expect(
+        await auth.revalidateCurrentSession(),
+        SessionValidationResult.authenticated,
+      );
+      expect(Permissions.canManageDrivers(auth.currentUser), isFalse);
+    },
+  );
+
+  test(
+    'revalidation removes User Management after a persisted role change',
+    () async {
+      await signIn(_user('admin', UserRole.admin));
+      await userService.updateUser(
+        auth.currentUser!.copyWith(role: UserRole.manager),
+      );
+
+      expect(
+        await auth.revalidateCurrentSession(),
+        SessionValidationResult.authenticated,
+      );
+      expect(Permissions.canManageUsers(auth.currentUser), isFalse);
+    },
+  );
+
   test('inactive persisted User invalidates the running session', () async {
     await signIn(_user('user-1', UserRole.manager));
     await userService.updateUser(auth.currentUser!.copyWith(isActive: false));

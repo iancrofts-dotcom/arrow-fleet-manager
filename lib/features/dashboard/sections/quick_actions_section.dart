@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/navigation/dashboard_navigation.dart';
 import '../../auth/screens/user_management_screen.dart';
 import '../../auth/services/permission_service.dart';
+import '../../auth/widgets/protected_screen.dart';
 import '../../calendar/screens/calendar_screen.dart';
 import '../../drivers/models/driver.dart';
 import '../../drivers/screens/add_driver_screen.dart';
@@ -73,7 +74,10 @@ class QuickActionsSection extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const UserManagementScreen(),
+                      builder: (_) => ProtectedScreen(
+                        allow: (permissions) => permissions.canManageUsers,
+                        child: const UserManagementScreen(),
+                      ),
                     ),
                   );
                 },
@@ -89,7 +93,10 @@ class QuickActionsSection extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const CalendarScreen(),
+                      builder: (_) => ProtectedScreen(
+                        allow: (permissions) => permissions.canAccessCalendar,
+                        child: const CalendarScreen(),
+                      ),
                     ),
                   );
                 },
@@ -105,7 +112,10 @@ class QuickActionsSection extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const InspectionScreen(),
+                      builder: (_) => ProtectedScreen(
+                        allow: (permissions) => permissions.canManageWorkshop,
+                        child: const InspectionScreen(),
+                      ),
                     ),
                   );
                 },
@@ -121,7 +131,10 @@ class QuickActionsSection extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const InspectionHistoryScreen(),
+                      builder: (_) => ProtectedScreen(
+                        allow: (permissions) => permissions.canManageWorkshop,
+                        child: const InspectionHistoryScreen(),
+                      ),
                     ),
                   );
                 },
@@ -136,7 +149,10 @@ if (permissions.canAccessWorkshop)
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => const WorkshopDashboardScreen(),
+          builder: (_) => ProtectedScreen(
+            allow: (permissions) => permissions.canAccessWorkshop,
+            child: const WorkshopDashboardScreen(),
+          ),
         ),
       );
     },
@@ -160,7 +176,10 @@ if (permissions.canAccessWorkshop)
                   final vehicle = await Navigator.push<Vehicle>(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => AddVehicleScreen(),
+                      builder: (_) => ProtectedScreen(
+                        allow: (permissions) => permissions.canManageVehicles,
+                        child: AddVehicleScreen(),
+                      ),
                     ),
                   );
 
@@ -188,7 +207,10 @@ if (permissions.canAccessWorkshop)
                   final driver = await Navigator.push<Driver>(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => AddDriverScreen(),
+                      builder: (_) => ProtectedScreen(
+                        allow: (permissions) => permissions.canManageDrivers,
+                        child: AddDriverScreen(),
+                      ),
                     ),
                   );
 

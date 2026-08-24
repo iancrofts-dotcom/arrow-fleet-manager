@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../workshop/screens/workshop_dashboard_screen.dart';
+import '../../../auth/widgets/protected_screen.dart';
 
 class TechnicianDashboard extends StatelessWidget {
   const TechnicianDashboard({super.key});
@@ -13,7 +14,10 @@ class TechnicianDashboard extends StatelessWidget {
         child: FilledButton.icon(
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => const WorkshopDashboardScreen(),
+              builder: (_) => ProtectedScreen(
+                allow: (permissions) => permissions.canAccessWorkshop,
+                child: const WorkshopDashboardScreen(),
+              ),
             ),
           ),
           icon: const Icon(Icons.handyman_outlined),

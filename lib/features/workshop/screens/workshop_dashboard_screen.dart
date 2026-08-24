@@ -154,8 +154,11 @@ class _WorkshopDashboardScreenState
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        const InspectionWizardScreen(),
+                                    builder: (_) => ProtectedScreen(
+                                      allow: (permissions) =>
+                                          permissions.canManageWorkshop,
+                                      child: const InspectionWizardScreen(),
+                                    ),
                                   ),
                                 );
                               },
@@ -172,8 +175,11 @@ class _WorkshopDashboardScreenState
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        const InspectionTemplatesScreen(),
+                                    builder: (_) => ProtectedScreen(
+                                      allow: (permissions) =>
+                                          permissions.canManageInspectionTemplates,
+                                      child: const InspectionTemplatesScreen(),
+                                    ),
                                   ),
                                 );
                               },
@@ -190,8 +196,11 @@ class _WorkshopDashboardScreenState
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        const WorkshopInspectionScreen(),
+                                    builder: (_) => ProtectedScreen(
+                                      allow: (permissions) =>
+                                          permissions.canManageWorkshop,
+                                      child: const WorkshopInspectionScreen(),
+                                    ),
                                   ),
                                 );
                               },
@@ -278,8 +287,12 @@ class _WorkshopDashboardScreenState
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => RepairJobsScreen(
-                                      inspectionId: selectedInspection!.id!,
+                                    builder: (_) => ProtectedScreen(
+                                      allow: (permissions) =>
+                                          permissions.canManageWorkshop,
+                                      child: RepairJobsScreen(
+                                        inspectionId: selectedInspection!.id!,
+                                      ),
                                     ),
                                   ),
                                 );
@@ -697,8 +710,12 @@ class _TechnicianWorkshopLanding extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => RepairJobsScreen(
-                          technicianId: technicianId,
+                        builder: (_) => ProtectedScreen(
+                          allow: (permissions) =>
+                              permissions.canOperateWorkshop,
+                          child: RepairJobsScreen(
+                            technicianId: technicianId,
+                          ),
                         ),
                       ),
                     );

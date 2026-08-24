@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../auth/screens/my_account_screen.dart';
 import '../../../auth/services/auth_service.dart';
 import '../../../auth/services/permission_service.dart';
+import '../../../auth/widgets/protected_screen.dart';
 import '../../../drivers/services/driver_assignment_service.dart';
 import '../../../inspections/inspection_screen.dart';
 import '../../../vehicles/models/vehicle.dart';
@@ -56,7 +57,11 @@ class DriverDashboard extends StatelessWidget {
                   '${vehicle.registration} • ${vehicle.make} ${vehicle.model}',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => const _MyAssignedVehicleScreen(),
+                  builder: (_) => ProtectedScreen(
+                    allow: (permissions) =>
+                        permissions.canViewAssignedVehicle,
+                    child: const _MyAssignedVehicleScreen(),
+                  ),
                 ),
               ),
             ),
@@ -67,10 +72,14 @@ class DriverDashboard extends StatelessWidget {
               subtitle: 'Complete today\'s vehicle walkaround',
               onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => InspectionScreen(
-                            assignedVehicle: vehicle,
-                            assignedDriverName:
-                                AuthService.instance.currentUser?.username,
+                          builder: (_) => ProtectedScreen(
+                            allow: (permissions) =>
+                                permissions.canPerformDailyInspection,
+                            child: InspectionScreen(
+                              assignedVehicle: vehicle,
+                              assignedDriverName:
+                                  AuthService.instance.currentUser?.username,
+                            ),
                           ),
                         ),
                       ),
@@ -82,7 +91,10 @@ class DriverDashboard extends StatelessWidget {
               subtitle: 'View your signed-in account',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => const MyAccountScreen(),
+                  builder: (_) => ProtectedScreen(
+                    allow: (permissions) => permissions.canViewOwnAccount,
+                    child: const MyAccountScreen(),
+                  ),
                 ),
               ),
             ),
