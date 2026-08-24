@@ -15,12 +15,10 @@ class DashboardKpiCard extends StatefulWidget {
   final String? routeName;
 
   @override
-  State<DashboardKpiCard> createState() =>
-      _DashboardKpiCardState();
+  State<DashboardKpiCard> createState() => _DashboardKpiCardState();
 }
 
-class _DashboardKpiCardState
-    extends State<DashboardKpiCard> {
+class _DashboardKpiCardState extends State<DashboardKpiCard> {
   bool _hovering = false;
 
   Color _trendColor(BuildContext context) {
@@ -70,53 +68,40 @@ class _DashboardKpiCardState
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: AnimatedScale(
-        scale: _hovering ? 1.02 : 1.0,
+        scale: _hovering ? 1.01 : 1.0,
         duration: const Duration(milliseconds: 150),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            boxShadow: _hovering
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : [],
+            border: Border.all(
+              color: _hovering
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
           child: Card(
-            elevation: _hovering ? 6 : 3,
+            elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
-              onTap:
-                  widget.routeName != null ? _openRoute : null,
+              onTap: widget.routeName != null ? _openRoute : null,
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         CircleAvatar(
                           radius: 22,
-                          backgroundColor:
-                              trendColor.withValues(alpha: 0.15),
-                          child: Icon(
-                            widget.icon,
-                            color: trendColor,
-                          ),
+                          backgroundColor: trendColor.withValues(alpha: 0.15),
+                          child: Icon(widget.icon, color: trendColor),
                         ),
                         const Spacer(),
-                        Icon(
-                          _trendIcon(),
-                          color: trendColor,
-                        ),
+                        Icon(_trendIcon(), color: trendColor),
                       ],
                     ),
 
@@ -124,21 +109,15 @@ class _DashboardKpiCardState
 
                     Text(
                       widget.kpi.title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium,
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
 
                     const SizedBox(height: 8),
 
                     Text(
                       widget.kpi.value,
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
 
                     const Spacer(),
@@ -148,21 +127,16 @@ class _DashboardKpiCardState
                         Expanded(
                           child: Text(
                             widget.kpi.subtitle,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: trendColor,
-                                ),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(color: trendColor),
                           ),
                         ),
                         if (widget.routeName != null)
                           Icon(
                             Icons.arrow_forward_ios,
                             size: 16,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                       ],
                     ),

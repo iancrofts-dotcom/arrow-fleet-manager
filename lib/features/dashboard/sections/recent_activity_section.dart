@@ -5,13 +5,13 @@ import '../services/activity_service.dart';
 import '../widgets/cards/dashboard_card.dart';
 import '../widgets/cards/dashboard_card_body.dart';
 import '../widgets/cards/dashboard_card_header.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 class RecentActivitySection extends StatefulWidget {
   const RecentActivitySection({super.key});
 
   @override
-  State<RecentActivitySection> createState() =>
-      _RecentActivitySectionState();
+  State<RecentActivitySection> createState() => _RecentActivitySectionState();
 }
 
 class _RecentActivitySectionState extends State<RecentActivitySection> {
@@ -84,12 +84,7 @@ class _RecentActivitySectionState extends State<RecentActivitySection> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
-              ),
-            );
+            return const AppLoadingState(label: 'Loading recent activity...');
           }
 
           if (snapshot.hasError) {
@@ -105,7 +100,11 @@ class _RecentActivitySectionState extends State<RecentActivitySection> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text('Unable to load recent activity.'),
+                AppErrorState(
+                  title: 'Unable to load recent activity',
+                  message: 'Please try again.',
+                  onRetry: _refresh,
+                ),
               ],
             );
           }
@@ -124,8 +123,10 @@ class _RecentActivitySectionState extends State<RecentActivitySection> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Center(
-                  child: Text('No recent activity.'),
+                const AppEmptyState(
+                  icon: Icons.history_toggle_off_outlined,
+                  title: 'No recent activity',
+                  message: 'New fleet activity will appear here.',
                 ),
               ],
             );
@@ -153,11 +154,19 @@ class _RecentActivitySectionState extends State<RecentActivitySection> {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        radius: 18,
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         child: Icon(
                           _icon(activity.type),
                           size: 18,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
                         ),
                       ),
 
@@ -169,19 +178,13 @@ class _RecentActivitySectionState extends State<RecentActivitySection> {
                           children: [
                             Text(
                               activity.title,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               activity.description,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium,
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
                         ),
@@ -191,9 +194,7 @@ class _RecentActivitySectionState extends State<RecentActivitySection> {
 
                       Text(
                         _timeAgo(activity.timestamp),
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   );

@@ -124,24 +124,22 @@ class _DashboardContentState extends State<_DashboardContent> {
               future: summaryFuture!,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const AppLoadingState(label: 'Loading dashboard...');
                 }
 
                 if (snapshot.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'Error loading dashboard\n\n${snapshot.error}',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                  return AppErrorState(
+                    title: 'Unable to load dashboard',
+                    message: 'Please try again.',
+                    onRetry: _refreshDashboard,
                   );
                 }
 
                 if (!snapshot.hasData) {
-                  return const Center(
-                    child: Text('No dashboard data available'),
+                  return const AppEmptyState(
+                    icon: Icons.dashboard_outlined,
+                    title: 'No dashboard data available',
+                    message: 'Refresh to load the latest operational summary.',
                   );
                 }
 

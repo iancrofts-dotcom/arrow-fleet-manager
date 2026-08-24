@@ -6,6 +6,7 @@ import '../widgets/cards/dashboard_card.dart';
 import '../widgets/cards/dashboard_card_body.dart';
 import '../widgets/cards/dashboard_card_header.dart';
 import '../widgets/cards/status_chip.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 class NotificationSection extends StatefulWidget {
   const NotificationSection({super.key});
@@ -92,12 +93,7 @@ class _NotificationSectionState extends State<NotificationSection> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
-              ),
-            );
+            return const AppLoadingState(label: 'Loading notifications...');
           }
 
           if (snapshot.hasError) {
@@ -113,7 +109,11 @@ class _NotificationSectionState extends State<NotificationSection> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text('Unable to load notifications.'),
+                AppErrorState(
+                  title: 'Unable to load notifications',
+                  message: 'Please try again.',
+                  onRetry: _refresh,
+                ),
               ],
             );
           }
@@ -132,8 +132,10 @@ class _NotificationSectionState extends State<NotificationSection> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Center(
-                  child: Text('No notifications available.'),
+                const AppEmptyState(
+                  icon: Icons.notifications_none_outlined,
+                  title: 'No notifications available',
+                  message: 'New fleet and system events will appear here.',
                 ),
               ],
             );
@@ -161,10 +163,7 @@ class _NotificationSectionState extends State<NotificationSection> {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        _leadingIcon(notification.type),
-                        size: 22,
-                      ),
+                      Icon(_leadingIcon(notification.type), size: 22),
 
                       const SizedBox(width: 12),
 
@@ -174,16 +173,12 @@ class _NotificationSectionState extends State<NotificationSection> {
                           children: [
                             Text(
                               notification.title,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium,
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               notification.message,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium,
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
                         ),

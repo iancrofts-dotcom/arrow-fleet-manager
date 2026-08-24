@@ -30,10 +30,7 @@ class ComplianceSummaryCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 14,
-            child: Text(
-              value.toString(),
-              style: const TextStyle(fontSize: 12),
-            ),
+            child: Text(value.toString(), style: const TextStyle(fontSize: 12)),
           ),
           if (onTap != null) ...[
             const SizedBox(width: 8),
@@ -47,10 +44,13 @@ class ComplianceSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Card(
-      elevation: 3,
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: scheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -59,9 +59,9 @@ class ComplianceSummaryCard extends StatelessWidget {
           children: [
             Text(
               "Upcoming Compliance",
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 16),

@@ -24,8 +24,7 @@ class WorkshopDashboardScreen extends StatefulWidget {
       _WorkshopDashboardScreenState();
 }
 
-class _WorkshopDashboardScreenState
-    extends State<WorkshopDashboardScreen> {
+class _WorkshopDashboardScreenState extends State<WorkshopDashboardScreen> {
   late final WorkshopDashboardService _dashboardService;
   late Future<WorkshopDashboardData> _dashboardFuture;
 
@@ -33,9 +32,7 @@ class _WorkshopDashboardScreenState
   void initState() {
     super.initState();
 
-    _dashboardService = WorkshopDashboardService(
-      WorkshopRepository(),
-    );
+    _dashboardService = WorkshopDashboardService(WorkshopRepository());
 
     _dashboardFuture = _dashboardService.loadDashboard();
   }
@@ -77,7 +74,9 @@ class _WorkshopDashboardScreenState
         future: _dashboardFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const AppLoadingState(label: 'Loading Workshop dashboard...');
+            return const AppLoadingState(
+              label: 'Loading Workshop dashboard...',
+            );
           }
 
           if (snapshot.hasError) {
@@ -87,17 +86,13 @@ class _WorkshopDashboardScreenState
             );
           }
 
-          final dashboard =
-              snapshot.data ?? WorkshopDashboardData.empty();
+          final dashboard = snapshot.data ?? WorkshopDashboardData.empty();
 
           final hasCriticalIssues = dashboard.criticalFailures > 0;
           final hasRepairs = dashboard.repairsRequired > 0;
-          final hasOutstandingRepairs =
-              dashboard.repairsOutstanding > 0;
-          final hasAwaitingParts =
-              dashboard.awaitingParts > 0;
-          final hasAwaitingSignOff =
-              dashboard.awaitingSignOff > 0;
+          final hasOutstandingRepairs = dashboard.repairsOutstanding > 0;
+          final hasAwaitingParts = dashboard.awaitingParts > 0;
+          final hasAwaitingSignOff = dashboard.awaitingSignOff > 0;
 
           return RefreshIndicator(
             onRefresh: _refreshDashboard,
@@ -112,8 +107,7 @@ class _WorkshopDashboardScreenState
                       Expanded(
                         child: Text(
                           'Quick Actions',
-                          style:
-                              theme.textTheme.headlineSmall?.copyWith(
+                          style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -129,15 +123,13 @@ class _WorkshopDashboardScreenState
                       final columns = width >= 1050
                           ? 3
                           : width >= 680
-                              ? 2
-                              : 1;
+                          ? 2
+                          : 1;
 
                       final spacing = 12.0;
                       final itemWidth = columns == 1
                           ? width
-                          : (width -
-                                  (spacing * (columns - 1))) /
-                              columns;
+                          : (width - (spacing * (columns - 1))) / columns;
 
                       return Wrap(
                         spacing: spacing,
@@ -148,8 +140,7 @@ class _WorkshopDashboardScreenState
                             child: _ActionCard(
                               icon: Icons.add_circle_outline,
                               title: 'New Inspection',
-                              subtitle:
-                                  'Start a new vehicle inspection',
+                              subtitle: 'Start a new vehicle inspection',
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -176,8 +167,8 @@ class _WorkshopDashboardScreenState
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => ProtectedScreen(
-                                      allow: (permissions) =>
-                                          permissions.canManageInspectionTemplates,
+                                      allow: (permissions) => permissions
+                                          .canManageInspectionTemplates,
                                       child: const InspectionTemplatesScreen(),
                                     ),
                                   ),
@@ -190,8 +181,7 @@ class _WorkshopDashboardScreenState
                             child: _ActionCard(
                               icon: Icons.assignment_outlined,
                               title: 'Inspection List',
-                              subtitle:
-                                  'View and manage saved inspections',
+                              subtitle: 'View and manage saved inspections',
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -211,11 +201,10 @@ class _WorkshopDashboardScreenState
                             child: _ActionCard(
                               icon: Icons.build_circle_outlined,
                               title: 'Repair Jobs',
-                              subtitle:
-                                  'View and manage workshop repair jobs',
+                              subtitle: 'View and manage workshop repair jobs',
                               onTap: () async {
-                                final inspections =
-                                    await WorkshopRepository().getAllInspections();
+                                final inspections = await WorkshopRepository()
+                                    .getAllInspections();
 
                                 if (!context.mounted) return;
 
@@ -237,45 +226,51 @@ class _WorkshopDashboardScreenState
                                 } else {
                                   selectedInspection =
                                       await showDialog<WorkshopInspection>(
-                                    context: context,
-                                    builder: (dialogContext) {
-                                      return SimpleDialog(
-                                        title: const Text('Select Inspection'),
-                                        children: inspections.map((inspection) {
-                                          return SimpleDialogOption(
-                                            onPressed: () {
-                                              Navigator.of(dialogContext)
-                                                  .pop(inspection);
-                                            },
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                vertical: 8,
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    inspection.registration,
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 3),
-                                                  Text(
-                                                    '${inspection.inspectionNumber} • '
-                                                    '${inspection.inspectionType.name}',
-                                                  ),
-                                                ],
-                                              ),
+                                        context: context,
+                                        builder: (dialogContext) {
+                                          return SimpleDialog(
+                                            title: const Text(
+                                              'Select Inspection',
                                             ),
+                                            children: inspections.map((
+                                              inspection,
+                                            ) {
+                                              return SimpleDialogOption(
+                                                onPressed: () {
+                                                  Navigator.of(
+                                                    dialogContext,
+                                                  ).pop(inspection);
+                                                },
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 8,
+                                                      ),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        inspection.registration,
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 3),
+                                                      Text(
+                                                        '${inspection.inspectionNumber} • '
+                                                        '${inspection.inspectionType.name}',
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
                                           );
-                                        }).toList(),
+                                        },
                                       );
-                                    },
-                                  );
                                 }
 
                                 if (!context.mounted ||
@@ -357,36 +352,29 @@ class _WorkshopDashboardScreenState
                             width: itemWidth,
                             child: _KpiCard(
                               title: 'Open Inspections',
-                              value:
-                                  dashboard.openInspections.toString(),
+                              value: dashboard.openInspections.toString(),
                               icon: Icons.assignment_outlined,
-                              description:
-                                  'Currently open in the workshop',
+                              description: 'Currently open in the workshop',
                             ),
                           ),
                           SizedBox(
                             width: itemWidth,
                             child: _KpiCard(
                               title: 'Completed Today',
-                              value:
-                                  dashboard.completedToday.toString(),
+                              value: dashboard.completedToday.toString(),
                               icon: Icons.check_circle_outline,
-                              description:
-                                  'Inspections completed today',
+                              description: 'Inspections completed today',
                             ),
                           ),
                           SizedBox(
                             width: itemWidth,
                             child: _KpiCard(
                               title: 'Critical Failures',
-                              value:
-                                  dashboard.criticalFailures.toString(),
-                              icon:
-                                  Icons.warning_amber_outlined,
-                              description:
-                                  hasCriticalIssues
-                                      ? 'Requires attention'
-                                      : 'No critical failures',
+                              value: dashboard.criticalFailures.toString(),
+                              icon: Icons.warning_amber_outlined,
+                              description: hasCriticalIssues
+                                  ? 'Requires attention'
+                                  : 'No critical failures',
                               alert: hasCriticalIssues,
                             ),
                           ),
@@ -394,13 +382,11 @@ class _WorkshopDashboardScreenState
                             width: itemWidth,
                             child: _KpiCard(
                               title: 'Repairs Required',
-                              value:
-                                  dashboard.repairsRequired.toString(),
+                              value: dashboard.repairsRequired.toString(),
                               icon: Icons.build_outlined,
-                              description:
-                                  hasRepairs
-                                      ? 'Jobs require workshop action'
-                                      : 'No outstanding repairs',
+                              description: hasRepairs
+                                  ? 'Jobs require workshop action'
+                                  : 'No outstanding repairs',
                               alert: hasRepairs,
                             ),
                           ),
@@ -437,8 +423,7 @@ class _WorkshopDashboardScreenState
                             width: itemWidth,
                             child: _KpiCard(
                               title: 'Repairs Outstanding',
-                              value:
-                                  dashboard.repairsOutstanding.toString(),
+                              value: dashboard.repairsOutstanding.toString(),
                               icon: Icons.build_circle_outlined,
                               description: hasOutstandingRepairs
                                   ? 'Repair jobs require action'
@@ -462,8 +447,7 @@ class _WorkshopDashboardScreenState
                             width: itemWidth,
                             child: _KpiCard(
                               title: 'Awaiting Sign-off',
-                              value:
-                                  dashboard.awaitingSignOff.toString(),
+                              value: dashboard.awaitingSignOff.toString(),
                               icon: Icons.fact_check_outlined,
                               description: hasAwaitingSignOff
                                   ? 'Completed inspections need approval'
@@ -490,10 +474,8 @@ class _WorkshopDashboardScreenState
                   Card(
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: scheme.outlineVariant,
-                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: scheme.outlineVariant),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(18),
@@ -506,8 +488,7 @@ class _WorkshopDashboardScreenState
                               color: hasCriticalIssues
                                   ? scheme.errorContainer
                                   : scheme.primaryContainer,
-                              borderRadius:
-                                  BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
                               hasCriticalIssues
@@ -521,15 +502,13 @@ class _WorkshopDashboardScreenState
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   hasCriticalIssues
                                       ? 'Attention Required'
                                       : 'Workshop Operational',
-                                  style: theme.textTheme.titleMedium
-                                      ?.copyWith(
+                                  style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -538,10 +517,9 @@ class _WorkshopDashboardScreenState
                                   hasCriticalIssues
                                       ? 'There are critical inspection failures requiring attention.'
                                       : hasRepairs
-                                          ? 'The workshop is operational with repair work currently outstanding.'
-                                          : 'No critical issues are currently reported.',
-                                  style:
-                                      theme.textTheme.bodyMedium,
+                                      ? 'The workshop is operational with repair work currently outstanding.'
+                                      : 'No critical issues are currently reported.',
+                                  style: theme.textTheme.bodyMedium,
                                 ),
                               ],
                             ),
@@ -566,10 +544,8 @@ class _WorkshopDashboardScreenState
                     Card(
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                          color: scheme.outlineVariant,
-                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: scheme.outlineVariant),
                       ),
                       child: const ListTile(
                         contentPadding: EdgeInsets.symmetric(
@@ -700,7 +676,7 @@ class _TechnicianWorkshopLanding extends StatelessWidget {
               Text(
                 technicianId == null
                     ? 'Your technician account is not available. '
-                        'Please sign in again or contact an administrator.'
+                          'Please sign in again or contact an administrator.'
                     : 'View and update repair jobs assigned to you.',
                 textAlign: TextAlign.center,
               ),
@@ -713,9 +689,7 @@ class _TechnicianWorkshopLanding extends StatelessWidget {
                         builder: (_) => ProtectedScreen(
                           allow: (permissions) =>
                               permissions.canOperateWorkshop,
-                          child: RepairJobsScreen(
-                            technicianId: technicianId,
-                          ),
+                          child: RepairJobsScreen(technicianId: technicianId),
                         ),
                       ),
                     );
@@ -754,10 +728,8 @@ class _ActionCard extends StatelessWidget {
       elevation: 0,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: scheme.outlineVariant,
-        ),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: scheme.outlineVariant),
       ),
       child: InkWell(
         onTap: onTap,
@@ -770,37 +742,27 @@ class _ActionCard extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: scheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon,
-                  color: scheme.onPrimaryContainer,
-                ),
+                child: Icon(icon, color: scheme.onPrimaryContainer),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
-                      style:
-                          theme.textTheme.titleMedium?.copyWith(
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 3),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodyMedium,
-                    ),
+                    Text(subtitle, style: theme.textTheme.bodyMedium),
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-              ),
+              const Icon(Icons.chevron_right_rounded),
             ],
           ),
         ),
@@ -832,7 +794,7 @@ class _KpiCard extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: alert
               ? scheme.error.withValues(alpha: 0.45)
@@ -847,10 +809,8 @@ class _KpiCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: alert
-                    ? scheme.errorContainer
-                    : scheme.primaryContainer,
-                borderRadius: BorderRadius.circular(14),
+                color: alert ? scheme.errorContainer : scheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
@@ -862,29 +822,23 @@ class _KpiCard extends StatelessWidget {
             const SizedBox(width: 14),
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     value,
-                    style:
-                        theme.textTheme.headlineMedium?.copyWith(
+                    style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     title,
-                    style:
-                        theme.textTheme.bodyMedium?.copyWith(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    description,
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  Text(description, style: theme.textTheme.bodySmall),
                 ],
               ),
             ),

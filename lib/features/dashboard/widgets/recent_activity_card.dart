@@ -4,10 +4,7 @@ import '../../../core/navigation/dashboard_navigation.dart';
 import '../models/dashboard_activity.dart';
 
 class RecentActivityCard extends StatelessWidget {
-  const RecentActivityCard({
-    super.key,
-    required this.activities,
-  });
+  const RecentActivityCard({super.key, required this.activities});
 
   final List<DashboardActivity> activities;
 
@@ -28,10 +25,13 @@ class RecentActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Card(
-      elevation: 3,
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: scheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -40,12 +40,9 @@ class RecentActivityCard extends StatelessWidget {
           children: [
             Text(
               'Recent Activity',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 20),
@@ -58,8 +55,17 @@ class RecentActivityCard extends StatelessWidget {
             else
               ...activities.map(
                 (activity) => ListTile(
-                  leading: Icon(
-                    _iconForType(activity.type),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: scheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      _iconForType(activity.type),
+                      color: scheme.onPrimaryContainer,
+                    ),
                   ),
                   title: Text(activity.title),
                   subtitle: Text(activity.subtitle),
@@ -69,19 +75,16 @@ class RecentActivityCard extends StatelessWidget {
                       Text(activity.relativeDate),
                       if (activity.route != null) ...[
                         const SizedBox(width: 8),
-                        const Icon(
-                          Icons.chevron_right,
-                          size: 18,
-                        ),
+                        const Icon(Icons.chevron_right, size: 18),
                       ],
                     ],
                   ),
                   onTap: activity.route == null
                       ? null
                       : () => DashboardNavigation.openRoute(
-                            context,
-                            activity.route,
-                          ),
+                          context,
+                          activity.route,
+                        ),
                 ),
               ),
           ],

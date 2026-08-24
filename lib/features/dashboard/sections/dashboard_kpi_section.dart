@@ -4,17 +4,16 @@ import '../../../app/router.dart';
 import '../models/dashboard_kpi.dart';
 import '../services/dashboard_kpi_service.dart';
 import '../widgets/dashboard_kpi_card.dart';
+import '../../../shared/widgets/app_page_scaffold.dart';
 
 class DashboardKpiSection extends StatefulWidget {
   const DashboardKpiSection({super.key});
 
   @override
-  State<DashboardKpiSection> createState() =>
-      _DashboardKpiSectionState();
+  State<DashboardKpiSection> createState() => _DashboardKpiSectionState();
 }
 
-class _DashboardKpiSectionState
-    extends State<DashboardKpiSection> {
+class _DashboardKpiSectionState extends State<DashboardKpiSection> {
   late final DashboardKpiService _service;
   late Future<List<DashboardKpi>> _future;
 
@@ -71,24 +70,15 @@ class _DashboardKpiSectionState
     return FutureBuilder<List<DashboardKpi>>(
       future: _future,
       builder: (context, snapshot) {
-        if (snapshot.connectionState ==
-            ConnectionState.waiting) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(),
-            ),
-          );
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const AppLoadingState(label: 'Loading dashboard metrics...');
         }
 
         if (snapshot.hasError) {
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text(
-                'Unable to load dashboard KPIs\n\n${snapshot.error}',
-              ),
-            ),
+          return AppErrorState(
+            title: 'Unable to load dashboard metrics',
+            message: 'Please try again.',
+            onRetry: () => setState(() => _future = _service.getKpis()),
           );
         }
 
@@ -110,11 +100,9 @@ class _DashboardKpiSectionState
 
             return GridView.builder(
               shrinkWrap: true,
-              physics:
-                  const NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: kpis.length,
-              gridDelegate:
-                  SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columns,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,

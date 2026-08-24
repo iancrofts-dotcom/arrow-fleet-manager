@@ -48,8 +48,20 @@ class DriverDashboard extends StatelessWidget {
         }
 
         return ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           children: [
+            Text(
+              'Driver workspace',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Your assigned vehicle, daily inspection and account actions.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 20),
             _DriverActionCard(
               icon: Icons.local_shipping_outlined,
               title: 'My Vehicle',
@@ -58,8 +70,7 @@ class DriverDashboard extends StatelessWidget {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => ProtectedScreen(
-                    allow: (permissions) =>
-                        permissions.canViewAssignedVehicle,
+                    allow: (permissions) => permissions.canViewAssignedVehicle,
                     child: const _MyAssignedVehicleScreen(),
                   ),
                 ),
@@ -71,18 +82,18 @@ class DriverDashboard extends StatelessWidget {
               title: 'Daily Inspection',
               subtitle: 'Complete today\'s vehicle walkaround',
               onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ProtectedScreen(
-                            allow: (permissions) =>
-                                permissions.canPerformDailyInspection,
-                            child: InspectionScreen(
-                              assignedVehicle: vehicle,
-                              assignedDriverName:
-                                  AuthService.instance.currentUser?.username,
-                            ),
-                          ),
-                        ),
-                      ),
+                MaterialPageRoute(
+                  builder: (_) => ProtectedScreen(
+                    allow: (permissions) =>
+                        permissions.canPerformDailyInspection,
+                    child: InspectionScreen(
+                      assignedVehicle: vehicle,
+                      assignedDriverName:
+                          AuthService.instance.currentUser?.username,
+                    ),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             _DriverActionCard(
@@ -112,7 +123,8 @@ class _MyAssignedVehicleScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final driverId = AuthService.instance.currentDriverId;
 
-    if (!PermissionService.instance.canViewAssignedVehicle || driverId == null) {
+    if (!PermissionService.instance.canViewAssignedVehicle ||
+        driverId == null) {
       return const _DriverAccessDenied(message: 'No driver account is linked.');
     }
 
@@ -150,8 +162,8 @@ class _MyAssignedVehicleScreen extends StatelessWidget {
                     Text(
                       'Vehicle Overview',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _VehicleDetailCard(
@@ -196,11 +208,27 @@ class _DriverActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Card(
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: scheme.outlineVariant),
+      ),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         enabled: onTap != null,
-        leading: Icon(icon),
-        title: Text(title),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: scheme.onPrimaryContainer),
+        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
@@ -232,7 +260,12 @@ class _DriverAccessDenied extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Access Denied')),
-      body: Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(message, textAlign: TextAlign.center))),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(message, textAlign: TextAlign.center),
+        ),
+      ),
     );
   }
 }
