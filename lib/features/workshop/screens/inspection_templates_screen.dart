@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/status_badge.dart';
 import '../../../shared/widgets/app_page_scaffold.dart';
+import '../../../shared/widgets/form_section.dart';
 import '../../auth/services/permission_service.dart';
 import '../models/inspection_item.dart';
 import '../models/inspection_template.dart';
@@ -19,7 +20,8 @@ class InspectionTemplatesScreen extends StatefulWidget {
 }
 
 class _InspectionTemplatesScreenState extends State<InspectionTemplatesScreen> {
-  final InspectionTemplateRepository _repository = InspectionTemplateRepository();
+  final InspectionTemplateRepository _repository =
+      InspectionTemplateRepository();
   late Future<List<_TemplateSummary>> _future;
 
   @override
@@ -38,11 +40,13 @@ class _InspectionTemplatesScreenState extends State<InspectionTemplatesScreen> {
         _repository.getTemplateSections(templateId),
         _repository.getTemplateItems(templateId),
       ]);
-      summaries.add(_TemplateSummary(
-        template: template,
-        sectionCount: (results[0] as List<InspectionTemplateSection>).length,
-        itemCount: (results[1] as List<InspectionTemplateItem>).length,
-      ));
+      summaries.add(
+        _TemplateSummary(
+          template: template,
+          sectionCount: (results[0] as List<InspectionTemplateSection>).length,
+          itemCount: (results[1] as List<InspectionTemplateItem>).length,
+        ),
+      );
     }
     return summaries;
   }
@@ -52,7 +56,10 @@ class _InspectionTemplatesScreenState extends State<InspectionTemplatesScreen> {
     await _future;
   }
 
-  Future<void> _openBuilder({InspectionTemplate? template, bool duplicate = false}) async {
+  Future<void> _openBuilder({
+    InspectionTemplate? template,
+    bool duplicate = false,
+  }) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => InspectionTemplateBuilderScreen(
@@ -66,7 +73,10 @@ class _InspectionTemplatesScreenState extends State<InspectionTemplatesScreen> {
 
   Future<void> _toggleActive(InspectionTemplate template) async {
     await _repository.updateTemplate(
-      template.copyWith(isActive: !template.isActive, updatedAt: DateTime.now()),
+      template.copyWith(
+        isActive: !template.isActive,
+        updatedAt: DateTime.now(),
+      ),
     );
     if (mounted) await _refresh();
   }
@@ -83,17 +93,20 @@ class _InspectionTemplatesScreenState extends State<InspectionTemplatesScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openBuilder,
         icon: const Icon(Icons.add),
-        label: const Text('Create Template'),
+        label: const Text('Add Template'),
       ),
       child: FutureBuilder<List<_TemplateSummary>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const AppLoadingState(label: 'Loading inspection templates...');
+            return const AppLoadingState(
+              label: 'Loading inspection templates...',
+            );
           }
           if (snapshot.hasError) {
             return AppErrorState(
-              message: 'Unable to load templates.\n${snapshot.error}',
+              message:
+                  'Inspection templates could not be loaded. Please try again.',
               onRetry: _refresh,
             );
           }
@@ -106,8 +119,9 @@ class _InspectionTemplatesScreenState extends State<InspectionTemplatesScreen> {
                   SizedBox(height: 96),
                   AppEmptyState(
                     icon: Icons.article_outlined,
-                    title: 'No custom inspection templates',
-                    message: 'Create a reusable form to tailor workshop inspections.',
+                    title: 'No inspection templates have been created.',
+                    message:
+                        'Create a reusable form to tailor workshop inspections.',
                   ),
                 ],
               ),
@@ -126,7 +140,11 @@ class _InspectionTemplatesScreenState extends State<InspectionTemplatesScreen> {
                   padding: EdgeInsets.zero,
                   child: ListTile(
                     leading: CircleAvatar(
-                      child: Icon(template.isActive ? Icons.article_outlined : Icons.archive_outlined),
+                      child: Icon(
+                        template.isActive
+                            ? Icons.article_outlined
+                            : Icons.archive_outlined,
+                      ),
                     ),
                     title: Text(template.name),
                     subtitle: Padding(
@@ -147,7 +165,7 @@ class _InspectionTemplatesScreenState extends State<InspectionTemplatesScreen> {
                             children: [
                               template.isActive
                                   ? StatusBadge.success('Active')
-                                  : StatusBadge.warning('Archived'),
+                                  : StatusBadge.neutral('Inactive'),
                               Text('Updated ${_dateLabel(template.updatedAt)}'),
                             ],
                           ),
@@ -171,10 +189,15 @@ class _InspectionTemplatesScreenState extends State<InspectionTemplatesScreen> {
                       },
                       itemBuilder: (_) => [
                         const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                        const PopupMenuItem(value: 'duplicate', child: Text('Duplicate')),
+                        const PopupMenuItem(
+                          value: 'duplicate',
+                          child: Text('Duplicate'),
+                        ),
                         PopupMenuItem(
                           value: 'active',
-                          child: Text(template.isActive ? 'Archive' : 'Activate'),
+                          child: Text(
+                            template.isActive ? 'Deactivate' : 'Activate',
+                          ),
                         ),
                       ],
                     ),
@@ -208,8 +231,10 @@ class InspectionTemplateBuilderScreen extends StatefulWidget {
       _InspectionTemplateBuilderScreenState();
 }
 
-class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuilderScreen> {
-  final InspectionTemplateRepository _repository = InspectionTemplateRepository();
+class _InspectionTemplateBuilderScreenState
+    extends State<InspectionTemplateBuilderScreen> {
+  final InspectionTemplateRepository _repository =
+      InspectionTemplateRepository();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final List<_SectionDraft> _sections = [];
@@ -231,7 +256,9 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
       _loading = false;
       return;
     }
-    _nameController.text = widget.duplicate ? '${template.name} Copy' : template.name;
+    _nameController.text = widget.duplicate
+        ? '${template.name} Copy'
+        : template.name;
     _descriptionController.text = template.description;
     _isActive = template.isActive;
     _vehicleType = template.vehicleType;
@@ -244,12 +271,16 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
       final sections = results[0] as List<InspectionTemplateSection>;
       final items = results[1] as List<InspectionTemplateItem>;
       for (final section in sections) {
-        _sections.add(_SectionDraft(
-          title: section.title,
-          items: items.where((item) => item.sectionId == section.id).toList(),
-        ));
+        _sections.add(
+          _SectionDraft(
+            title: section.title,
+            items: items.where((item) => item.sectionId == section.id).toList(),
+          ),
+        );
       }
-      final unsectioned = items.where((item) => item.sectionId == null).toList();
+      final unsectioned = items
+          .where((item) => item.sectionId == null)
+          .toList();
       if (unsectioned.isNotEmpty) {
         _sections.add(_SectionDraft(title: 'General', items: unsectioned));
       }
@@ -265,15 +296,27 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
   }
 
   Future<void> _addSection({int? editIndex}) async {
-    final controller = TextEditingController(text: editIndex == null ? '' : _sections[editIndex].title);
+    final controller = TextEditingController(
+      text: editIndex == null ? '' : _sections[editIndex].title,
+    );
     final title = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(editIndex == null ? 'Add Section' : 'Rename Section'),
-        content: TextField(controller: controller, autofocus: true, decoration: const InputDecoration(labelText: 'Section title')),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Section title'),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, controller.text.trim()), child: const Text('Save')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Save'),
+          ),
         ],
       ),
     );
@@ -289,7 +332,9 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
   }
 
   Future<void> _editItem(int sectionIndex, {int? itemIndex}) async {
-    final initial = itemIndex == null ? null : _sections[sectionIndex].items[itemIndex];
+    final initial = itemIndex == null
+        ? null
+        : _sections[sectionIndex].items[itemIndex];
     final item = await showDialog<InspectionTemplateItem>(
       context: context,
       builder: (_) => _TemplateItemDialog(initial: initial),
@@ -325,7 +370,11 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
 
   Future<void> _save() async {
     if (_nameController.text.trim().isEmpty || _sections.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Add a form name and at least one section.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Add a form name and at least one section.'),
+        ),
+      );
       return;
     }
     setState(() => _saving = true);
@@ -339,7 +388,9 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
         vehicleType: _vehicleType,
         isDefault: false,
         isActive: _isActive,
-        createdAt: widget.duplicate || original == null ? now : original.createdAt,
+        createdAt: widget.duplicate || original == null
+            ? now
+            : original.createdAt,
         updatedAt: now,
       );
       late final int templateId;
@@ -388,7 +439,9 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
 
     return AppPageScaffold(
       title: title,
-      subtitle: 'Build a reusable inspection form in six steps.',
+      subtitle: isNewTemplate
+          ? 'Build a reusable inspection form in six steps.'
+          : 'Update this reusable inspection form in six steps.',
       child: Stepper(
         currentStep: _step,
         onStepTapped: (value) => setState(() => _step = value),
@@ -399,77 +452,170 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
             setState(() => _step++);
           }
         },
-        onStepCancel: _step == 0 ? () => Navigator.of(context).pop() : () => setState(() => _step--),
+        onStepCancel: _step == 0
+            ? () => Navigator.of(context).pop()
+            : () => setState(() => _step--),
         controlsBuilder: (context, details) => Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: Wrap(spacing: 12, children: [
-            FilledButton(onPressed: _saving ? null : details.onStepContinue, child: Text(_step == 5 ? 'Save Template' : 'Continue')),
-            TextButton(onPressed: details.onStepCancel, child: Text(_step == 0 ? 'Cancel' : 'Back')),
-          ]),
+          child: Wrap(
+            spacing: 12,
+            children: [
+              FilledButton(
+                onPressed: _saving ? null : details.onStepContinue,
+                child: Text(
+                  _step == 5
+                      ? (isNewTemplate ? 'Save Template' : 'Update Template')
+                      : 'Continue',
+                ),
+              ),
+              TextButton(
+                onPressed: details.onStepCancel,
+                child: Text(_step == 0 ? 'Cancel' : 'Back'),
+              ),
+            ],
+          ),
         ),
         steps: [
-          Step(title: const Text('Form Details'), content: _buildDetails(), isActive: _step >= 0),
-          Step(title: const Text('Sections'), content: _buildSections(), isActive: _step >= 1),
-          Step(title: const Text('Items'), content: _buildItems(), isActive: _step >= 2),
-          Step(title: const Text('Defect / Repair Rules'), content: _buildRules(), isActive: _step >= 3),
-          Step(title: const Text('Preview'), content: _buildPreview(), isActive: _step >= 4),
-          Step(title: const Text('Save'), content: const Text('Save this reusable template. Existing completed inspections retain their saved item snapshots.'), isActive: _step >= 5),
+          Step(
+            title: const Text('Form Details'),
+            content: _buildDetails(),
+            isActive: _step >= 0,
+          ),
+          Step(
+            title: const Text('Sections'),
+            content: _buildSections(),
+            isActive: _step >= 1,
+          ),
+          Step(
+            title: const Text('Items'),
+            content: _buildItems(),
+            isActive: _step >= 2,
+          ),
+          Step(
+            title: const Text('Defect / Repair Rules'),
+            content: _buildRules(),
+            isActive: _step >= 3,
+          ),
+          Step(
+            title: const Text('Preview'),
+            content: _buildPreview(),
+            isActive: _step >= 4,
+          ),
+          Step(
+            title: const Text('Save'),
+            content: const Text(
+              'Save this reusable template. Existing completed inspections retain their saved item snapshots.',
+            ),
+            isActive: _step >= 5,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDetails() => SectionCard(
-    child: Column(children: [
-      TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Form name')),
-      const SizedBox(height: 12),
-      TextField(controller: _descriptionController, minLines: 2, maxLines: 4, decoration: const InputDecoration(labelText: 'Description')),
-      const SizedBox(height: 12),
-      DropdownButtonFormField<WorkshopVehicleType>(initialValue: _vehicleType, decoration: const InputDecoration(labelText: 'Vehicle category'), items: WorkshopVehicleType.values.map((type) => DropdownMenuItem(value: type, child: Text(type.name))).toList(), onChanged: (value) { if (value != null) setState(() => _vehicleType = value); }),
-      SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Active'), value: _isActive, onChanged: (value) => setState(() => _isActive = value)),
-    ]),
+  Widget _buildDetails() => FormSection(
+    title: 'Template details',
+    subtitle: 'Name the form and choose the vehicle category it supports.',
+    child: Column(
+      children: [
+        TextField(
+          controller: _nameController,
+          decoration: const InputDecoration(labelText: 'Form name'),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _descriptionController,
+          minLines: 2,
+          maxLines: 4,
+          decoration: const InputDecoration(labelText: 'Description'),
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<WorkshopVehicleType>(
+          initialValue: _vehicleType,
+          decoration: const InputDecoration(labelText: 'Vehicle category'),
+          items: WorkshopVehicleType.values
+              .map(
+                (type) => DropdownMenuItem(value: type, child: Text(type.name)),
+              )
+              .toList(),
+          onChanged: (value) {
+            if (value != null) setState(() => _vehicleType = value);
+          },
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Active'),
+          subtitle: const Text(
+            'Only active templates are available for new inspections.',
+          ),
+          value: _isActive,
+          onChanged: (value) => setState(() => _isActive = value),
+        ),
+      ],
+    ),
   );
 
   Widget _buildSections() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: OutlinedButton.icon(
+        FormSection(
+          title: 'Sections',
+          subtitle: 'Group checklist items in the order they should appear.',
+          trailing: OutlinedButton.icon(
             onPressed: _addSection,
             icon: const Icon(Icons.add),
             label: const Text('Add Section'),
           ),
+          child: _sections.isEmpty
+              ? const AppEmptyState(
+                  icon: Icons.format_list_bulleted_outlined,
+                  title: 'No sections yet',
+                  message: 'Add a section before adding checklist items.',
+                )
+              : Column(
+                  children: [
+                    for (var index = 0; index < _sections.length; index++)
+                      SectionCard(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        title: _sections[index].title,
+                        subtitle:
+                            '${_sections[index].items.length} checklist items',
+                        child: Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: [
+                            IconButton(
+                              tooltip: 'Move section up',
+                              onPressed: index == 0
+                                  ? null
+                                  : () => _moveSection(index, -1),
+                              icon: const Icon(Icons.arrow_upward),
+                            ),
+                            IconButton(
+                              tooltip: 'Move section down',
+                              onPressed: index == _sections.length - 1
+                                  ? null
+                                  : () => _moveSection(index, 1),
+                              icon: const Icon(Icons.arrow_downward),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () => _addSection(editIndex: index),
+                              icon: const Icon(Icons.edit_outlined),
+                              label: const Text('Edit'),
+                            ),
+                            TextButton.icon(
+                              onPressed: () =>
+                                  setState(() => _sections.removeAt(index)),
+                              icon: const Icon(Icons.delete_outline),
+                              label: const Text('Remove'),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
         ),
-        for (var index = 0; index < _sections.length; index++)
-          ListTile(
-            title: Text(_sections[index].title),
-            subtitle: Text('${_sections[index].items.length} items'),
-            trailing: Wrap(
-              spacing: 0,
-              children: [
-                IconButton(
-                  onPressed:
-                      index == 0 ? null : () => _moveSection(index, -1),
-                  icon: const Icon(Icons.arrow_upward),
-                ),
-                IconButton(
-                  onPressed: index == _sections.length - 1
-                      ? null
-                      : () => _moveSection(index, 1),
-                  icon: const Icon(Icons.arrow_downward),
-                ),
-                IconButton(
-                  onPressed: () => _addSection(editIndex: index),
-                  icon: const Icon(Icons.edit_outlined),
-                ),
-                IconButton(
-                  onPressed: () => setState(() => _sections.removeAt(index)),
-                  icon: const Icon(Icons.delete_outline),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }
@@ -478,71 +624,100 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
     return Column(
       children: [
         if (_sections.isEmpty)
-          const Text('Add sections before adding items.'),
-        for (var sectionIndex = 0;
-            sectionIndex < _sections.length;
-            sectionIndex++)
+          const AppEmptyState(
+            icon: Icons.checklist_outlined,
+            title: 'No checklist items yet',
+            message: 'Add a section before adding checklist items.',
+          ),
+        for (
+          var sectionIndex = 0;
+          sectionIndex < _sections.length;
+          sectionIndex++
+        )
           SectionCard(
-            padding: const EdgeInsets.all(12),
+            title: _sections[sectionIndex].title,
+            subtitle: '${_sections[sectionIndex].items.length} checklist items',
+            trailing: OutlinedButton.icon(
+              onPressed: () => _editItem(sectionIndex),
+              icon: const Icon(Icons.add),
+              label: const Text('Add Item'),
+            ),
+            padding: const EdgeInsets.all(16),
             child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _sections[sectionIndex].title,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => _editItem(sectionIndex),
-                        icon: const Icon(Icons.add),
-                      ),
-                    ],
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_sections[sectionIndex].items.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('No checklist items have been added.'),
                   ),
-                  for (var itemIndex = 0;
-                      itemIndex < _sections[sectionIndex].items.length;
-                      itemIndex++)
-                    ListTile(
-                      title: Text(_sections[sectionIndex].items[itemIndex].title),
-                      subtitle: Text(
-                        _sections[sectionIndex].items[itemIndex].responseType.name,
-                      ),
-                      trailing: Wrap(
-                        spacing: 0,
-                        children: [
-                          IconButton(
-                            onPressed: itemIndex == 0
-                                ? null
-                                : () => _moveItem(sectionIndex, itemIndex, -1),
-                            icon: const Icon(Icons.arrow_upward),
-                          ),
-                          IconButton(
-                            onPressed: itemIndex ==
-                                    _sections[sectionIndex].items.length - 1
-                                ? null
-                                : () => _moveItem(sectionIndex, itemIndex, 1),
-                            icon: const Icon(Icons.arrow_downward),
-                          ),
-                          IconButton(
-                            onPressed: () => _editItem(
-                              sectionIndex,
-                              itemIndex: itemIndex,
+                for (
+                  var itemIndex = 0;
+                  itemIndex < _sections[sectionIndex].items.length;
+                  itemIndex++
+                )
+                  SectionCard(
+                    margin: const EdgeInsets.only(top: 8),
+                    title: _sections[sectionIndex].items[itemIndex].title,
+                    subtitle:
+                        _sections[sectionIndex]
+                            .items[itemIndex]
+                            .description
+                            .isEmpty
+                        ? _sections[sectionIndex]
+                              .items[itemIndex]
+                              .responseType
+                              .name
+                        : _sections[sectionIndex].items[itemIndex].description,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _sections[sectionIndex].items[itemIndex].mandatory
+                            ? StatusBadge.info('Required')
+                            : StatusBadge.neutral('Optional'),
+                        StatusBadge.neutral(
+                          _sections[sectionIndex]
+                              .items[itemIndex]
+                              .responseType
+                              .name,
+                        ),
+                        IconButton(
+                          tooltip: 'Move item up',
+                          onPressed: itemIndex == 0
+                              ? null
+                              : () => _moveItem(sectionIndex, itemIndex, -1),
+                          icon: const Icon(Icons.arrow_upward),
+                        ),
+                        IconButton(
+                          tooltip: 'Move item down',
+                          onPressed:
+                              itemIndex ==
+                                  _sections[sectionIndex].items.length - 1
+                              ? null
+                              : () => _moveItem(sectionIndex, itemIndex, 1),
+                          icon: const Icon(Icons.arrow_downward),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () =>
+                              _editItem(sectionIndex, itemIndex: itemIndex),
+                          icon: const Icon(Icons.edit_outlined),
+                          label: const Text('Edit'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => setState(
+                            () => _sections[sectionIndex].items.removeAt(
+                              itemIndex,
                             ),
-                            icon: const Icon(Icons.edit_outlined),
                           ),
-                          IconButton(
-                            onPressed: () => setState(
-                              () => _sections[sectionIndex].items.removeAt(itemIndex),
-                            ),
-                            icon: const Icon(Icons.delete_outline),
-                          ),
-                        ],
-                      ),
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Remove'),
+                        ),
+                      ],
                     ),
-                ],
-              ),
+                  ),
+              ],
+            ),
           ),
       ],
     );
@@ -573,23 +748,23 @@ class _InspectionTemplateBuilderScreenState extends State<InspectionTemplateBuil
           SectionCard(
             padding: const EdgeInsets.all(12),
             child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    section.title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  for (final item in section.items)
-                    ListTile(
-                      title: Text(item.title),
-                      subtitle: Text(
-                        item.description.isEmpty
-                            ? item.responseType.name
-                            : item.description,
-                      ),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  section.title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                for (final item in section.items)
+                  ListTile(
+                    title: Text(item.title),
+                    subtitle: Text(
+                      item.description.isEmpty
+                          ? item.responseType.name
+                          : item.description,
                     ),
-                ],
-              ),
+                  ),
+              ],
+            ),
           ),
       ],
     );
@@ -616,27 +791,107 @@ class _TemplateItemDialogState extends State<_TemplateItemDialog> {
   void initState() {
     super.initState();
     _title = TextEditingController(text: widget.initial?.title ?? '');
-    _description = TextEditingController(text: widget.initial?.description ?? '');
-    _responseType = widget.initial?.responseType ??
+    _description = TextEditingController(
+      text: widget.initial?.description ?? '',
+    );
+    _responseType =
+        widget.initial?.responseType ??
         InspectionResponseType.passFailNotApplicable;
     _required = widget.initial?.mandatory ?? true;
     _notes = widget.initial?.allowNotes ?? true;
     _photo = widget.initial?.photoRequiredOnFail ?? false;
     _repair = widget.initial?.autoCreateRepair ?? true;
   }
-  @override void dispose() { _title.dispose(); _description.dispose(); super.dispose(); }
-  @override Widget build(BuildContext context) => AlertDialog(
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _description.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
     title: Text(widget.initial == null ? 'Add Item' : 'Edit Item'),
-    content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-      TextField(controller: _title, decoration: const InputDecoration(labelText: 'Item title')),
-      TextField(controller: _description, decoration: const InputDecoration(labelText: 'Help text')),
-      DropdownButtonFormField<InspectionResponseType>(initialValue: _responseType, decoration: const InputDecoration(labelText: 'Response type'), items: InspectionResponseType.values.map((type) => DropdownMenuItem(value: type, child: Text(type.name))).toList(), onChanged: (value) { if (value != null) setState(() => _responseType = value); }),
-      SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Required'), value: _required, onChanged: (value) => setState(() => _required = value)),
-      SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Allow notes'), value: _notes, onChanged: (value) => setState(() => _notes = value)),
-      SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Photo required on fail'), value: _photo, onChanged: (value) => setState(() => _photo = value)),
-      SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Create repair on fail'), value: _repair, onChanged: (value) => setState(() => _repair = value)),
-    ])),
-    actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')), FilledButton(onPressed: () { if (_title.text.trim().isEmpty) return; Navigator.pop(context, InspectionTemplateItem(templateId: 0, category: InspectionCategory.vehicleInformation, title: _title.text.trim(), description: _description.text.trim(), displayOrder: 0, mandatory: _required, allowNotes: _notes, photoRequiredOnFail: _photo, autoCreateRepair: _repair, responseType: _responseType)); }, child: const Text('Save'))],
+    content: SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _title,
+            decoration: const InputDecoration(labelText: 'Item title'),
+          ),
+          TextField(
+            controller: _description,
+            decoration: const InputDecoration(labelText: 'Help text'),
+          ),
+          DropdownButtonFormField<InspectionResponseType>(
+            initialValue: _responseType,
+            decoration: const InputDecoration(labelText: 'Response type'),
+            items: InspectionResponseType.values
+                .map(
+                  (type) =>
+                      DropdownMenuItem(value: type, child: Text(type.name)),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value != null) setState(() => _responseType = value);
+            },
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Required'),
+            value: _required,
+            onChanged: (value) => setState(() => _required = value),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Allow notes'),
+            value: _notes,
+            onChanged: (value) => setState(() => _notes = value),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Photo required on fail'),
+            value: _photo,
+            onChanged: (value) => setState(() => _photo = value),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Create repair on fail'),
+            value: _repair,
+            onChanged: (value) => setState(() => _repair = value),
+          ),
+        ],
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      FilledButton(
+        onPressed: () {
+          if (_title.text.trim().isEmpty) return;
+          Navigator.pop(
+            context,
+            InspectionTemplateItem(
+              templateId: 0,
+              category: InspectionCategory.vehicleInformation,
+              title: _title.text.trim(),
+              description: _description.text.trim(),
+              displayOrder: 0,
+              mandatory: _required,
+              allowNotes: _notes,
+              photoRequiredOnFail: _photo,
+              autoCreateRepair: _repair,
+              responseType: _responseType,
+            ),
+          );
+        },
+        child: const Text('Save'),
+      ),
+    ],
   );
 }
 
@@ -644,31 +899,87 @@ class _RuleEditor extends StatelessWidget {
   final InspectionTemplateItem item;
   final ValueChanged<InspectionTemplateItem> onChanged;
   const _RuleEditor({required this.item, required this.onChanged});
-  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(item.title, style: Theme.of(context).textTheme.titleSmall),
-    SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Create repair when failed'), value: item.autoCreateRepair, onChanged: (value) => onChanged(item.copyWith(autoCreateRepair: value))),
-    if (item.autoCreateRepair) DropdownButtonFormField<RepairPriority>(initialValue: item.repairPriority, decoration: const InputDecoration(labelText: 'Default repair priority'), items: RepairPriority.values.map((priority) => DropdownMenuItem(value: priority, child: Text(priority.name))).toList(), onChanged: (value) { if (value != null) onChanged(item.copyWith(repairPriority: value)); }),
-    DropdownButtonFormField<TemplateRoadworthyImpact>(initialValue: item.roadworthyImpact, decoration: const InputDecoration(labelText: 'Roadworthy impact'), items: TemplateRoadworthyImpact.values.map((impact) => DropdownMenuItem(value: impact, child: Text(impact.name))).toList(), onChanged: (value) { if (value != null) onChanged(item.copyWith(roadworthyImpact: value)); }),
-  ])));
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(item.title, style: Theme.of(context).textTheme.titleSmall),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Create repair when failed'),
+            value: item.autoCreateRepair,
+            onChanged: (value) =>
+                onChanged(item.copyWith(autoCreateRepair: value)),
+          ),
+          if (item.autoCreateRepair)
+            DropdownButtonFormField<RepairPriority>(
+              initialValue: item.repairPriority,
+              decoration: const InputDecoration(
+                labelText: 'Default repair priority',
+              ),
+              items: RepairPriority.values
+                  .map(
+                    (priority) => DropdownMenuItem(
+                      value: priority,
+                      child: Text(priority.name),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  onChanged(item.copyWith(repairPriority: value));
+                }
+              },
+            ),
+          DropdownButtonFormField<TemplateRoadworthyImpact>(
+            initialValue: item.roadworthyImpact,
+            decoration: const InputDecoration(labelText: 'Roadworthy impact'),
+            items: TemplateRoadworthyImpact.values
+                .map(
+                  (impact) =>
+                      DropdownMenuItem(value: impact, child: Text(impact.name)),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value != null) {
+                onChanged(item.copyWith(roadworthyImpact: value));
+              }
+            },
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _SectionDraft {
   String title;
   final List<InspectionTemplateItem> items;
-  _SectionDraft({required this.title, List<InspectionTemplateItem>? items}) : items = items ?? [];
+  _SectionDraft({required this.title, List<InspectionTemplateItem>? items})
+    : items = items ?? [];
 }
 
 class _TemplateSummary {
   final InspectionTemplate template;
   final int sectionCount;
   final int itemCount;
-  const _TemplateSummary({required this.template, required this.sectionCount, required this.itemCount});
+  const _TemplateSummary({
+    required this.template,
+    required this.sectionCount,
+    required this.itemCount,
+  });
 }
 
 class _TemplateAccessDenied extends StatelessWidget {
   const _TemplateAccessDenied();
-  @override Widget build(BuildContext context) => Scaffold(
+  @override
+  Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Access Denied')),
-    body: const Center(child: Text('You do not have permission to manage inspection templates.')),
+    body: const Center(
+      child: Text('You do not have permission to manage inspection templates.'),
+    ),
   );
 }
