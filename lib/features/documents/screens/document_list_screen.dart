@@ -4,6 +4,7 @@ import 'package:open_filex/open_filex.dart';
 
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/app_page_scaffold.dart';
 import '../../auth/services/permission_service.dart';
 import '../models/fleet_document.dart';
 import '../services/document_service.dart';
@@ -12,17 +13,13 @@ class DocumentListScreen extends StatefulWidget {
   const DocumentListScreen({super.key});
 
   @override
-  State<DocumentListScreen> createState() =>
-      _DocumentListScreenState();
+  State<DocumentListScreen> createState() => _DocumentListScreenState();
 }
 
-class _DocumentListScreenState
-    extends State<DocumentListScreen> {
-  final DocumentService _service =
-      DocumentService();
+class _DocumentListScreenState extends State<DocumentListScreen> {
+  final DocumentService _service = DocumentService();
 
-  late Future<List<FleetDocument>>
-      _documentsFuture;
+  late Future<List<FleetDocument>> _documentsFuture;
 
   @override
   void initState() {
@@ -35,42 +32,36 @@ class _DocumentListScreenState
   }
 
   Future<void> _refresh() async {
-  setState(() {
-    _loadDocuments();
-  });
+    setState(() {
+      _loadDocuments();
+    });
 
-  await _documentsFuture;
-}
-
-Future<void> _openDocument(
-  FleetDocument document,
-) async {
-  if (document.filePath.isEmpty) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('No file attached.'),
-      ),
-    );
-    return;
+    await _documentsFuture;
   }
 
-  final file = File(document.filePath);
+  Future<void> _openDocument(FleetDocument document) async {
+    if (document.filePath.isEmpty) {
+      if (!mounted) return;
 
-  if (!await file.exists()) {
-    if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No file attached.')));
+      return;
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Attached file not found.'),
-      ),
-    );
-    return;
+    final file = File(document.filePath);
+
+    if (!await file.exists()) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Attached file not found.')));
+      return;
+    }
+
+    await OpenFilex.open(document.filePath);
   }
-
-  await OpenFilex.open(document.filePath);
-}
 
   @override
   Widget build(BuildContext context) {
@@ -78,31 +69,34 @@ Future<void> _openDocument(
       return const _DocumentsAccessDenied();
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Documents'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refresh,
-          ),
-        ],
+    return AppPageScaffold(
+      title: 'Documents',
+      subtitle: 'Fleet and compliance document records.',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: 'Refresh documents',
+          onPressed: _refresh,
+        ),
+      ],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // Add document (Sprint 10.4)
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Add Document'),
       ),
-      body: FutureBuilder<List<FleetDocument>>(
+      child: FutureBuilder<List<FleetDocument>>(
         future: _documentsFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const AppLoadingState(label: 'Loading documents...');
           }
 
           if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                snapshot.error.toString(),
-              ),
+            return AppErrorState(
+              message: 'Unable to load documents.',
+              onRetry: _refresh,
             );
           }
 
@@ -110,28 +104,25 @@ Future<void> _openDocument(
           final permissions = PermissionService.instance;
           final documents = permissions.canViewDriverComplianceDocuments
               ? allDocuments
-              : allDocuments.where((document) =>
-                  document.driverId == null ||
-                  !document.category.isSingleCurrentComplianceCategory).toList();
+              : allDocuments
+                    .where(
+                      (document) =>
+                          document.driverId == null ||
+                          !document.category.isSingleCurrentComplianceCategory,
+                    )
+                    .toList();
 
           if (documents.isEmpty) {
             return RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
-                physics:
-                    const AlwaysScrollableScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: const [
-                  SizedBox(height: 120),
-                  Icon(
-                    Icons.folder_open,
-                    size: 72,
-                    color: Colors.grey,
-                  ),
-                  SizedBox(height: 16),
-                  Center(
-                    child: Text(
-                      'No documents found',
-                    ),
+                  SizedBox(height: 96),
+                  AppEmptyState(
+                    title: 'No documents have been added.',
+                    message:
+                        'Documents will appear here when they are available.',
                   ),
                 ],
               ),
@@ -141,60 +132,38 @@ Future<void> _openDocument(
           return RefreshIndicator(
             onRefresh: _refresh,
             child: ListView.separated(
-              physics:
-                  const AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(),
               itemCount: documents.length,
-              separatorBuilder: (context, index) =>
-                      const Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
-                final document =
-                    documents[index];
+                final document = documents[index];
 
-                final status =
-                    _service.status(
-                  document.expiryDate,
-                );
+                final status = _service.status(document.expiryDate);
 
                 return ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.description),
-                  ),
+                  leading: const CircleAvatar(child: Icon(Icons.description)),
                   title: Text(document.title),
-                  subtitle: Text(
-                    document.category.name
-                        .toUpperCase(),
+                  subtitle: Text(document.category.name.toUpperCase()),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (document.filePath.isNotEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Icon(Icons.attach_file, size: 20),
+                        ),
+                      Chip(
+                        label: Text(status),
+                        backgroundColor: _statusColor(status),
+                      ),
+                    ],
                   ),
-                trailing: Row(
-  mainAxisSize: MainAxisSize.min,
-  children: [
-    if (document.filePath.isNotEmpty)
-      const Padding(
-        padding: EdgeInsets.only(right: 8),
-        child: Icon(
-          Icons.attach_file,
-          size: 20,
-        ),
-      ),
-    Chip(
-      label: Text(status),
-      backgroundColor: _statusColor(status),
-    ),
-  ],
-),
                   onTap: () => _openDocument(document),
                 );
               },
             ),
           );
         },
-      ),
-      floatingActionButton:
-          FloatingActionButton.extended(
-        onPressed: () {
-          // Add document (Sprint 10.4)
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add Document'),
       ),
     );
   }
@@ -218,9 +187,9 @@ class _DocumentsAccessDenied extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Access Denied')),
-        body: const Center(
-          child: Text('You do not have permission to view fleet documents.'),
-        ),
-      );
+    appBar: AppBar(title: const Text('Access Denied')),
+    body: const Center(
+      child: Text('You do not have permission to view fleet documents.'),
+    ),
+  );
 }
