@@ -8,6 +8,7 @@ import '../../../shared/widgets/app_page_scaffold.dart';
 import '../../auth/services/permission_service.dart';
 import '../models/fleet_document.dart';
 import '../services/document_service.dart';
+import 'edit_document_screen.dart';
 
 class DocumentListScreen extends StatefulWidget {
   const DocumentListScreen({super.key});
@@ -63,6 +64,15 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     await OpenFilex.open(document.filePath);
   }
 
+  Future<void> _addDocument() async {
+    final created = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const EditDocumentScreen()));
+    if (created == true && mounted) {
+      await _refresh();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!PermissionService.instance.canViewVehicles) {
@@ -80,9 +90,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
         ),
       ],
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // Add document (Sprint 10.4)
-        },
+        onPressed: _addDocument,
         icon: const Icon(Icons.add),
         label: const Text('Add Document'),
       ),
