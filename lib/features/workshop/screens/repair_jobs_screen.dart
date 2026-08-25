@@ -238,6 +238,19 @@ class _RepairJobsScreenState extends State<RepairJobsScreen> {
     }
   }
 
+  Color _priorityColor(RepairPriority priority) {
+    switch (priority) {
+      case RepairPriority.low:
+        return Colors.green;
+      case RepairPriority.medium:
+        return Colors.blue;
+      case RepairPriority.high:
+        return Colors.orange;
+      case RepairPriority.critical:
+        return Colors.red;
+    }
+  }
+
   Future<void> _editJob(RepairJob job) async {
     if (!PermissionService.instance.canManageWorkshop) {
       _showMessage('Only Workshop management can edit repair job assignments.');
@@ -675,6 +688,7 @@ class _RepairJobsScreenState extends State<RepairJobsScreen> {
               width: double.infinity,
               child: TextButton.icon(
                 onPressed: () => _cancelJob(job),
+                style: TextButton.styleFrom(foregroundColor: scheme.error),
                 icon: const Icon(Icons.cancel_outlined),
                 label: const Text('Cancel Job'),
               ),
@@ -736,7 +750,8 @@ class _RepairJobsScreenState extends State<RepairJobsScreen> {
 
           if (snapshot.hasError) {
             return AppErrorState(
-              message: 'Unable to load repair jobs.\n${snapshot.error}',
+              title: 'Unable to load repair jobs',
+              message: 'Please try again.',
               onRetry: _refresh,
             );
           }
@@ -984,7 +999,7 @@ class _RepairJobsScreenState extends State<RepairJobsScreen> {
                       width: itemWidth,
                       child: _summaryValue(
                         'Estimated',
-                        '£${cost.toStringAsFixed(2)}',
+                        'GBP ${cost.toStringAsFixed(2)}',
                         Icons.payments_outlined,
                       ),
                     ),
@@ -1073,14 +1088,17 @@ class _RepairJobsScreenState extends State<RepairJobsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        job.title,
+                        job.jobNumber,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      if (job.jobNumber.trim().isNotEmpty) ...[
+                      if (job.vehicleRegistration.trim().isNotEmpty) ...[
                         const SizedBox(height: 3),
-                        Text(job.jobNumber, style: theme.textTheme.bodySmall),
+                        Text(
+                          'Vehicle: ${job.vehicleRegistration}',
+                          style: theme.textTheme.bodySmall,
+                        ),
                       ],
                     ],
                   ),
@@ -1090,30 +1108,36 @@ class _RepairJobsScreenState extends State<RepairJobsScreen> {
               ],
             ),
             const SizedBox(height: 14),
+            Text(
+              job.title,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
             Text(job.description, style: theme.textTheme.bodyMedium),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                _infoChip(
-                  context,
-                  Icons.priority_high_outlined,
-                  _priorityText(job.priority),
+                StatusBadge(
+                  label: 'Priority: ${_priorityText(job.priority)}',
+                  color: _priorityColor(job.priority),
                 ),
                 _infoChip(
                   context,
                   Icons.person_outline,
                   job.technicianId == null
-                      ? 'Unassigned'
+                      ? 'Technician: Unassigned'
                       : job.technicianName.trim().isEmpty
-                      ? 'Assigned technician'
-                      : job.technicianName,
+                      ? 'Technician: Assigned'
+                      : 'Technician: ${job.technicianName}',
                 ),
                 _infoChip(
                   context,
                   Icons.local_shipping_outlined,
-                  job.vehicleRegistration,
+                  'Vehicle: ${job.vehicleRegistration}',
                 ),
                 _infoChip(
                   context,
@@ -1161,7 +1185,7 @@ class _RepairJobsScreenState extends State<RepairJobsScreen> {
                       width: itemWidth,
                       child: _costValue(
                         'Estimated Cost',
-                        '£${job.estimatedCost.toStringAsFixed(2)}',
+                        'GBP ${job.estimatedCost.toStringAsFixed(2)}',
                       ),
                     ),
                     if (job.actualHours > 0 || job.actualCost > 0) ...[
@@ -1176,7 +1200,7 @@ class _RepairJobsScreenState extends State<RepairJobsScreen> {
                         width: itemWidth,
                         child: _costValue(
                           'Actual Cost',
-                          '£${job.actualCost.toStringAsFixed(2)}',
+                          'GBP ${job.actualCost.toStringAsFixed(2)}',
                         ),
                       ),
                     ],
@@ -1203,7 +1227,7 @@ class _RepairJobsScreenState extends State<RepairJobsScreen> {
                       ? () => _printOrSaveJobCard(job)
                       : null,
                   icon: const Icon(Icons.print_outlined),
-                  label: const Text('Print / Save PDF'),
+                  label: const Text('Print / Save Job Card'),
                 ),
               ],
             ),
