@@ -436,13 +436,22 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
       children: [
         SectionCard(
           title: 'Report type and filters',
+          subtitle:
+              'Choose a report and refine it using the applicable filters.',
           child: _filters(data, vehicles),
         ),
         const SizedBox(height: 24),
-        SectionCard(title: _title, child: _summary(data, jobs, inspections)),
+        SectionCard(
+          title: _title,
+          subtitle: 'Current results for the selected report filters.',
+          child: _summary(data, jobs, inspections),
+        ),
         const SizedBox(height: 24),
         SectionCard(
-          title: 'Export actions',
+          title: 'Report actions',
+          subtitle: _operationGate.isRunning
+              ? 'Generating your report...'
+              : 'Preview, print, save, or export the current report.',
           child: Wrap(
             spacing: 10,
             runSpacing: 10,
@@ -452,14 +461,14 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
                     ? null
                     : () => _preview(data),
                 icon: const Icon(Icons.preview_outlined),
-                label: const Text('Preview PDF'),
+                label: const Text('Preview'),
               ),
               FilledButton.tonalIcon(
                 onPressed: _operationGate.isRunning
                     ? null
                     : () => _printOrSave(data),
                 icon: const Icon(Icons.print_outlined),
-                label: const Text('Print / Save PDF'),
+                label: const Text('Print / Save'),
               ),
               if (_type != _WorkshopReportType.inspection)
                 OutlinedButton.icon(

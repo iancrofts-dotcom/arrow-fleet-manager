@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
+import '../../../shared/widgets/app_page_scaffold.dart';
 import '../../auth/services/permission_service.dart';
 import '../models/fleet_report.dart';
 import '../services/fleet_report_service.dart';
@@ -111,61 +112,57 @@ class _ReportsScreenState extends State<ReportsScreen> {
       return const _ReportsAccessDenied();
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Fleet Reports'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            tooltip: 'Preview PDF',
-            onPressed: _operationGate.isRunning ? null : _previewPdf,
-          ),
-          IconButton(
-            icon: const Icon(Icons.save_alt),
-            tooltip: 'Save PDF',
-            onPressed: _operationGate.isRunning ? null : _savePdf,
-          ),
-          IconButton(
-            icon: const Icon(Icons.share),
-            tooltip: 'Share PDF',
-            onPressed: _operationGate.isRunning ? null : _sharePdf,
-          ),
-        ],
-      ),
-      body: FutureBuilder<FleetReport>(
+    return AppPageScaffold(
+      title: 'Fleet Reports',
+      subtitle: 'Current fleet compliance and operational metrics.',
+      actions: [
+        OutlinedButton.icon(
+          onPressed: _operationGate.isRunning ? null : _previewPdf,
+          icon: const Icon(Icons.preview_outlined),
+          label: const Text('Preview'),
+        ),
+        OutlinedButton.icon(
+          onPressed: _operationGate.isRunning ? null : _savePdf,
+          icon: const Icon(Icons.save_alt),
+          label: const Text('Save'),
+        ),
+        FilledButton.icon(
+          onPressed: _operationGate.isRunning ? null : _sharePdf,
+          icon: const Icon(Icons.share),
+          label: const Text('Share'),
+        ),
+      ],
+      child: FutureBuilder<FleetReport>(
         future: _reportFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppLoadingState(label: 'Loading fleet report...');
           }
 
           if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error loading report:\n${snapshot.error}',
-                textAlign: TextAlign.center,
-              ),
+            return AppErrorState(
+              message: 'Unable to load the fleet report.',
+              onRetry: _refresh,
             );
           }
 
           if (!snapshot.hasData) {
-            return const Center(child: Text('No report available.'));
+            return const AppEmptyState(
+              title: 'No report available',
+              message: 'Refresh to generate the current fleet report.',
+            );
           }
 
           return RefreshIndicator(
             onRefresh: _refresh,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Fleet Summary',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 16),
+                  const Text('Fleet Summary'),
+                  const SizedBox(height: 12),
                   FleetReportCard(report: snapshot.data!),
                 ],
               ),
