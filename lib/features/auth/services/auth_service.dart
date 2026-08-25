@@ -55,6 +55,25 @@ class AuthService {
     await _sessionService.clearSession();
   }
 
+  /// Replaces a historic bootstrap credential, confirms the persisted user no
+  /// longer requires replacement, then ends the current session. Keeping this
+  /// sequence here prevents the UI from reporting success against stale or
+  /// unverified account state.
+  Future<void> completeForcedPasswordChange(
+    User user, {
+    required String newPassword,
+  }) async {
+    await _userService.updateUser(user, newPassword: newPassword);
+
+    final persistedUser = await _userService.getUserById(user.id);
+    if (persistedUser == null ||
+        _userService.requiresPasswordChange(persistedUser)) {
+      throw StateError('Could not verify the updated password.');
+    }
+
+    await logout();
+  }
+
   /// Reloads the session user from persisted storage at an authorization
   /// boundary. Missing and inactive accounts are invalidated; repository
   /// failures intentionally retain the session but return [refreshFailed] so

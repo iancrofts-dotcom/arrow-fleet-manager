@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../models/user.dart';
 import '../services/auth_service.dart';
-import '../services/user_service.dart';
 import 'login_screen.dart';
 
 class ForcedPasswordChangeScreen extends StatefulWidget {
-  const ForcedPasswordChangeScreen({super.key, required this.user});
+  const ForcedPasswordChangeScreen({
+    super.key,
+    required this.user,
+    this.onPasswordChanged,
+    this.authService,
+  });
 
   final User user;
+  final VoidCallback? onPasswordChanged;
+  final AuthService? authService;
 
   @override
   State<ForcedPasswordChangeScreen> createState() =>
@@ -21,6 +27,8 @@ class _ForcedPasswordChangeScreenState
   final _passwordController = TextEditingController();
   final _confirmationController = TextEditingController();
   bool _saving = false;
+
+  AuthService get _authService => widget.authService ?? AuthService.instance;
 
   @override
   void dispose() {
@@ -44,12 +52,22 @@ class _ForcedPasswordChangeScreenState
       _saving = true;
     });
     try {
-      await UserService.instance.updateUser(widget.user, newPassword: password);
-      await AuthService.instance.logout();
+      await _authService.completeForcedPasswordChange(
+        widget.user,
+        newPassword: password,
+      );
       if (!mounted) return;
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+
+      final onPasswordChanged = widget.onPasswordChanged;
+      if (onPasswordChanged != null) {
+        onPasswordChanged();
+        return;
+      }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (_) => false,
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

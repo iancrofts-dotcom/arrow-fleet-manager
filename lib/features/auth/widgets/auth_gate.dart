@@ -37,6 +37,12 @@ class _AuthGateState extends State<AuthGate> {
     return const _AuthGateStateResult.normal();
   }
 
+  void _reloadState() {
+    setState(() {
+      _stateFuture = _loadState();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<_AuthGateStateResult>(
@@ -57,7 +63,10 @@ class _AuthGateState extends State<AuthGate> {
         if (state?.requiresPasswordChange == true) {
           final user = AuthService.instance.currentUser;
           if (user != null) {
-            return ForcedPasswordChangeScreen(user: user);
+            return ForcedPasswordChangeScreen(
+              user: user,
+              onPasswordChanged: _reloadState,
+            );
           }
         }
 
