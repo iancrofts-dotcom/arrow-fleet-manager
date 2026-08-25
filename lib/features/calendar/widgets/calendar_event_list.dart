@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/app_page_scaffold.dart';
 import '../models/calendar_event.dart';
 import '../models/calendar_group.dart';
 import 'calendar_event_card.dart';
 
 class CalendarEventList extends StatelessWidget {
-  const CalendarEventList({
-    super.key,
-    required this.events,
-    this.onEventTap,
-  });
+  const CalendarEventList({super.key, required this.events, this.onEventTap});
 
   final List<CalendarEvent> events;
   final ValueChanged<CalendarEvent>? onEventTap;
@@ -17,15 +14,10 @@ class CalendarEventList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (events.isEmpty) {
-      return const Card(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Center(
-            child: Text(
-              'No upcoming fleet events.',
-            ),
-          ),
-        ),
+      return const AppEmptyState(
+        icon: Icons.event_available_outlined,
+        title: 'No upcoming MOT or service events.',
+        message: 'There are no calendar events for the selected filter.',
       );
     }
 
@@ -34,13 +26,7 @@ class CalendarEventList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: CalendarGroup.values
-          .map(
-            (group) => _buildSection(
-              context,
-              group,
-              grouped[group]!,
-            ),
-          )
+          .map((group) => _buildSection(context, group, grouped[group]!))
           .whereType<Widget>()
           .toList(),
     );
@@ -55,69 +41,24 @@ class CalendarEventList extends StatelessWidget {
       return null;
     }
 
-    final theme = Theme.of(context);
     final colour = _colour(group);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 32),
+    return SectionCard(
+      margin: const EdgeInsets.only(bottom: 24),
+      title: group.title,
+      subtitle: '${events.length} event${events.length == 1 ? '' : 's'}',
+      trailing: CircleAvatar(
+        radius: 18,
+        backgroundColor: colour.withValues(alpha: 0.12),
+        child: Icon(_icon(group), color: colour, size: 20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: colour.withValues(alpha: 0.12),
-                child: Icon(
-                  _icon(group),
-                  color: colour,
-                  size: 20,
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      group.title,
-                      style: theme.textTheme.titleLarge
-                          ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '${events.length} event${events.length == 1 ? '' : 's'}',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(
-                        color: theme
-                            .colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          Divider(
-            color: colour.withValues(alpha: 0.25),
-            thickness: 1,
-          ),
-
-          const SizedBox(height: 8),
-
           ...events.map(
             (event) => CalendarEventCard(
               event: event,
-              onTap: onEventTap == null
-                  ? null
-                  : () => onEventTap!(event),
+              onTap: onEventTap == null ? null : () => onEventTap!(event),
             ),
           ),
         ],

@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../shared/status_badge.dart';
 import '../utils/calendar_date_formatter.dart';
 import '../models/calendar_event.dart';
 
 class CalendarEventCard extends StatelessWidget {
-  const CalendarEventCard({
-    super.key,
-    required this.event,
-    this.onTap,
-  });
+  const CalendarEventCard({super.key, required this.event, this.onTap});
 
   final CalendarEvent event;
   final VoidCallback? onTap;
@@ -22,13 +19,7 @@ class CalendarEventCard extends StatelessWidget {
       event.date.year,
       event.date.month,
       event.date.day,
-    ).difference(
-      DateTime(
-        today.year,
-        today.month,
-        today.day,
-      ),
-    ).inDays;
+    ).difference(DateTime(today.year, today.month, today.day)).inDays;
 
     return Card(
       elevation: 1,
@@ -39,10 +30,7 @@ class CalendarEventCard extends StatelessWidget {
         child: IntrinsicHeight(
           child: Row(
             children: [
-              Container(
-                width: 5,
-                color: event.color,
-              ),
+              Container(width: 5, color: event.color),
 
               Expanded(
                 child: Padding(
@@ -57,24 +45,18 @@ class CalendarEventCard extends StatelessWidget {
                           color: event.color.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Icon(
-                          event.icon,
-                          color: event.color,
-                          size: 30,
-                        ),
+                        child: Icon(event.icon, color: event.color, size: 30),
                       ),
 
                       const SizedBox(width: 18),
 
                       Expanded(
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               event.title,
-                              style: theme.textTheme.titleMedium
-                                  ?.copyWith(
+                              style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -83,13 +65,16 @@ class CalendarEventCard extends StatelessWidget {
 
                             Text(
                               event.subtitle,
-                              style: theme.textTheme.bodyMedium
-                                  ?.copyWith(
+                              style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
 
                             const SizedBox(height: 18),
+
+                            StatusBadge.info(_eventTypeLabel(event.type)),
+
+                            const SizedBox(height: 10),
 
                             Row(
                               children: [
@@ -104,12 +89,9 @@ class CalendarEventCard extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     _status(daysRemaining),
-                                    style: theme
-                                        .textTheme.bodySmall
-                                        ?.copyWith(
+                                    style: theme.textTheme.bodySmall?.copyWith(
                                       color: event.color,
-                                      fontWeight:
-                                          FontWeight.w600,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
@@ -123,9 +105,8 @@ class CalendarEventCard extends StatelessWidget {
                                 const SizedBox(width: 6),
 
                                 Text(
-                                 CalendarDateFormatter.format(event.date),
-                                  style: theme
-                                      .textTheme.bodySmall,
+                                  CalendarDateFormatter.format(event.date),
+                                  style: theme.textTheme.bodySmall,
                                 ),
                               ],
                             ),
@@ -170,4 +151,13 @@ class CalendarEventCard extends StatelessWidget {
     return '$days days remaining';
   }
 
- }
+  static String _eventTypeLabel(CalendarEventType type) => switch (type) {
+    CalendarEventType.vehicle => 'Vehicle',
+    CalendarEventType.maintenance => 'Service',
+    CalendarEventType.document => 'Document',
+    CalendarEventType.licence => 'Licence',
+    CalendarEventType.cpc => 'CPC',
+    CalendarEventType.medical => 'Medical',
+    CalendarEventType.dbs => 'DBS',
+  };
+}

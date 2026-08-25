@@ -49,7 +49,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return AppPageScaffold(
       title: 'Fleet Calendar',
       subtitle: 'Upcoming fleet, maintenance and compliance dates.',
-      actions: [IconButton(tooltip: 'Refresh calendar', onPressed: _refresh, icon: const Icon(Icons.refresh))],
+      actions: [
+        IconButton(
+          tooltip: 'Refresh calendar',
+          onPressed: _refresh,
+          icon: const Icon(Icons.refresh),
+        ),
+      ],
       child: FutureBuilder<List<CalendarEvent>>(
         future: _eventsFuture,
         builder: (context, snapshot) {
@@ -58,14 +64,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
           }
 
           if (snapshot.hasError) {
-            return AppErrorState(message: '${snapshot.error}', onRetry: _refresh);
+            return AppErrorState(
+              message: 'Unable to load calendar events.',
+              onRetry: _refresh,
+            );
           }
 
           final events = snapshot.data ?? [];
 
-          final filteredEvents = events
-              .where(_selectedFilter.matches)
-              .toList();
+          final filteredEvents = events.where(_selectedFilter.matches).toList();
 
           return RefreshIndicator(
             onRefresh: _refresh,
@@ -76,6 +83,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SectionCard(
+                    title: 'Event filters',
+                    subtitle: 'Filter the existing calendar timeline.',
                     padding: const EdgeInsets.all(12),
                     child: CalendarFilterChips(
                       selected: _selectedFilter,
@@ -89,9 +98,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
                   const SizedBox(height: 24),
 
-                  CalendarEventList(
-                    events: filteredEvents,
-                  ),
+                  CalendarEventList(events: filteredEvents),
                 ],
               ),
             ),
