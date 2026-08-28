@@ -3,6 +3,7 @@ import '../models/user_entity.dart';
 import '../models/user_role.dart';
 import '../repositories/user_repository.dart';
 import 'password_service.dart';
+import 'password_policy.dart';
 
 class UserService {
   UserService({UserRepository? repository, PasswordService? passwordService})
@@ -180,6 +181,7 @@ class UserService {
 
   /// Adds a new user with a bcrypt password hash.
   Future<void> addUser(User user, {required String password}) async {
+    _validateNewPassword(password);
     final userWithPasswordHash = user.copyWith(
       passwordHash: _passwordService.hash(password),
     );
@@ -195,6 +197,7 @@ class UserService {
     User user, {
     required String password,
   }) async {
+    _validateNewPassword(password);
     final administrator = User(
       id: user.id,
       username: user.username,
@@ -211,11 +214,21 @@ class UserService {
   /// Updates an existing user and only changes the stored password when a
   /// replacement plaintext password is supplied.
   Future<void> updateUser(User user, {String? newPassword}) async {
+    if (newPassword != null) {
+      _validateNewPassword(newPassword);
+    }
     final userWithPasswordHash = newPassword == null
         ? user
         : user.copyWith(passwordHash: _passwordService.hash(newPassword));
 
     await _repository.updateUser(UserEntity.fromUser(userWithPasswordHash));
+  }
+
+  void _validateNewPassword(String password) {
+    final message = PasswordPolicy.validate(password);
+    if (message != null) {
+      throw ArgumentError(message, 'password');
+    }
   }
 
   /// Applies changes made through User Management while retaining the account

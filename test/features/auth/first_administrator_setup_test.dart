@@ -183,14 +183,13 @@ void main() {
     () async {
       final users = _FakeUserRepository();
       final userService = service(users);
-      await userService.addUser(
+      users.seed(
         const User(
           id: 'manager',
           username: 'manager',
           passwordHash: '',
           role: UserRole.manager,
-        ),
-        password: 'manager',
+        ).copyWith(passwordHash: passwords.hash('manager')),
       );
 
       final seededManager = await userService.getUserById('manager');

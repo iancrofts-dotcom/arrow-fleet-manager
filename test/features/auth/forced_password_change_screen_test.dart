@@ -46,7 +46,7 @@ void main() {
         driverId: 7,
         isActive: true,
       );
-      await userService.addUser(seeded, password: 'admin');
+      users.seed(seeded.copyWith(passwordHash: passwords.hash('admin')));
       expect(
         await authService.login(username: 'admin', password: 'admin'),
         isTrue,
@@ -103,7 +103,7 @@ void main() {
       passwordHash: '',
       role: UserRole.manager,
     );
-    await userService.addUser(seeded, password: 'manager');
+    users.seed(seeded.copyWith(passwordHash: passwords.hash('manager')));
     expect(
       await authService.login(username: 'manager', password: 'manager'),
       isTrue,
@@ -137,7 +137,7 @@ void main() {
         passwordHash: '',
         role: UserRole.manager,
       );
-      await userService.addUser(seeded, password: 'manager');
+      users.seed(seeded.copyWith(passwordHash: passwords.hash('manager')));
       expect(
         await authService.login(username: 'manager', password: 'manager'),
         isTrue,
@@ -170,6 +170,10 @@ void main() {
 class _FakeUserRepository extends UserRepository {
   final _users = <String, UserEntity>{};
   bool failUpdates = false;
+
+  void seed(User user) {
+    _users[user.id] = UserEntity.fromUser(user);
+  }
 
   @override
   Future<UserEntity?> getUserById(String id) async => _users[id];
