@@ -22,6 +22,8 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
   final VehicleService _vehicleService = VehicleService();
 
   bool _saving = false;
+  DateTime? _motExpiry;
+  DateTime? _serviceDue;
 
   late final TextEditingController fleetController;
   late final TextEditingController registrationController;
@@ -49,6 +51,8 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     );
 
     vinController = TextEditingController(text: widget.vehicle.vin);
+    _motExpiry = widget.vehicle.motExpiry;
+    _serviceDue = widget.vehicle.serviceDue;
   }
 
   @override
@@ -77,8 +81,8 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
       model: modelController.text.trim(),
       year: int.tryParse(yearController.text.trim()) ?? widget.vehicle.year,
       vin: vinController.text.trim(),
-      motExpiry: widget.vehicle.motExpiry,
-      serviceDue: widget.vehicle.serviceDue,
+      motExpiry: _motExpiry,
+      serviceDue: _serviceDue,
       active: widget.vehicle.active,
     );
 
@@ -104,6 +108,65 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     return InputDecoration(
       labelText: label,
       border: const OutlineInputBorder(),
+    );
+  }
+
+  Future<void> _selectDate({
+    required DateTime? currentDate,
+    required ValueChanged<DateTime?> onSelected,
+  }) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: currentDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null && mounted) {
+      setState(() {
+        onSelected(picked);
+      });
+    }
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) {
+      return 'Not Selected';
+    }
+
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Widget _dateControl({
+    required String label,
+    required IconData icon,
+    required DateTime? value,
+    required ValueChanged<DateTime?> onChanged,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: _saving
+                ? null
+                : () => _selectDate(currentDate: value, onSelected: onChanged),
+            icon: Icon(icon),
+            label: Text('$label: ${_formatDate(value)}'),
+          ),
+        ),
+        if (value != null) ...[
+          const SizedBox(width: 8),
+          IconButton(
+            tooltip: 'Clear $label',
+            onPressed: _saving
+                ? null
+                : () => setState(() {
+                    onChanged(null);
+                  }),
+            icon: const Icon(Icons.clear),
+          ),
+        ],
+      ],
     );
   }
 
@@ -163,6 +226,32 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                 const SizedBox(height: 16),
 
                 TextField(controller: vinController, decoration: input("VIN")),
+              ],
+            ),
+          ),
+
+          FormSection(
+            title: 'Operational details',
+            subtitle: 'Optional MOT and service dates.',
+            child: Column(
+              children: [
+                _dateControl(
+                  label: 'MOT Expiry',
+                  icon: Icons.event,
+                  value: _motExpiry,
+                  onChanged: (date) {
+                    _motExpiry = date;
+                  },
+                ),
+                const SizedBox(height: 12),
+                _dateControl(
+                  label: 'Service Due',
+                  icon: Icons.build,
+                  value: _serviceDue,
+                  onChanged: (date) {
+                    _serviceDue = date;
+                  },
+                ),
               ],
             ),
           ),
