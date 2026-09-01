@@ -14,9 +14,7 @@ import '../widgets/quick_action_card.dart';
 import '../../workshop/screens/workshop_dashboard_screen.dart';
 
 class QuickActionsSection extends StatelessWidget {
-  const QuickActionsSection({
-    super.key,
-  });
+  const QuickActionsSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +25,9 @@ class QuickActionsSection extends StatelessWidget {
       children: [
         Text(
           'Quick Actions',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 6),
         Text(
@@ -38,8 +36,8 @@ class QuickActionsSection extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Wrap(
-          spacing: 20,
-          runSpacing: 20,
+          spacing: 16,
+          runSpacing: 16,
           children: [
             // Fleet
             if (permissions.canViewVehicles)
@@ -50,7 +48,6 @@ class QuickActionsSection extends StatelessWidget {
                     ? 'Manage fleet vehicles'
                     : 'View fleet vehicles',
                 onTap: () => DashboardNavigation.openFleet(context),
-                
               ),
 
             // Drivers
@@ -139,24 +136,24 @@ class QuickActionsSection extends StatelessWidget {
                   );
                 },
               ),
-// Workshop
-if (permissions.canAccessWorkshop)
-  QuickActionCard(
-    icon: Icons.build,
-    title: 'Workshop',
-    subtitle: 'Workshop inspections & repairs',
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ProtectedScreen(
-            allow: (permissions) => permissions.canAccessWorkshop,
-            child: const WorkshopDashboardScreen(),
-          ),
-        ),
-      );
-    },
-  ),
+            // Workshop
+            if (permissions.canAccessWorkshop)
+              QuickActionCard(
+                icon: Icons.build,
+                title: 'Workshop',
+                subtitle: 'Workshop inspections & repairs',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProtectedScreen(
+                        allow: (permissions) => permissions.canAccessWorkshop,
+                        child: const WorkshopDashboardScreen(),
+                      ),
+                    ),
+                  );
+                },
+              ),
             // Reports
             if (permissions.canViewReports)
               QuickActionCard(
@@ -220,9 +217,7 @@ if (permissions.canAccessWorkshop)
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(
-                        '${driver.fullName} created successfully.',
-                      ),
+                      content: Text('${driver.fullName} created successfully.'),
                     ),
                   );
                 },

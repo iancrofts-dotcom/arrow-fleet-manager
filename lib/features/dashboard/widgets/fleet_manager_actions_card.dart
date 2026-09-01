@@ -8,8 +8,12 @@ class FleetManagerActionsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 3,
+      elevation: 0,
       clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -29,7 +33,7 @@ class FleetManagerActionsCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             Wrap(
               spacing: 12,
@@ -37,32 +41,22 @@ class FleetManagerActionsCard extends StatelessWidget {
               children: [
                 FilledButton.icon(
                   onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRouter.vehicles,
-                    );
+                    Navigator.pushNamed(context, AppRouter.vehicles);
                   },
                   icon: const Icon(Icons.directions_car),
                   label: const Text('Vehicles'),
                 ),
 
                 FilledButton.icon(
-  onPressed: () {
-    Navigator.pushNamed(
-      context,
-      AppRouter.workshop,
-    );
-  },
-  icon: const Icon(Icons.build),
-  label: const Text('Workshop'),
-),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRouter.workshop),
+                  icon: const Icon(Icons.build),
+                  label: const Text('Workshop'),
+                ),
 
                 FilledButton.icon(
                   onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRouter.drivers,
-                    );
+                    Navigator.pushNamed(context, AppRouter.drivers);
                   },
                   icon: const Icon(Icons.people),
                   label: const Text('Drivers'),
@@ -70,10 +64,7 @@ class FleetManagerActionsCard extends StatelessWidget {
 
                 FilledButton.icon(
                   onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRouter.calendar,
-                    );
+                    Navigator.pushNamed(context, AppRouter.calendar);
                   },
                   icon: const Icon(Icons.calendar_month),
                   label: const Text('Calendar'),
@@ -81,24 +72,18 @@ class FleetManagerActionsCard extends StatelessWidget {
 
                 FilledButton.icon(
                   onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRouter.reports,
-                    );
+                    Navigator.pushNamed(context, AppRouter.reports);
                   },
                   icon: const Icon(Icons.assessment),
                   label: const Text('Reports'),
                 ),
-
-                
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             Text(
-              'Quick access to fleet management tools. '
-              'Additional modules will become active as they are implemented.',
+              'Management shortcuts for frequently used fleet tools.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],

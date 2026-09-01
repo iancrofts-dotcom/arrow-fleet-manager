@@ -74,8 +74,8 @@ class _DashboardKpiCardState extends State<DashboardKpiCard> {
       cursor: isInteractive
           ? SystemMouseCursors.click
           : SystemMouseCursors.basic,
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
+      onEnter: isInteractive ? (_) => setState(() => _hovering = true) : null,
+      onExit: isInteractive ? (_) => setState(() => _hovering = false) : null,
       child: AnimatedScale(
         scale: _hovering ? 1.01 : 1.0,
         duration: const Duration(milliseconds: 150),
@@ -98,7 +98,7 @@ class _DashboardKpiCardState extends State<DashboardKpiCard> {
             child: InkWell(
               onTap: isInteractive ? _openRoute : null,
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

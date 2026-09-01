@@ -105,9 +105,9 @@ class _DashboardKpiSectionState extends State<DashboardKpiSection> {
           builder: (context, constraints) {
             int columns = 1;
 
-            if (constraints.maxWidth >= 1200) {
+            if (constraints.maxWidth >= 1000) {
               columns = 4;
-            } else if (constraints.maxWidth >= 700) {
+            } else if (constraints.maxWidth >= 640) {
               columns = 2;
             }
 

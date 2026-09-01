@@ -29,7 +29,7 @@ class _QuickActionCardState extends State<QuickActionCard> {
       cursor: SystemMouseCursors.click,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
-        width: 220,
+        width: 200,
         decoration: BoxDecoration(
           color: _hovering
               ? Theme.of(context).colorScheme.primaryContainer
@@ -45,7 +45,7 @@ class _QuickActionCardState extends State<QuickActionCard> {
           borderRadius: BorderRadius.circular(16),
           onTap: widget.onTap,
           child: Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -60,7 +60,7 @@ class _QuickActionCardState extends State<QuickActionCard> {
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Text(
                   widget.title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(

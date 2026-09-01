@@ -32,7 +32,7 @@ class MaintenanceSection extends StatelessWidget {
 
         LayoutBuilder(
           builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 900 ? 2 : 1;
+            final columns = constraints.maxWidth >= 520 ? 2 : 1;
             const spacing = 20.0;
 
             final cardWidth =

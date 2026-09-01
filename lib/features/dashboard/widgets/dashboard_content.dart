@@ -37,63 +37,52 @@ class DashboardContent extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.all(constraints.maxWidth < 700 ? 20 : 24),
                 child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            DashboardHeader(
-              fleetHealth: this.context.fleetHealth,
-            ),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DashboardHeader(fleetHealth: this.context.fleetHealth),
 
-            const SizedBox(height: 30),
+                    const SizedBox(height: 24),
+                    const QuickActionsSection(),
 
-            const DashboardKpiSection(),
+                    const SizedBox(height: 30),
 
-            if (this.context.summary.workshopDashboard != null) ...[
-              const SizedBox(height: 24),
-              WorkshopKpiSection(
-                data: this.context.summary.workshopDashboard!,
-              ),
-            ],
+                    PrioritySection(summary: this.context.summary),
 
-            const SizedBox(height: 24),
-            
-            const QuickActionsSection(),
+                    const SizedBox(height: 30),
 
-            const SizedBox(height: 30),
+                    const DashboardKpiSection(),
 
-            ResponsiveDashboardLayout(
-              leftColumn: [
-                FleetOverviewSection(
-                  summary: this.context.summary,
+                    if (this.context.summary.workshopDashboard != null) ...[
+                      const SizedBox(height: 24),
+                      WorkshopKpiSection(
+                        data: this.context.summary.workshopDashboard!,
+                      ),
+                    ],
+
+                    const SizedBox(height: 30),
+
+                    ResponsiveDashboardLayout(
+                      leftColumn: [
+                        FleetOverviewSection(summary: this.context.summary),
+
+                        ComplianceSection(summary: this.context.summary),
+                      ],
+                      rightColumn: [
+                        MaintenanceSection(summary: this.context.summary),
+
+                        AnalyticsSection(summary: this.context.summary),
+
+                        ...children,
+                      ],
+                    ),
+
+                    const SizedBox(height: 30),
+                  ],
                 ),
-
-                PrioritySection(
-                  summary: this.context.summary,
-                ),
-
-                ComplianceSection(
-                  summary: this.context.summary,
-                ),
-              ],
-              rightColumn: [
-                MaintenanceSection(
-                  summary: this.context.summary,
-                ),
-
-                AnalyticsSection(
-                  summary: this.context.summary,
-                ),
-
-                ...children,
-              ],
-            ),
-
-            const SizedBox(height: 30),
-                ],
               ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

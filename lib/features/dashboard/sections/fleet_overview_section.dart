@@ -35,9 +35,9 @@ class FleetOverviewSection extends StatelessWidget {
           builder: (context, constraints) {
             int columns;
 
-            if (constraints.maxWidth >= 1400) {
+            if (constraints.maxWidth >= 1000) {
               columns = 4;
-            } else if (constraints.maxWidth >= 900) {
+            } else if (constraints.maxWidth >= 520) {
               columns = 2;
             } else {
               columns = 1;

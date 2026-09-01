@@ -6,10 +6,7 @@ import '../../auth/services/auth_service.dart';
 import '../models/fleet_health.dart';
 
 class DashboardHeader extends StatelessWidget {
-  const DashboardHeader({
-    super.key,
-    required this.fleetHealth,
-  });
+  const DashboardHeader({super.key, required this.fleetHealth});
 
   final FleetHealth fleetHealth;
 
@@ -38,8 +35,6 @@ class DashboardHeader extends StatelessWidget {
       case UserRole.driver:
         return Icons.drive_eta;
 
-     
-
       default:
         return Icons.person;
     }
@@ -54,12 +49,13 @@ class DashboardHeader extends StatelessWidget {
     final currentRole = AuthService.instance.currentRole;
 
     return Card(
-      elevation: 3,
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(22),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final mobile = constraints.maxWidth < 700;
@@ -68,16 +64,9 @@ class DashboardHeader extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildLeft(
-                    theme,
-                    now,
-                    currentUser?.username ?? "User"
-                  ),
+                  _buildLeft(theme, now, currentUser?.username ?? "User"),
                   const SizedBox(height: 24),
-                  _buildRight(
-                    theme,
-                    currentRole,
-                  ),
+                  _buildRight(theme, currentRole),
                 ],
               );
             }
@@ -89,14 +78,11 @@ class DashboardHeader extends StatelessWidget {
                   child: _buildLeft(
                     theme,
                     now,
-                    currentUser?.username ?? "User"
+                    currentUser?.username ?? "User",
                   ),
                 ),
                 const SizedBox(width: 24),
-                _buildRight(
-                  theme,
-                  currentRole,
-                ),
+                _buildRight(theme, currentRole),
               ],
             );
           },
@@ -105,11 +91,7 @@ class DashboardHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildLeft(
-    ThemeData theme,
-    DateTime now,
-    String userName,
-  ) {
+  Widget _buildLeft(ThemeData theme, DateTime now, String userName) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -119,7 +101,7 @@ class DashboardHeader extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           DateFormat('EEEE, d MMMM yyyy').format(now),
           style: theme.textTheme.bodyMedium,
@@ -128,10 +110,7 @@ class DashboardHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildRight(
-    ThemeData theme,
-    UserRole? role,
-  ) {
+  Widget _buildRight(ThemeData theme, UserRole? role) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -145,22 +124,14 @@ class DashboardHeader extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Chip(
-          avatar: Icon(
-            _roleIcon(role),
-            size: 18,
-          ),
-          label: Text(
-            role?.displayName ?? "Unknown",
-          ),
+          avatar: Icon(_roleIcon(role), size: 18),
+          label: Text(role?.displayName ?? "Unknown"),
         ),
         const SizedBox(height: 12),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.favorite,
-              color: fleetHealth.colour,
-            ),
+            Icon(Icons.favorite, color: fleetHealth.colour),
             const SizedBox(width: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -172,10 +143,7 @@ class DashboardHeader extends StatelessWidget {
                     color: fleetHealth.colour,
                   ),
                 ),
-                Text(
-                  fleetHealth.label,
-                  style: theme.textTheme.bodySmall,
-                ),
+                Text(fleetHealth.label, style: theme.textTheme.bodySmall),
               ],
             ),
           ],
