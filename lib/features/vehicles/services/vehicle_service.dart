@@ -69,4 +69,16 @@ class VehicleService {
     vehicle.active = false;
     await _repository.updateVehicle(vehicle);
   }
+
+  /// Restores a retained vehicle to the active fleet without recreating any
+  /// prior Driver assignment.
+  Future<void> reactivateVehicle(int id) async {
+    final vehicle = await _repository.getVehicleById(id);
+    if (vehicle == null) {
+      throw StateError('Vehicle $id could not be found.');
+    }
+
+    vehicle.active = true;
+    await _repository.updateVehicle(vehicle);
+  }
 }

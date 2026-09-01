@@ -10,6 +10,7 @@ import '../../drivers/screens/assign_driver_screen.dart';
 import '../../drivers/screens/assignment_history_screen.dart';
 
 import '../models/vehicle.dart';
+import '../services/vehicle_service.dart';
 import 'edit_vehicle_screen.dart';
 
 class VehicleDetailsScreen extends StatefulWidget {
@@ -25,6 +26,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   late Vehicle _vehicle;
 
   final AssignmentRepository _repository = AssignmentRepository.instance;
+  final VehicleService _vehicleService = VehicleService();
 
   final PermissionService _permissions = PermissionService.instance;
 
@@ -85,6 +87,101 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Driver assignment ended.')));
+  }
+
+  Future<void> _refreshVehicle() async {
+    final id = _vehicle.id;
+    if (id == null) {
+      return;
+    }
+
+    final vehicle = await _vehicleService.getVehicleById(id);
+    if (vehicle == null) {
+      throw StateError('Vehicle could not be reloaded.');
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _vehicle = vehicle;
+    });
+    await _loadAssignedDriver();
+  }
+
+  Future<void> _deactivateVehicle() async {
+    final id = _vehicle.id;
+    if (id == null) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Deactivate Vehicle?'),
+        content: const Text(
+          'This will mark the vehicle as inactive and end any current driver '
+          'assignment. Vehicle history and records will be retained.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Deactivate'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    try {
+      await _vehicleService.deactivateVehicle(id);
+      await _refreshVehicle();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Vehicle deactivated.')));
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to deactivate vehicle.')),
+      );
+    }
+  }
+
+  Future<void> _reactivateVehicle() async {
+    final id = _vehicle.id;
+    if (id == null) {
+      return;
+    }
+
+    try {
+      await _vehicleService.reactivateVehicle(id);
+      await _refreshVehicle();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Vehicle reactivated.')));
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to reactivate vehicle.')),
+      );
+    }
   }
 
   Widget _detailTile({
@@ -301,6 +398,23 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
               },
               icon: const Icon(Icons.edit),
               label: const Text('Edit Vehicle'),
+            ),
+
+          if (_permissions.canManageVehicles) const SizedBox(height: 12),
+
+          if (_permissions.canManageVehicles)
+            OutlinedButton.icon(
+              onPressed: _vehicle.active
+                  ? _deactivateVehicle
+                  : _reactivateVehicle,
+              icon: Icon(
+                _vehicle.active
+                    ? Icons.pause_circle_outline
+                    : Icons.play_circle_outline,
+              ),
+              label: Text(
+                _vehicle.active ? 'Deactivate Vehicle' : 'Reactivate Vehicle',
+              ),
             ),
 
           if (_permissions.canManageVehicles) const SizedBox(height: 12),

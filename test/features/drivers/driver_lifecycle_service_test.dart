@@ -88,6 +88,28 @@ void main() {
       throwsStateError,
     );
   });
+
+  test('vehicle reactivation retains ended assignment history', () async {
+    final vehicles = _FakeVehicleRepository()
+      ..seed(_vehicle(id: 2, active: false));
+    final assignments = _FakeAssignmentRepository()
+      ..seed(
+        _assignment(
+          driverId: 1,
+          vehicleId: 2,
+        ).copyWith(assignedTo: DateTime(2026, 2, 1), active: false),
+      );
+    final service = VehicleService(
+      repository: vehicles,
+      assignmentRepository: assignments,
+    );
+
+    await service.reactivateVehicle(2);
+
+    expect(vehicles.vehicle(2)!.active, isTrue);
+    expect(assignments.assignment(1)!.active, isFalse);
+    expect(assignments.assignment(1)!.assignedTo, DateTime(2026, 2, 1));
+  });
 }
 
 class _FakeDriverRepository extends DriverRepository {
