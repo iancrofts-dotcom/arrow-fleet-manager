@@ -66,6 +66,101 @@ void main() {
     },
   );
 
+  test(
+    'addUser rejects an unlinked Driver account before persistence',
+    () async {
+      final users = _FakeUserRepository();
+      final service = UserService(repository: users);
+      final invalidDriver = User(
+        id: 'driver',
+        username: 'invalid.driver',
+        passwordHash: '',
+        role: UserRole.driver,
+      );
+
+      await expectLater(
+        service.addUser(invalidDriver, password: '12345678'),
+        throwsA(
+          isA<UserManagementException>().having(
+            (error) => error.message,
+            'message',
+            'Driver accounts must be created from Driver Management.',
+          ),
+        ),
+      );
+      expect(await service.getUserById(invalidDriver.id), isNull);
+    },
+  );
+
+  test(
+    'addUser permits a linked Driver account and hashes its password',
+    () async {
+      final users = _FakeUserRepository();
+      final service = UserService(repository: users);
+      final linkedDriver = User(
+        id: 'driver',
+        username: 'linked.driver',
+        passwordHash: '',
+        role: UserRole.driver,
+        driverId: 7,
+      );
+
+      await service.addUser(linkedDriver, password: '12345678');
+
+      final saved = await service.getUserById(linkedDriver.id);
+      expect(saved!.role, UserRole.driver);
+      expect(saved.driverId, 7);
+      expect(saved.passwordHash, isNot('12345678'));
+    },
+  );
+
+  test(
+    'updateUser cannot convert a non-Driver account to unlinked Driver',
+    () async {
+      final original = _user('manager', 'manager.user');
+      final users = _FakeUserRepository()..seed(original);
+      final service = UserService(repository: users);
+
+      await expectLater(
+        service.updateUser(original.copyWith(role: UserRole.driver)),
+        throwsA(isA<UserManagementException>()),
+      );
+      expect((await service.getUserById(original.id))!.role, UserRole.manager);
+    },
+  );
+
+  test('updateUser permits ordinary non-Driver role changes', () async {
+    final original = _user('manager', 'manager.user');
+    final users = _FakeUserRepository()..seed(original);
+    final service = UserService(repository: users);
+
+    await service.updateUser(original.copyWith(role: UserRole.workshop));
+
+    expect((await service.getUserById(original.id))!.role, UserRole.workshop);
+  });
+
+  test(
+    'legacy unlinked Driver account can be converted to a generic role',
+    () async {
+      final legacyDriver = User(
+        id: 'legacy-driver',
+        username: 'legacy.driver',
+        passwordHash: 'hash',
+        role: UserRole.driver,
+      );
+      final users = _FakeUserRepository()..seed(legacyDriver);
+      final service = UserService(repository: users);
+
+      await service.updateUser(
+        legacyDriver.copyWith(role: UserRole.technician),
+      );
+
+      final saved = await service.getUserById(legacyDriver.id);
+      expect(saved!.role, UserRole.technician);
+      expect(saved.driverId, isNull);
+    },
+  );
+
   test('createFirstAdministrator rejects a seven-character password', () async {
     final users = _FakeUserRepository();
     final service = UserService(repository: users);
@@ -287,7 +382,74 @@ void main() {
     expect(saves, 0);
     expect(find.text('Passwords do not match'), findsOneWidget);
   });
+
+  testWidgets('generic UserForm defaults to Technician and excludes Driver', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: UserForm(onSave: (_, _, _, _) async {})),
+      ),
+    );
+
+    expect(find.text('Technician'), findsOneWidget);
+    await tester.tap(_roleDropdown());
+    await tester.pump();
+
+    expect(find.text('Driver'), findsNothing);
+  });
+
+  testWidgets('non-Driver UserForm edit excludes Driver', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: UserForm(
+            user: _user('manager', 'manager.user'),
+            onSave: (_, _, _, _) async {},
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(_roleDropdown());
+    await tester.pump();
+
+    expect(find.text('Driver'), findsNothing);
+  });
+
+  testWidgets(
+    'legacy unlinked Driver role can be changed away but not selected again',
+    (tester) async {
+      final legacyDriver = User(
+        id: 'legacy-driver',
+        username: 'legacy.driver',
+        passwordHash: 'hash',
+        role: UserRole.driver,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: UserForm(user: legacyDriver, onSave: (_, _, _, _) async {}),
+          ),
+        ),
+      );
+
+      expect(find.text('Driver'), findsOneWidget);
+      await tester.tap(_roleDropdown());
+      await tester.pump();
+      await tester.tap(find.text('Technician').last);
+      await tester.pump();
+      await tester.tap(_roleDropdown());
+      await tester.pump();
+
+      expect(find.text('Driver'), findsNothing);
+    },
+  );
 }
+
+Finder _roleDropdown() => find.byWidgetPredicate(
+  (widget) => widget is DropdownButtonFormField<UserRole>,
+);
 
 User _user(String id, String username) => User(
   id: id,

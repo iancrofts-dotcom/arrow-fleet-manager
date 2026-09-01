@@ -181,6 +181,7 @@ class UserService {
 
   /// Adds a new user with a bcrypt password hash.
   Future<void> addUser(User user, {required String password}) async {
+    _ensureDriverAccountIsLinked(user);
     _validateNewPassword(password);
     final userWithPasswordHash = user.copyWith(
       passwordHash: _passwordService.hash(password),
@@ -214,6 +215,7 @@ class UserService {
   /// Updates an existing user and only changes the stored password when a
   /// replacement plaintext password is supplied.
   Future<void> updateUser(User user, {String? newPassword}) async {
+    _ensureDriverAccountIsLinked(user);
     if (newPassword != null) {
       _validateNewPassword(newPassword);
     }
@@ -327,7 +329,16 @@ class UserService {
   /// Updates an existing user if it already exists,
   /// otherwise creates a new one.
   Future<void> saveUser(User user) async {
+    _ensureDriverAccountIsLinked(user);
     await _repository.saveUser(UserEntity.fromUser(user));
+  }
+
+  void _ensureDriverAccountIsLinked(User user) {
+    if (user.role == UserRole.driver && user.driverId == null) {
+      throw UserManagementException(
+        'Driver accounts must be created from Driver Management.',
+      );
+    }
   }
 
   /// Deletes a user.

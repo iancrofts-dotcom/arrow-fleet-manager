@@ -34,6 +34,7 @@ void main() {
       expect(driver.username, 'driver.renamed');
       expect(user!.id, 'driver-user');
       expect(user.driverId, 1);
+      expect(user.role, UserRole.driver);
       expect(user.username, 'driver.renamed');
       expect(user.passwordHash, originalHash);
     },

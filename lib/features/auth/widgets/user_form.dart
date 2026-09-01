@@ -21,6 +21,13 @@ class UserForm extends StatefulWidget {
 }
 
 class _UserFormState extends State<UserForm> {
+  static const _genericRoles = <UserRole>[
+    UserRole.technician,
+    UserRole.manager,
+    UserRole.workshop,
+    UserRole.admin,
+  ];
+
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _usernameController;
@@ -45,7 +52,7 @@ class _UserFormState extends State<UserForm> {
     _passwordController = TextEditingController();
     _confirmationController = TextEditingController();
 
-    _role = widget.user?.role ?? UserRole.driver;
+    _role = widget.user?.role ?? UserRole.technician;
 
     _isActive = widget.user?.isActive ?? true;
   }
@@ -86,6 +93,15 @@ class _UserFormState extends State<UserForm> {
         });
       }
     }
+  }
+
+  List<UserRole> get _availableRoles {
+    final user = widget.user;
+    if (user?.role == UserRole.driver && _role == UserRole.driver) {
+      return [UserRole.driver, ..._genericRoles];
+    }
+
+    return _genericRoles;
   }
 
   @override
@@ -147,7 +163,7 @@ class _UserFormState extends State<UserForm> {
           DropdownButtonFormField<UserRole>(
             initialValue: _role,
             decoration: const InputDecoration(labelText: 'Role'),
-            items: UserRole.values.map((role) {
+            items: _availableRoles.map((role) {
               return DropdownMenuItem<UserRole>(
                 value: role,
                 child: Text(role.displayName),

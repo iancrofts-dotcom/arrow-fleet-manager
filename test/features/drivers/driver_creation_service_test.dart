@@ -38,7 +38,8 @@ void main() {
 
       expect(savedDriver.id, 1);
       expect(linkedUser, isNotNull);
-      expect(linkedUser!.driverId, savedDriver.id);
+      expect(linkedUser!.role, UserRole.driver);
+      expect(linkedUser.driverId, savedDriver.id);
       expect(linkedUser.passwordHash, isNot('correct-password'));
       expect(passwords.isSecureHash(linkedUser.passwordHash), isTrue);
       expect(

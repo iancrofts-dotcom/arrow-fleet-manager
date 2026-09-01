@@ -43,14 +43,14 @@ void main() {
     () async {
       await signIn(_user('manager', UserRole.manager));
       await userService.updateUser(
-        auth.currentUser!.copyWith(role: UserRole.driver),
+        auth.currentUser!.copyWith(role: UserRole.technician),
       );
 
       final result = await auth.revalidateCurrentSession();
 
       expect(result, SessionValidationResult.authenticated);
-      expect(auth.currentUser!.role, UserRole.driver);
-      expect(auth.currentRole, UserRole.driver);
+      expect(auth.currentUser!.role, UserRole.technician);
+      expect(auth.currentRole, UserRole.technician);
     },
   );
 
@@ -59,7 +59,7 @@ void main() {
     () async {
       await signIn(_user('manager', UserRole.manager));
       await userService.updateUser(
-        auth.currentUser!.copyWith(role: UserRole.driver),
+        auth.currentUser!.copyWith(role: UserRole.technician),
       );
 
       expect(
