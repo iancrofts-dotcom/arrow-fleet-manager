@@ -73,18 +73,18 @@ class RecentActivityCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(activity.relativeDate),
-                      if (activity.route != null) ...[
+                      if (DashboardNavigation.canOpenRoute(activity.route)) ...[
                         const SizedBox(width: 8),
                         const Icon(Icons.chevron_right, size: 18),
                       ],
                     ],
                   ),
-                  onTap: activity.route == null
-                      ? null
-                      : () => DashboardNavigation.openRoute(
+                  onTap: DashboardNavigation.canOpenRoute(activity.route)
+                      ? () => DashboardNavigation.openRoute(
                           context,
                           activity.route,
-                        ),
+                        )
+                      : null,
                 ),
               ),
           ],

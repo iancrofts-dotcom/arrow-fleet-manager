@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/navigation/dashboard_navigation.dart';
 import '../models/dashboard_summary.dart';
 import '../widgets/kpi_card.dart';
 
 class ComplianceSection extends StatelessWidget {
   final DashboardSummary summary;
 
-  const ComplianceSection({
-    super.key,
-    required this.summary,
-  });
+  const ComplianceSection({super.key, required this.summary});
 
   @override
   Widget build(BuildContext context) {
@@ -19,9 +15,9 @@ class ComplianceSection extends StatelessWidget {
       children: [
         Text(
           "Compliance",
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 6),
         Text(
@@ -49,10 +45,6 @@ class ComplianceSection extends StatelessWidget {
                     value: summary.complianceDue.toString(),
                     subtitle: "Upcoming renewals",
                     color: Colors.deepOrange,
-                    onTap: () => DashboardNavigation.openRoute(
-                      context,
-                      '/driver-compliance',
-                    ),
                   ),
                 ),
                 SizedBox(
@@ -63,10 +55,6 @@ class ComplianceSection extends StatelessWidget {
                     value: summary.complianceExpired.toString(),
                     subtitle: "Immediate action required",
                     color: Colors.redAccent,
-                    onTap: () => DashboardNavigation.openRoute(
-                      context,
-                      '/driver-compliance',
-                    ),
                   ),
                 ),
               ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/navigation/dashboard_navigation.dart';
+import '../../auth/services/permission_service.dart';
 
 class FleetAnalyticsCard extends StatelessWidget {
   final int vehicleCount;
@@ -31,14 +32,14 @@ class FleetAnalyticsCard extends StatelessWidget {
     final risk = fleetHealth >= 90
         ? 'Low'
         : fleetHealth >= 75
-            ? 'Medium'
-            : 'High';
+        ? 'Medium'
+        : 'High';
 
     final riskColor = fleetHealth >= 90
         ? Colors.green
         : fleetHealth >= 75
-            ? Colors.orange
-            : Colors.red;
+        ? Colors.orange
+        : Colors.red;
 
     return Card(
       elevation: 2,
@@ -75,26 +76,22 @@ class FleetAnalyticsCard extends StatelessWidget {
               label: 'Driver Coverage',
               value: '$driverCoverage%',
               icon: Icons.people,
-              onTap: () => DashboardNavigation.openDrivers(context),
+              onTap: PermissionService.instance.canViewDrivers
+                  ? () => DashboardNavigation.openDrivers(context)
+                  : null,
             ),
 
             const Divider(),
 
             InkWell(
               borderRadius: BorderRadius.circular(8),
-              onTap: () => DashboardNavigation.openRoute(
-                context,
-                '/maintenance',
-              ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Row(
                   children: [
                     const Icon(Icons.warning_amber_rounded),
                     const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text('Maintenance Risk'),
-                    ),
+                    const Expanded(child: Text('Maintenance Risk')),
                     Chip(
                       label: Text(risk),
                       backgroundColor: riskColor.withValues(alpha: 0.15),
@@ -103,8 +100,6 @@ class FleetAnalyticsCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.chevron_right, size: 18),
                   ],
                 ),
               ),
@@ -140,21 +135,16 @@ class _AnalyticsRow extends StatelessWidget {
           children: [
             Icon(icon),
             const SizedBox(width: 12),
-            Expanded(
-              child: Text(label),
-            ),
+            Expanded(child: Text(label)),
             Text(
               value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             if (onTap != null) ...[
               const SizedBox(width: 8),
-              const Icon(
-                Icons.chevron_right,
-                size: 18,
-              ),
+              const Icon(Icons.chevron_right, size: 18),
             ],
           ],
         ),

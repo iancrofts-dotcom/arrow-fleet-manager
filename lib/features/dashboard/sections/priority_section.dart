@@ -5,16 +5,11 @@ import '../models/dashboard_summary.dart';
 import '../widgets/priority_card.dart';
 
 class PrioritySection extends StatelessWidget {
-  const PrioritySection({
-    super.key,
-    required this.summary,
-  });
+  const PrioritySection({super.key, required this.summary});
 
   final DashboardSummary summary;
 
-  PriorityLevel _priorityLevel(
-    DashboardAlertSeverity severity,
-  ) {
+  PriorityLevel _priorityLevel(DashboardAlertSeverity severity) {
     switch (severity) {
       case DashboardAlertSeverity.critical:
         return PriorityLevel.critical;
@@ -36,12 +31,9 @@ class PrioritySection extends StatelessWidget {
       children: [
         Text(
           'Priority Centre',
-          style: Theme.of(context)
-              .textTheme
-              .headlineSmall
-              ?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 6),
@@ -69,10 +61,9 @@ class PrioritySection extends StatelessWidget {
                 title: alert.title,
                 description: alert.message,
                 level: _priorityLevel(alert.severity),
-               onTap: () => DashboardNavigation.openRoute(
-  context,
-  alert.route,
-),
+                onTap: DashboardNavigation.canOpenRoute(alert.route)
+                    ? () => DashboardNavigation.openRoute(context, alert.route)
+                    : null,
               ),
               const SizedBox(height: 12),
             ],

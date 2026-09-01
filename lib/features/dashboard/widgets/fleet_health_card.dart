@@ -39,9 +39,7 @@ class FleetHealthCard extends StatelessWidget {
 
     return Card(
       elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -49,12 +47,9 @@ class FleetHealthCard extends StatelessWidget {
           children: [
             Text(
               'Fleet Health',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 20),
@@ -68,17 +63,13 @@ class FleetHealthCard extends StatelessWidget {
             const SizedBox(height: 16),
 
             Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   '$healthScore%',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium
-                      ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Chip(
                   avatar: Icon(
@@ -96,19 +87,14 @@ class FleetHealthCard extends StatelessWidget {
             ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.check_circle,
-                color: Colors.green,
-              ),
+              leading: const Icon(Icons.check_circle, color: Colors.green),
               title: const Text('Healthy Vehicles'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     healthyVehicles.toString(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(width: 8),
                   const Icon(Icons.chevron_right, size: 18),
@@ -120,54 +106,32 @@ class FleetHealthCard extends StatelessWidget {
             ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.build,
-                color: Colors.orange,
-              ),
+              leading: const Icon(Icons.build, color: Colors.orange),
               title: const Text('Maintenance Overdue'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     maintenanceOverdue.toString(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.chevron_right, size: 18),
                 ],
-              ),
-              onTap: () => DashboardNavigation.openRoute(
-                context,
-                '/maintenance',
               ),
             ),
 
             ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.verified_user,
-                color: Colors.red,
-              ),
+              leading: const Icon(Icons.verified_user, color: Colors.red),
               title: const Text('Compliance Expired'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     complianceExpired.toString(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.chevron_right, size: 18),
                 ],
-              ),
-              onTap: () => DashboardNavigation.openRoute(
-                context,
-                '/driver-compliance',
               ),
             ),
           ],

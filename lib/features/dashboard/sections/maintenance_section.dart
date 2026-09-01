@@ -7,10 +7,7 @@ import '../widgets/kpi_card.dart';
 class MaintenanceSection extends StatelessWidget {
   final DashboardSummary summary;
 
-  const MaintenanceSection({
-    super.key,
-    required this.summary,
-  });
+  const MaintenanceSection({super.key, required this.summary});
 
   @override
   Widget build(BuildContext context) {
@@ -19,9 +16,9 @@ class MaintenanceSection extends StatelessWidget {
       children: [
         Text(
           "Maintenance",
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 6),
@@ -65,10 +62,6 @@ class MaintenanceSection extends StatelessWidget {
                     value: summary.maintenanceOverdue.toString(),
                     subtitle: "Immediate attention",
                     color: Colors.red,
-                    onTap: () => DashboardNavigation.openRoute(
-                      context,
-                      '/maintenance',
-                    ),
                   ),
                 ),
               ],

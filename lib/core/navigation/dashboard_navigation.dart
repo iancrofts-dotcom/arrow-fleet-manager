@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../features/drivers/screens/driver_list_screen.dart';
+import '../../features/auth/services/permission_service.dart';
 import '../../features/auth/widgets/protected_screen.dart';
+import '../../features/documents/screens/document_list_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
 import '../../features/vehicles/models/vehicle_filter.dart';
 import '../../features/vehicles/screens/vehicle_list_screen.dart';
@@ -78,6 +80,34 @@ class DashboardNavigation {
     );
   }
 
+  static Future<void> openDocuments(BuildContext context) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProtectedScreen(
+          allow: (permissions) => permissions.canViewVehicles,
+          child: const DocumentListScreen(),
+        ),
+      ),
+    );
+  }
+
+  static bool canOpenRoute(String? route) {
+    final permissions = PermissionService.instance;
+
+    switch (route) {
+      case '/vehicles':
+        return permissions.canViewVehicles;
+      case '/drivers':
+        return permissions.canViewDrivers;
+      case '/reports':
+        return permissions.canViewReports;
+      case '/documents':
+        return permissions.canViewVehicles;
+      default:
+        return false;
+    }
+  }
+
   static Future<void> openRoute(BuildContext context, String? route) async {
     if (route == null) {
       return;
@@ -90,11 +120,11 @@ class DashboardNavigation {
       case '/drivers':
         return openDrivers(context);
 
-      case '/maintenance':
-        return openServiceDue(context);
-
       case '/reports':
         return openReports(context);
+
+      case '/documents':
+        return openDocuments(context);
 
       default:
         debugPrint('DashboardNavigation: Unknown route: $route');

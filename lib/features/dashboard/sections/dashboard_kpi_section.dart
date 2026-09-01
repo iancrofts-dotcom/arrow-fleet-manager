@@ -49,18 +49,20 @@ class _DashboardKpiSectionState extends State<DashboardKpiSection> {
   String? _routeFor(String title) {
     switch (title) {
       case 'Fleet':
-        return AppRouter.vehicles;
+        return PermissionService.instance.canViewVehicles
+            ? AppRouter.vehicles
+            : null;
 
       case 'Drivers':
-        return AppRouter.drivers;
+        return PermissionService.instance.canViewDrivers
+            ? AppRouter.drivers
+            : null;
 
       case 'Maintenance':
         return null;
 
       case 'Compliance':
-        // Temporary destination until a dedicated
-        // compliance dashboard is available.
-        return AppRouter.drivers;
+        return null;
 
       default:
         return null;

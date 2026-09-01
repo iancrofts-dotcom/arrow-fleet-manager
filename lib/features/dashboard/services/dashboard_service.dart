@@ -21,16 +21,14 @@ class DashboardService {
     DriverComplianceService? complianceService,
     MaintenanceService? maintenanceService,
     WorkshopDashboardService? workshopDashboardService,
-  })  : _vehicleService = vehicleService ?? VehicleService(),
-        _driverService = driverService ?? DriverService(),
-        _assignmentService =
-            assignmentService ?? DriverAssignmentService(),
-        _complianceService =
-            complianceService ?? DriverComplianceService(),
-        _maintenanceService =
-            maintenanceService ?? MaintenanceService(),
-        _workshopDashboardService = workshopDashboardService ??
-            WorkshopDashboardService(WorkshopRepository());
+  }) : _vehicleService = vehicleService ?? VehicleService(),
+       _driverService = driverService ?? DriverService(),
+       _assignmentService = assignmentService ?? DriverAssignmentService(),
+       _complianceService = complianceService ?? DriverComplianceService(),
+       _maintenanceService = maintenanceService ?? MaintenanceService(),
+       _workshopDashboardService =
+           workshopDashboardService ??
+           WorkshopDashboardService(WorkshopRepository());
 
   final VehicleService _vehicleService;
   final DriverService _driverService;
@@ -39,9 +37,8 @@ class DashboardService {
   final MaintenanceService _maintenanceService;
   final WorkshopDashboardService _workshopDashboardService;
   final FleetDashboardRepository _dashboardRepository =
-    FleetDashboardRepository.instance;
-  final FleetHealthService _fleetHealthService =
-    const FleetHealthService();
+      FleetDashboardRepository.instance;
+  final FleetHealthService _fleetHealthService = const FleetHealthService();
 
   void _addAlert(
     List<DashboardAlert> alerts, {
@@ -64,64 +61,50 @@ class DashboardService {
     );
   }
 
-String _daysMessage(int days) {
-  if (days <= 0) {
-    return 'expires today';
+  String _daysMessage(int days) {
+    if (days <= 0) {
+      return 'expires today';
+    }
+
+    if (days == 1) {
+      return 'expires tomorrow';
+    }
+
+    return 'expires in $days days';
   }
 
-  if (days == 1) {
-    return 'expires tomorrow';
+  FleetHealth getFleetHealth(DashboardSummary summary) {
+    return _fleetHealthService.calculate(summary);
   }
-
-  return 'expires in $days days';
-}
-
-FleetHealth getFleetHealth(
-  DashboardSummary summary,
-) {
-  return _fleetHealthService.calculate(summary);
-}
 
   Future<DashboardSummary> loadSummary() async {
-    
-final vehicleCount =
-    await _dashboardRepository.getVehicleCount();
+    final vehicleCount = await _dashboardRepository.getVehicleCount();
 
-final driverCount =
-    await _dashboardRepository.getDriverCount();
+    final driverCount = await _dashboardRepository.getDriverCount();
 
-final activeVehicles =
-    await _dashboardRepository.getActiveVehicleCount();
+    final activeVehicles = await _dashboardRepository.getActiveVehicleCount();
 
-final activeDrivers =
-    await _dashboardRepository.getActiveDriverCount();
+    final activeDrivers = await _dashboardRepository.getActiveDriverCount();
 
-final assignedVehicles =
-    await _dashboardRepository.getAssignedVehicles();
+    final assignedVehicles = await _dashboardRepository.getAssignedVehicles();
 
-final unassignedVehicles =
-    await _dashboardRepository.getUnassignedVehicles();
+    final unassignedVehicles = await _dashboardRepository
+        .getUnassignedVehicles();
 
-final assignedDrivers =
-    await _dashboardRepository.getAssignedDrivers();
+    final assignedDrivers = await _dashboardRepository.getAssignedDrivers();
 
-final availableDrivers =
-    await _dashboardRepository.getAvailableDrivers();
-
+    final availableDrivers = await _dashboardRepository.getAvailableDrivers();
 
     final compliance = await _complianceService.getAll();
     final workshopDashboard = await _workshopDashboardService.loadDashboard();
 
     final maintenance = await _maintenanceService.getAll();
 
-    final documents =
-    await DocumentService().getAll();
+    final documents = await DocumentService().getAll();
 
-    final vehicleMap =
-        await _vehicleService.getVehicleMap();
+    final vehicleMap = await _vehicleService.getVehicleMap();
 
-    final driverMap =
-    await _driverService.getDriverMap();    
+    final driverMap = await _driverService.getDriverMap();
 
     final activities = [
       ...await _assignmentService.getRecentActivities(),
@@ -129,30 +112,22 @@ final availableDrivers =
       ...await _complianceService.getRecentActivities(),
     ];
 
-    activities.sort(
-      (a, b) => b.date.compareTo(a.date),
-    );
+    activities.sort((a, b) => b.date.compareTo(a.date));
 
-    final recentActivity =
-        activities.take(10).toList();
+    final recentActivity = activities.take(10).toList();
 
-    final maintenanceDue =
-        _maintenanceService.dueSoon(maintenance).length;
+    final maintenanceDue = _maintenanceService.dueSoon(maintenance).length;
 
-    final maintenanceOverdue =
-        _maintenanceService.overdue(maintenance).length;
+    final maintenanceOverdue = _maintenanceService.overdue(maintenance).length;
 
-    final complianceDue =
-        _complianceService.expiringSoon(compliance).length;
+    final complianceDue = _complianceService.expiringSoon(compliance).length;
 
-    final complianceExpired =
-        _complianceService.expired(compliance).length;
+    final complianceExpired = _complianceService.expired(compliance).length;
 
     final alerts = <DashboardAlert>[];
 
     // Overdue maintenance
-    for (final record
-        in _maintenanceService.overdue(maintenance)) {
+    for (final record in _maintenanceService.overdue(maintenance)) {
       final vehicle = vehicleMap[record.vehicleId];
 
       _addAlert(
@@ -163,13 +138,12 @@ final availableDrivers =
         date: record.dueDate,
         icon: Icons.build,
         severity: DashboardAlertSeverity.critical,
-        route: '/maintenance',
+        route: null,
       );
     }
 
     // Maintenance due soon
-    for (final record
-        in _maintenanceService.dueSoon(maintenance)) {
+    for (final record in _maintenanceService.dueSoon(maintenance)) {
       final vehicle = vehicleMap[record.vehicleId];
 
       _addAlert(
@@ -180,179 +154,175 @@ final availableDrivers =
         date: record.dueDate,
         icon: Icons.build,
         severity: DashboardAlertSeverity.warning,
-        route: '/maintenance',
+        route: null,
       );
     }
 
     // Driver compliance alerts
-for (final record in compliance) {
-  final driver = driverMap[record.driverId];
-  final driverName = driver?.fullName ?? 'Unknown driver';
+    for (final record in compliance) {
+      final driver = driverMap[record.driverId];
+      final driverName = driver?.fullName ?? 'Unknown driver';
 
-  // Licence
-  if (record.licenceExpired) {
-    _addAlert(
-      alerts,
-      title: 'Driver Compliance',
-      message: '$driverName • Licence has expired.',
-      date: record.licenceExpiry,
-      icon: Icons.badge,
-      severity: DashboardAlertSeverity.critical,
-      route: '/driver-compliance',
-    );
-  } else if (record.licenceDaysRemaining <= 30) {
-    _addAlert(
-      alerts,
-      title: 'Driver Compliance',
-      message:
-          '$driverName • Licence expires in ${record.licenceDaysRemaining} day(s).',
-      date: record.licenceExpiry,
-      icon: Icons.badge,
-      severity: DashboardAlertSeverity.warning,
-      route: '/driver-compliance',
-    );
-  }
+      // Licence
+      if (record.licenceExpired) {
+        _addAlert(
+          alerts,
+          title: 'Driver Compliance',
+          message: '$driverName • Licence has expired.',
+          date: record.licenceExpiry,
+          icon: Icons.badge,
+          severity: DashboardAlertSeverity.critical,
+          route: null,
+        );
+      } else if (record.licenceDaysRemaining <= 30) {
+        _addAlert(
+          alerts,
+          title: 'Driver Compliance',
+          message:
+              '$driverName • Licence expires in ${record.licenceDaysRemaining} day(s).',
+          date: record.licenceExpiry,
+          icon: Icons.badge,
+          severity: DashboardAlertSeverity.warning,
+          route: null,
+        );
+      }
 
-  // CPC
-  if (record.cpcExpired) {
-    _addAlert(
-      alerts,
-      title: 'Driver Compliance',
-      message: '$driverName • CPC has expired.',
-      date: record.cpcExpiry,
-      icon: Icons.school,
-      severity: DashboardAlertSeverity.critical,
-      route: '/driver-compliance',
-    );
-  } else if (record.cpcDaysRemaining <= 30) {
-    _addAlert(
-      alerts,
-      title: 'Driver Compliance',
-      message:
-          '$driverName • CPC expires in ${record.cpcDaysRemaining} day(s).',
-      date: record.cpcExpiry,
-      icon: Icons.school,
-      severity: DashboardAlertSeverity.warning,
-      route: '/driver-compliance',
-    );
-  }
+      // CPC
+      if (record.cpcExpired) {
+        _addAlert(
+          alerts,
+          title: 'Driver Compliance',
+          message: '$driverName • CPC has expired.',
+          date: record.cpcExpiry,
+          icon: Icons.school,
+          severity: DashboardAlertSeverity.critical,
+          route: null,
+        );
+      } else if (record.cpcDaysRemaining <= 30) {
+        _addAlert(
+          alerts,
+          title: 'Driver Compliance',
+          message:
+              '$driverName • CPC expires in ${record.cpcDaysRemaining} day(s).',
+          date: record.cpcExpiry,
+          icon: Icons.school,
+          severity: DashboardAlertSeverity.warning,
+          route: null,
+        );
+      }
 
-  // Medical
-  if (record.medicalExpired) {
-    _addAlert(
-      alerts,
-      title: 'Driver Compliance',
-      message: '$driverName • Medical has expired.',
-      date: record.medicalExpiry,
-      icon: Icons.medical_services,
-      severity: DashboardAlertSeverity.critical,
-      route: '/driver-compliance',
-    );
-  } else if (record.medicalDaysRemaining <= 30) {
-    _addAlert(
-      alerts,
-      title: 'Driver Compliance',
-      message:
-          '$driverName • Medical expires in ${record.medicalDaysRemaining} day(s).',
-      date: record.medicalExpiry,
-      icon: Icons.medical_services,
-      severity: DashboardAlertSeverity.warning,
-      route: '/driver-compliance',
-    );
-  }
+      // Medical
+      if (record.medicalExpired) {
+        _addAlert(
+          alerts,
+          title: 'Driver Compliance',
+          message: '$driverName • Medical has expired.',
+          date: record.medicalExpiry,
+          icon: Icons.medical_services,
+          severity: DashboardAlertSeverity.critical,
+          route: null,
+        );
+      } else if (record.medicalDaysRemaining <= 30) {
+        _addAlert(
+          alerts,
+          title: 'Driver Compliance',
+          message:
+              '$driverName • Medical expires in ${record.medicalDaysRemaining} day(s).',
+          date: record.medicalExpiry,
+          icon: Icons.medical_services,
+          severity: DashboardAlertSeverity.warning,
+          route: null,
+        );
+      }
 
-  // DBS uses the shared compliance status authority so warning and expiry
-  // semantics stay aligned with the Driver compliance screens.
-  final dbsExpiry = record.dbsExpiry;
-  final dbsStatus = _complianceService.status(dbsExpiry);
-  if (dbsExpiry != null &&
-      (dbsStatus == 'Expired' || dbsStatus == 'Due Soon')) {
-    _addAlert(
-      alerts,
-      title: 'Driver Compliance',
-      message: dbsStatus == 'Expired'
-          ? '$driverName • DBS has expired.'
-          : '$driverName • DBS expires in ${_complianceService.daysRemaining(dbsExpiry)} day(s).',
-      date: dbsExpiry,
-      icon: Icons.verified_user,
-      severity: dbsStatus == 'Expired'
-          ? DashboardAlertSeverity.critical
-          : DashboardAlertSeverity.warning,
-      route: '/driver-compliance',
-    );
-  }
-}
+      // DBS uses the shared compliance status authority so warning and expiry
+      // semantics stay aligned with the Driver compliance screens.
+      final dbsExpiry = record.dbsExpiry;
+      final dbsStatus = _complianceService.status(dbsExpiry);
+      if (dbsExpiry != null &&
+          (dbsStatus == 'Expired' || dbsStatus == 'Due Soon')) {
+        _addAlert(
+          alerts,
+          title: 'Driver Compliance',
+          message: dbsStatus == 'Expired'
+              ? '$driverName • DBS has expired.'
+              : '$driverName • DBS expires in ${_complianceService.daysRemaining(dbsExpiry)} day(s).',
+          date: dbsExpiry,
+          icon: Icons.verified_user,
+          severity: dbsStatus == 'Expired'
+              ? DashboardAlertSeverity.critical
+              : DashboardAlertSeverity.warning,
+          route: null,
+        );
+      }
+    }
 
-// Document alerts
-for (final document in documents) {
-  final expiryDate = document.expiryDate;
-  if (expiryDate == null) {
-    continue;
-  }
-  String owner = 'Fleet';
+    // Document alerts
+    for (final document in documents) {
+      final expiryDate = document.expiryDate;
+      if (expiryDate == null) {
+        continue;
+      }
+      String owner = 'Fleet';
 
-  if (document.vehicleId != null) {
-    owner = vehicleMap[document.vehicleId!]?.registration ??
-        'Vehicle';
-  } else if (document.driverId != null) {
-    owner = driverMap[document.driverId!]?.fullName ??
-        'Driver';
-  }
+      if (document.vehicleId != null) {
+        owner = vehicleMap[document.vehicleId!]?.registration ?? 'Vehicle';
+      } else if (document.driverId != null) {
+        owner = driverMap[document.driverId!]?.fullName ?? 'Driver';
+      }
 
-  if (document.isExpired) {
-    _addAlert(
-      alerts,
-      title: 'Documents',
-      message:
-          '$owner • ${document.title} has expired.',
-      date: expiryDate,
-      icon: Icons.description,
-      severity: DashboardAlertSeverity.critical,
-      route: '/documents',
-    );
-  } else if (document.isDueSoon) {
-    _addAlert(
-      alerts,
-      title: 'Documents',
-     message:
-    '$owner • ${document.title} ${_daysMessage(document.daysRemaining)}.',
-date: expiryDate,
-      icon: Icons.description,
-      severity: DashboardAlertSeverity.warning,
-      route: '/documents',
-    );
-  }
-}
+      if (document.isExpired) {
+        _addAlert(
+          alerts,
+          title: 'Documents',
+          message: '$owner • ${document.title} has expired.',
+          date: expiryDate,
+          icon: Icons.description,
+          severity: DashboardAlertSeverity.critical,
+          route: '/documents',
+        );
+      } else if (document.isDueSoon) {
+        _addAlert(
+          alerts,
+          title: 'Documents',
+          message:
+              '$owner • ${document.title} ${_daysMessage(document.daysRemaining)}.',
+          date: expiryDate,
+          icon: Icons.description,
+          severity: DashboardAlertSeverity.warning,
+          route: '/documents',
+        );
+      }
+    }
 
     alerts.sort((a, b) {
-  // Critical alerts before warnings
-  final severityCompare =
-      b.severity.index.compareTo(a.severity.index);
+      // Critical alerts before warnings
+      final severityCompare = b.severity.index.compareTo(a.severity.index);
 
-  if (severityCompare != 0) {
-    return severityCompare;
-  }
+      if (severityCompare != 0) {
+        return severityCompare;
+      }
 
-  // Within the same severity, show the earliest date first
-  return a.date.compareTo(b.date);
-});
+      // Within the same severity, show the earliest date first
+      return a.date.compareTo(b.date);
+    });
 
     return DashboardSummary(
-  vehicleCount: vehicleCount,
-  driverCount: driverCount,
-  activeVehicles: activeVehicles,
-  activeDrivers: activeDrivers,
-  assignedDrivers: assignedDrivers,
-  unassignedDrivers: availableDrivers,
-  assignedVehicles: assignedVehicles,
-  unassignedVehicles: unassignedVehicles,
-  maintenanceDue: maintenanceDue,
-  maintenanceOverdue: maintenanceOverdue,
-  complianceDue: complianceDue,
-  complianceExpired: complianceExpired,
-  recentActivity: recentActivity,
-  alerts: alerts.take(15).toList(),
-  workshopDashboard: workshopDashboard,
-);
+      vehicleCount: vehicleCount,
+      driverCount: driverCount,
+      activeVehicles: activeVehicles,
+      activeDrivers: activeDrivers,
+      assignedDrivers: assignedDrivers,
+      unassignedDrivers: availableDrivers,
+      assignedVehicles: assignedVehicles,
+      unassignedVehicles: unassignedVehicles,
+      maintenanceDue: maintenanceDue,
+      maintenanceOverdue: maintenanceOverdue,
+      complianceDue: complianceDue,
+      complianceExpired: complianceExpired,
+      recentActivity: recentActivity,
+      alerts: alerts.take(15).toList(),
+      workshopDashboard: workshopDashboard,
+    );
   }
 }

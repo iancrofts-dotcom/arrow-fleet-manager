@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/navigation/dashboard_navigation.dart';
+import '../../auth/services/permission_service.dart';
 import '../models/dashboard_summary.dart';
 import '../widgets/kpi_card.dart';
 
 class FleetOverviewSection extends StatelessWidget {
   final DashboardSummary summary;
 
-  const FleetOverviewSection({
-    super.key,
-    required this.summary,
-  });
+  const FleetOverviewSection({super.key, required this.summary});
 
   @override
   Widget build(BuildContext context) {
@@ -19,9 +17,9 @@ class FleetOverviewSection extends StatelessWidget {
       children: [
         Text(
           "Fleet Snapshot",
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 6),
@@ -74,7 +72,9 @@ class FleetOverviewSection extends StatelessWidget {
                     value: summary.driverCount.toString(),
                     subtitle: "Active drivers",
                     color: Colors.indigo,
-                    onTap: () => DashboardNavigation.openDrivers(context),
+                    onTap: PermissionService.instance.canViewDrivers
+                        ? () => DashboardNavigation.openDrivers(context)
+                        : null,
                   ),
                 ),
 

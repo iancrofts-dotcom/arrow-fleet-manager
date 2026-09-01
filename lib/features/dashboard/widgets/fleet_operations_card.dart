@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/navigation/dashboard_navigation.dart';
+import '../../auth/services/permission_service.dart';
 
 class FleetOperationsCard extends StatelessWidget {
   final int assignedVehicles;
@@ -58,7 +59,9 @@ class FleetOperationsCard extends StatelessWidget {
               value: '$availability%',
               icon: Icons.person,
               color: Colors.green,
-              onTap: () => DashboardNavigation.openDrivers(context),
+              onTap: PermissionService.instance.canViewDrivers
+                  ? () => DashboardNavigation.openDrivers(context)
+                  : null,
             ),
 
             const Divider(),
@@ -68,10 +71,6 @@ class FleetOperationsCard extends StatelessWidget {
               value: '$fleetHealth%',
               icon: Icons.favorite,
               color: Colors.orange,
-              onTap: () => DashboardNavigation.openRoute(
-                context,
-                '/maintenance',
-              ),
             ),
 
             const Divider(),
@@ -81,10 +80,6 @@ class FleetOperationsCard extends StatelessWidget {
               value: '$compliance%',
               icon: Icons.verified,
               color: Colors.teal,
-              onTap: () => DashboardNavigation.openRoute(
-                context,
-                '/driver-compliance',
-              ),
             ),
           ],
         ),
@@ -120,23 +115,17 @@ class _MetricRow extends StatelessWidget {
             Icon(icon, color: color),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
+              child: Text(label, style: Theme.of(context).textTheme.bodyLarge),
             ),
             Text(
               value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             if (onTap != null) ...[
               const SizedBox(width: 8),
-              const Icon(
-                Icons.chevron_right,
-                size: 18,
-              ),
+              const Icon(Icons.chevron_right, size: 18),
             ],
           ],
         ),

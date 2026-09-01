@@ -82,9 +82,15 @@ class DashboardAlertsCard extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(alert.message),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () =>
-                          DashboardNavigation.openRoute(context, alert.route),
+                      trailing: DashboardNavigation.canOpenRoute(alert.route)
+                          ? const Icon(Icons.chevron_right)
+                          : null,
+                      onTap: DashboardNavigation.canOpenRoute(alert.route)
+                          ? () => DashboardNavigation.openRoute(
+                              context,
+                              alert.route,
+                            )
+                          : null,
                     ),
                   ),
                 ],
