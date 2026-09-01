@@ -139,6 +139,7 @@ class _DriverFormState extends State<DriverForm> {
             usernameController: _username,
             passwordController: _password,
             confirmPasswordController: _confirmPassword,
+            showPasswordFields: widget.driver == null,
           ),
           DriverStatusSection(
             isActive: _isActive,

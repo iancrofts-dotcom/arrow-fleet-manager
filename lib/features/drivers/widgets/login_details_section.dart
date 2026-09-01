@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/form_section.dart';
+import '../../auth/services/password_policy.dart';
 
 class LoginDetailsSection extends StatefulWidget {
   final TextEditingController usernameController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
+  final bool showPasswordFields;
 
   const LoginDetailsSection({
     super.key,
     required this.usernameController,
     required this.passwordController,
     required this.confirmPasswordController,
+    this.showPasswordFields = true,
   });
 
   @override
-  State<LoginDetailsSection> createState() =>
-      _LoginDetailsSectionState();
+  State<LoginDetailsSection> createState() => _LoginDetailsSectionState();
 }
 
-class _LoginDetailsSectionState
-    extends State<LoginDetailsSection> {
+class _LoginDetailsSectionState extends State<LoginDetailsSection> {
   bool _showPassword = false;
 
   @override
@@ -44,57 +45,53 @@ class _LoginDetailsSectionState
             },
           ),
 
-          const SizedBox(height: 16),
+          if (widget.showPasswordFields) ...[
+            const SizedBox(height: 16),
 
-          TextFormField(
-            controller: widget.passwordController,
-            obscureText: !_showPassword,
-            decoration: InputDecoration(
-              labelText: 'Password',
-              prefixIcon: const Icon(Icons.lock_outline),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _showPassword
-                      ? Icons.visibility_off
-                      : Icons.visibility,
+            TextFormField(
+              controller: widget.passwordController,
+              obscureText: !_showPassword,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                prefixIcon: const Icon(Icons.lock_outline),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _showPassword ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _showPassword = !_showPassword;
+                    });
+                  },
                 ),
-                onPressed: () {
-                  setState(() {
-                    _showPassword = !_showPassword;
-                  });
-                },
               ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Enter a password';
+                }
+
+                return PasswordPolicy.validate(value);
+              },
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Enter a password';
-              }
 
-              if (value.length < 6) {
-                return 'Password must be at least 6 characters';
-              }
+            const SizedBox(height: 16),
 
-              return null;
-            },
-          ),
+            TextFormField(
+              controller: widget.confirmPasswordController,
+              obscureText: !_showPassword,
+              decoration: const InputDecoration(
+                labelText: 'Confirm Password',
+                prefixIcon: Icon(Icons.lock_outline),
+              ),
+              validator: (value) {
+                if (value != widget.passwordController.text) {
+                  return 'Passwords do not match';
+                }
 
-          const SizedBox(height: 16),
-
-          TextFormField(
-            controller: widget.confirmPasswordController,
-            obscureText: !_showPassword,
-            decoration: const InputDecoration(
-              labelText: 'Confirm Password',
-              prefixIcon: Icon(Icons.lock_outline),
+                return null;
+              },
             ),
-            validator: (value) {
-              if (value != widget.passwordController.text) {
-                return 'Passwords do not match';
-              }
-
-              return null;
-            },
-          ),
+          ],
         ],
       ),
     );
