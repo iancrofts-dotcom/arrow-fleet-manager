@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../auth/models/user_role.dart';
-import '../auth/screens/login_screen.dart';
 import '../auth/services/auth_service.dart';
 import '../auth/services/permission_service.dart';
 import '../auth/widgets/protected_screen.dart';
@@ -64,13 +63,6 @@ class _DashboardContentState extends State<_DashboardContent> {
 
   Future<void> _logout() async {
     await AuthService.instance.logout();
-
-    if (!mounted) return;
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
   }
 
   DashboardRole _getDashboardRole() {

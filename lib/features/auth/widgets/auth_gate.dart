@@ -70,8 +70,8 @@ class _AuthGateState extends State<AuthGate> {
           }
         }
 
-        // If restoreSession() found a valid session, AuthService.isLoggedIn
-        // will now be true.
+        // Application restarts require a fresh login, so this is normally the
+        // Login screen until the user authenticates in the current process.
         if (AuthService.instance.isLoggedIn) {
           return const DashboardScreen();
         }

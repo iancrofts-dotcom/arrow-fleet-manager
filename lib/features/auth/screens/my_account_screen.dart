@@ -164,6 +164,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
           newPassword: newPassword,
         );
       }
+
+      if (newPassword != null) {
+        await AuthService.instance.logout();
+        return;
+      }
+
       await AuthService.instance.refreshCurrentUser();
       final savedUser = await UserService.instance.getUserById(currentUser.id);
       if (savedUser == null || savedUser.id != currentUser.id) {
