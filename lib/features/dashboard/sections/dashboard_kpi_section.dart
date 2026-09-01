@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
+import '../../../core/navigation/dashboard_navigation.dart';
+import '../../auth/services/permission_service.dart';
 import '../models/dashboard_kpi.dart';
 import '../services/dashboard_kpi_service.dart';
 import '../widgets/dashboard_kpi_card.dart';
@@ -53,7 +55,7 @@ class _DashboardKpiSectionState extends State<DashboardKpiSection> {
         return AppRouter.drivers;
 
       case 'Maintenance':
-        return AppRouter.maintenance;
+        return null;
 
       case 'Compliance':
         // Temporary destination until a dedicated
@@ -63,6 +65,15 @@ class _DashboardKpiSectionState extends State<DashboardKpiSection> {
       default:
         return null;
     }
+  }
+
+  VoidCallback? _onTapFor(BuildContext context, String title) {
+    if (title == 'Maintenance' &&
+        PermissionService.instance.canAccessWorkshop) {
+      return () => DashboardNavigation.openWorkshop(context);
+    }
+
+    return null;
   }
 
   @override
@@ -115,6 +126,7 @@ class _DashboardKpiSectionState extends State<DashboardKpiSection> {
                   kpi: kpi,
                   icon: _iconFor(kpi.title),
                   routeName: _routeFor(kpi.title),
+                  onTap: _onTapFor(context, kpi.title),
                 );
               },
             );

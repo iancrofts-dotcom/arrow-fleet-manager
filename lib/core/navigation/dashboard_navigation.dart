@@ -5,6 +5,7 @@ import '../../features/auth/widgets/protected_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
 import '../../features/vehicles/models/vehicle_filter.dart';
 import '../../features/vehicles/screens/vehicle_list_screen.dart';
+import '../../features/workshop/screens/workshop_dashboard_screen.dart';
 
 /// Central navigation service for the Dashboard.
 ///
@@ -25,9 +26,7 @@ class DashboardNavigation {
       MaterialPageRoute(
         builder: (_) => ProtectedScreen(
           allow: (permissions) => permissions.canViewVehicles,
-          child: const VehicleListScreen(
-            initialFilter: VehicleFilter.all,
-          ),
+          child: const VehicleListScreen(initialFilter: VehicleFilter.all),
         ),
       ),
     );
@@ -38,9 +37,7 @@ class DashboardNavigation {
       MaterialPageRoute(
         builder: (_) => ProtectedScreen(
           allow: (permissions) => permissions.canViewVehicles,
-          child: const VehicleListScreen(
-            initialFilter: VehicleFilter.motDue,
-          ),
+          child: const VehicleListScreen(initialFilter: VehicleFilter.motDue),
         ),
       ),
     );
@@ -64,9 +61,7 @@ class DashboardNavigation {
       MaterialPageRoute(
         builder: (_) => ProtectedScreen(
           allow: (permissions) => permissions.canViewVehicles,
-          child: const VehicleListScreen(
-            initialFilter: VehicleFilter.overdue,
-          ),
+          child: const VehicleListScreen(initialFilter: VehicleFilter.overdue),
         ),
       ),
     );
@@ -76,42 +71,35 @@ class DashboardNavigation {
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ProtectedScreen(
-          allow: (permissions) => permissions.canViewVehicles,
-          child: const VehicleListScreen(
-            initialFilter: VehicleFilter.workshop,
-          ),
+          allow: (permissions) => permissions.canAccessWorkshop,
+          child: const WorkshopDashboardScreen(),
         ),
       ),
     );
   }
 
-static Future<void> openRoute(
-  BuildContext context,
-  String? route,
-) async {
-  if (route == null) {
-    return;
+  static Future<void> openRoute(BuildContext context, String? route) async {
+    if (route == null) {
+      return;
+    }
+
+    switch (route) {
+      case '/vehicles':
+        return openFleet(context);
+
+      case '/drivers':
+        return openDrivers(context);
+
+      case '/maintenance':
+        return openServiceDue(context);
+
+      case '/reports':
+        return openReports(context);
+
+      default:
+        debugPrint('DashboardNavigation: Unknown route: $route');
+    }
   }
-
-  switch (route) {
-    case '/vehicles':
-      return openFleet(context);
-
-    case '/drivers':
-      return openDrivers(context);
-
-    case '/maintenance':
-      return openServiceDue(context);
-
-    case '/reports':
-      return openReports(context);
-
-    default:
-      debugPrint(
-        'DashboardNavigation: Unknown route: $route',
-      );
-  }
-}
 
   // ==========================================================
   // Drivers

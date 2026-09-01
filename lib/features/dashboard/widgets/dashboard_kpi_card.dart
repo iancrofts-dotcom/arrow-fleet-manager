@@ -8,11 +8,13 @@ class DashboardKpiCard extends StatefulWidget {
     required this.kpi,
     required this.icon,
     this.routeName,
+    this.onTap,
   });
 
   final DashboardKpi kpi;
   final IconData icon;
   final String? routeName;
+  final VoidCallback? onTap;
 
   @override
   State<DashboardKpiCard> createState() => _DashboardKpiCardState();
@@ -48,6 +50,12 @@ class _DashboardKpiCardState extends State<DashboardKpiCard> {
   }
 
   void _openRoute() {
+    final onTap = widget.onTap;
+    if (onTap != null) {
+      onTap();
+      return;
+    }
+
     final route = widget.routeName;
 
     if (route == null || route.isEmpty) {
@@ -60,9 +68,10 @@ class _DashboardKpiCardState extends State<DashboardKpiCard> {
   @override
   Widget build(BuildContext context) {
     final trendColor = _trendColor(context);
+    final isInteractive = widget.onTap != null || widget.routeName != null;
 
     return MouseRegion(
-      cursor: widget.routeName != null
+      cursor: isInteractive
           ? SystemMouseCursors.click
           : SystemMouseCursors.basic,
       onEnter: (_) => setState(() => _hovering = true),
@@ -87,7 +96,7 @@ class _DashboardKpiCardState extends State<DashboardKpiCard> {
             ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
-              onTap: widget.routeName != null ? _openRoute : null,
+              onTap: isInteractive ? _openRoute : null,
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -132,7 +141,7 @@ class _DashboardKpiCardState extends State<DashboardKpiCard> {
                             ).textTheme.bodyMedium?.copyWith(color: trendColor),
                           ),
                         ),
-                        if (widget.routeName != null)
+                        if (isInteractive)
                           Icon(
                             Icons.arrow_forward_ios,
                             size: 16,
