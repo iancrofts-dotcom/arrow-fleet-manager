@@ -116,10 +116,11 @@ class CalendarEventCard extends StatelessWidget {
 
                       const SizedBox(width: 12),
 
-                      Icon(
-                        Icons.chevron_right,
-                        color: theme.colorScheme.outline,
-                      ),
+                      if (onTap != null)
+                        Icon(
+                          Icons.chevron_right,
+                          color: theme.colorScheme.outline,
+                        ),
                     ],
                   ),
                 ),

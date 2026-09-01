@@ -12,13 +12,14 @@ enum CalendarEventType {
 
 class CalendarEvent {
   const CalendarEvent({
-  required this.title,
-  required this.subtitle,
-  required this.date,
-  required this.type,
-  required this.icon,
-  required this.color,
-  this.source,
+    required this.title,
+    required this.subtitle,
+    required this.date,
+    required this.type,
+    required this.icon,
+    required this.color,
+    this.source,
+    this.vehicleId,
   });
 
   final String title;
@@ -30,4 +31,7 @@ class CalendarEvent {
   final Color color;
 
   final Object? source;
+
+  /// Persisted Vehicle identity for events that can open Vehicle Details.
+  final int? vehicleId;
 }

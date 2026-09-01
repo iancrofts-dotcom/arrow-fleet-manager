@@ -6,9 +6,7 @@ import '../models/calendar_event.dart';
 class VehicleCalendarMapper {
   const VehicleCalendarMapper();
 
-  List<CalendarEvent> map(
-    List<Vehicle> vehicles,
-  ) {
+  List<CalendarEvent> map(List<Vehicle> vehicles) {
     final events = <CalendarEvent>[];
 
     for (final vehicle in vehicles) {
@@ -22,6 +20,7 @@ class VehicleCalendarMapper {
             icon: Icons.directions_car,
             color: Colors.blue,
             source: vehicle,
+            vehicleId: vehicle.id,
           ),
         );
       }
@@ -36,6 +35,7 @@ class VehicleCalendarMapper {
             icon: Icons.build,
             color: Colors.orange,
             source: vehicle,
+            vehicleId: vehicle.id,
           ),
         );
       }

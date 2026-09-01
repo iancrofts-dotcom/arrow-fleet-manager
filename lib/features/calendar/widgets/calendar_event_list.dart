@@ -58,7 +58,9 @@ class CalendarEventList extends StatelessWidget {
           ...events.map(
             (event) => CalendarEventCard(
               event: event,
-              onTap: onEventTap == null ? null : () => onEventTap!(event),
+              onTap: event.vehicleId == null || onEventTap == null
+                  ? null
+                  : () => onEventTap!(event),
             ),
           ),
         ],

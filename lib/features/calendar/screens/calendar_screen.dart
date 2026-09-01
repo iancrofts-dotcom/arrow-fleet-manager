@@ -4,6 +4,7 @@ import '../../auth/services/permission_service.dart';
 import '../../../shared/widgets/app_page_scaffold.dart';
 import '../models/calendar_event.dart';
 import '../models/calendar_filter.dart';
+import '../services/calendar_event_navigator.dart';
 import '../services/calendar_service.dart';
 import '../widgets/calendar_event_list.dart';
 import '../widgets/calendar_filter_chips.dart';
@@ -17,6 +18,7 @@ class CalendarScreen extends StatefulWidget {
 
 class _CalendarScreenState extends State<CalendarScreen> {
   final CalendarService _calendarService = CalendarService();
+  final CalendarEventNavigator _eventNavigator = CalendarEventNavigator();
 
   late Future<List<CalendarEvent>> _eventsFuture;
 
@@ -38,6 +40,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
 
     await _eventsFuture;
+  }
+
+  Future<void> _openEvent(CalendarEvent event) async {
+    final opened = await _eventNavigator.openVehicleDetails(context, event);
+    if (!opened || !mounted) return;
+
+    await _refresh();
   }
 
   @override
@@ -98,7 +107,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
                   const SizedBox(height: 24),
 
-                  CalendarEventList(events: filteredEvents),
+                  CalendarEventList(
+                    events: filteredEvents,
+                    onEventTap: _openEvent,
+                  ),
                 ],
               ),
             ),
