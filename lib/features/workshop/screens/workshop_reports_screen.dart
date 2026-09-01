@@ -12,6 +12,7 @@ import '../../auth/services/permission_service.dart';
 import '../../auth/services/user_service.dart';
 import '../../reports/services/pdf_export_service.dart';
 import '../../reports/services/report_operation_gate.dart';
+import '../../reports/widgets/report_preview_screen.dart';
 import '../models/repair_job.dart';
 import '../models/inspection_item.dart';
 import '../models/workshop_inspection.dart';
@@ -251,7 +252,10 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
       if (!mounted) return;
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => PdfPreview(build: (_) async => bytes),
+          builder: (_) => ReportPreviewScreen(
+            title: 'Workshop Report Preview',
+            child: PdfPreview(build: (_) async => bytes),
+          ),
         ),
       );
     },

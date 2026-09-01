@@ -9,6 +9,7 @@ import '../services/pdf_report_service.dart';
 import '../services/pdf_export_service.dart';
 import '../services/pdf_share_service.dart';
 import '../widgets/fleet_report_card.dart';
+import '../widgets/report_preview_screen.dart';
 import '../services/report_operation_gate.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -69,7 +70,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       if (!mounted) return;
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => PdfPreview(build: (_) async => pdfBytes),
+          builder: (_) => ReportPreviewScreen(
+            title: 'Fleet Report Preview',
+            child: PdfPreview(build: (_) async => pdfBytes),
+          ),
         ),
       );
     },
