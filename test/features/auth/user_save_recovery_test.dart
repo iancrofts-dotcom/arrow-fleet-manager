@@ -189,6 +189,7 @@ void main() {
 
       await tester.enterText(find.byType(TextFormField).at(0), 'new.user');
       await tester.enterText(find.byType(TextFormField).at(1), 'password');
+      await tester.enterText(find.byType(TextFormField).at(2), 'password');
       await tester.tap(find.byType(FilledButton));
       await tester.pump();
       await tester.pump();
@@ -206,6 +207,86 @@ void main() {
       expect(attempts, 2);
     },
   );
+
+  testWidgets('UserForm rejects a seven-character new password', (
+    tester,
+  ) async {
+    var saves = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: UserForm(
+            onSave: (_, _, _, _) async {
+              saves++;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'new.user');
+    await tester.enterText(find.byType(TextFormField).at(1), '1234567');
+    await tester.enterText(find.byType(TextFormField).at(2), '1234567');
+    await tester.tap(find.byType(FilledButton));
+    await tester.pump();
+
+    expect(saves, 0);
+    expect(
+      find.text('Password must be at least 8 characters.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('UserForm accepts an eight-character new password', (
+    tester,
+  ) async {
+    var saves = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: UserForm(
+            onSave: (_, _, _, _) async {
+              saves++;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'new.user');
+    await tester.enterText(find.byType(TextFormField).at(1), '12345678');
+    await tester.enterText(find.byType(TextFormField).at(2), '12345678');
+    await tester.tap(find.byType(FilledButton));
+    await tester.pump();
+
+    expect(saves, 1);
+  });
+
+  testWidgets('UserForm rejects a mismatched password confirmation', (
+    tester,
+  ) async {
+    var saves = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: UserForm(
+            onSave: (_, _, _, _) async {
+              saves++;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'new.user');
+    await tester.enterText(find.byType(TextFormField).at(1), '12345678');
+    await tester.enterText(find.byType(TextFormField).at(2), '87654321');
+    await tester.tap(find.byType(FilledButton));
+    await tester.pump();
+
+    expect(saves, 0);
+    expect(find.text('Passwords do not match'), findsOneWidget);
+  });
 }
 
 User _user(String id, String username) => User(

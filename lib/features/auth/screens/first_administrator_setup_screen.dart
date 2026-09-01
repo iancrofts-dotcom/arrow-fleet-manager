@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../models/user_role.dart';
 import '../services/auth_initializer.dart';
+import '../services/password_policy.dart';
 import '../services/user_service.dart';
 import 'login_screen.dart';
 
@@ -171,9 +172,7 @@ class _FirstAdministratorSetupScreenState
                             labelText: 'Password',
                           ),
                           validator: (value) =>
-                              value == null || value.length < 4
-                              ? 'Password must be at least 4 characters'
-                              : null,
+                              PasswordPolicy.validate(value ?? ''),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(

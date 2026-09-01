@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/user.dart';
 import '../models/user_role.dart';
+import '../services/password_policy.dart';
 
 class UserForm extends StatefulWidget {
   const UserForm({super.key, this.user, required this.onSave});
@@ -24,6 +25,7 @@ class _UserFormState extends State<UserForm> {
 
   late final TextEditingController _usernameController;
   late final TextEditingController _passwordController;
+  late final TextEditingController _confirmationController;
 
   late UserRole _role;
   late bool _isActive;
@@ -41,6 +43,7 @@ class _UserFormState extends State<UserForm> {
     );
 
     _passwordController = TextEditingController();
+    _confirmationController = TextEditingController();
 
     _role = widget.user?.role ?? UserRole.driver;
 
@@ -51,6 +54,7 @@ class _UserFormState extends State<UserForm> {
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
+    _confirmationController.dispose();
     super.dispose();
   }
 
@@ -112,8 +116,26 @@ class _UserFormState extends State<UserForm> {
               labelText: _isEdit ? 'New Password (optional)' : 'Password',
             ),
             validator: (value) {
-              if (!_isEdit && (value == null || value.length < 4)) {
-                return 'Password must be at least 4 characters';
+              final password = value ?? '';
+              if (!_isEdit || password.isNotEmpty) {
+                return PasswordPolicy.validate(password);
+              }
+
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          TextFormField(
+            controller: _confirmationController,
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: _isEdit ? 'Confirm New Password' : 'Confirm Password',
+            ),
+            validator: (value) {
+              if (value != _passwordController.text) {
+                return 'Passwords do not match';
               }
 
               return null;
