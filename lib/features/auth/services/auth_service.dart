@@ -1,26 +1,50 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+
 import '../models/user.dart';
 import '../models/user_role.dart';
 import 'session_service.dart';
 import 'user_service.dart';
 
-class AuthService {
-  AuthService({UserService? userService, SessionService? sessionService})
-    : _userService = userService ?? UserService.instance,
-      _sessionService = sessionService ?? SessionService.instance;
+typedef NowProvider = DateTime Function();
+
+class AuthService extends ChangeNotifier {
+  AuthService({
+    UserService? userService,
+    SessionService? sessionService,
+    NowProvider? now,
+    this.enableSessionWatchdog = true,
+  }) : _userService = userService ?? UserService.instance,
+       _sessionService = sessionService ?? SessionService.instance,
+       _now = now ?? DateTime.now;
+
+  static const idleTimeout = Duration(minutes: 60);
+  static const absoluteTimeout = Duration(hours: 12);
+  static const _watchdogInterval = Duration(minutes: 1);
 
   static final AuthService instance = AuthService();
 
   final UserService _userService;
   final SessionService _sessionService;
+  final NowProvider _now;
+  final bool enableSessionWatchdog;
 
   User? _currentUser;
   bool _requiresPasswordChange = false;
+  DateTime? _authenticatedAt;
+  DateTime? _lastActivityAt;
+  Timer? _sessionWatchdog;
 
   User? get currentUser => _currentUser;
 
   bool get isLoggedIn => _currentUser != null;
 
   bool get requiresPasswordChange => _requiresPasswordChange;
+
+  DateTime? get authenticatedAt => _authenticatedAt;
+
+  DateTime? get lastActivityAt => _lastActivityAt;
 
   Future<bool> login({
     required String username,
@@ -35,24 +59,72 @@ class AuthService {
       return false;
     }
 
+    final loginTime = _now();
     _currentUser = user;
     _requiresPasswordChange = _userService.requiresPasswordChange(user);
+    _authenticatedAt = loginTime;
+    _lastActivityAt = loginTime;
 
-    // Save session
+    // Kept only as compatibility cleanup for existing installations. It is
+    // never used to restore authentication after an application restart.
     await _sessionService.saveUserId(user.id);
+    _startSessionWatchdog();
+    notifyListeners();
 
     return true;
   }
 
+  /// Application restarts require a fresh login. Older versions persisted a
+  /// user ID, so remove it rather than treating it as authentication state.
   Future<bool> restoreSession() async {
-    return (await revalidateCurrentSession()) ==
-        SessionValidationResult.authenticated;
+    await _invalidateSession(notify: false);
+    return false;
   }
 
-  Future<void> logout() async {
-    _currentUser = null;
-    _requiresPasswordChange = false;
-    await _sessionService.clearSession();
+  Future<void> logout() => _invalidateSession();
+
+  /// Records user activity for the in-memory session. Activity never extends
+  /// the absolute lifetime and cannot revive an expired session.
+  Future<void> registerActivity() async {
+    if (_currentUser == null ||
+        _authenticatedAt == null ||
+        _lastActivityAt == null) {
+      return;
+    }
+
+    if (await evaluateSessionExpiry() == SessionExpiryStatus.expired) {
+      return;
+    }
+
+    _lastActivityAt = _now();
+  }
+
+  /// Evaluates the in-memory session lifetime without relying on watchdog tick
+  /// counts. Normal expiry is represented by [SessionExpiryStatus.expired].
+  Future<SessionExpiryStatus> evaluateSessionExpiry() async {
+    final authenticatedAt = _authenticatedAt;
+    final lastActivityAt = _lastActivityAt;
+
+    if (_currentUser == null) {
+      return SessionExpiryStatus.noSession;
+    }
+
+    if (authenticatedAt == null || lastActivityAt == null) {
+      await _invalidateSession();
+      return SessionExpiryStatus.expired;
+    }
+
+    final now = _now();
+    final isIdleExpired = now.difference(lastActivityAt) >= idleTimeout;
+    final isAbsoluteExpired =
+        now.difference(authenticatedAt) >= absoluteTimeout;
+
+    if (!isIdleExpired && !isAbsoluteExpired) {
+      return SessionExpiryStatus.valid;
+    }
+
+    await _invalidateSession();
+    return SessionExpiryStatus.expired;
   }
 
   /// Replaces a historic bootstrap credential, confirms the persisted user no
@@ -80,7 +152,16 @@ class AuthService {
   /// callers can fail closed without treating a transient database issue as a
   /// logout.
   Future<SessionValidationResult> revalidateCurrentSession() async {
-    final userId = _currentUser?.id ?? await _sessionService.getUserId();
+    if (_currentUser == null) {
+      await _invalidateSession(notify: false);
+      return SessionValidationResult.unauthenticated;
+    }
+
+    if (await evaluateSessionExpiry() != SessionExpiryStatus.valid) {
+      return SessionValidationResult.unauthenticated;
+    }
+
+    final userId = _currentUser?.id;
     if (userId == null) {
       return SessionValidationResult.unauthenticated;
     }
@@ -88,14 +169,13 @@ class AuthService {
     try {
       final user = await _userService.getUserById(userId);
       if (user == null || !user.isActive) {
-        _currentUser = null;
-        _requiresPasswordChange = false;
-        await _sessionService.clearSession();
+        await _invalidateSession();
         return SessionValidationResult.unauthenticated;
       }
 
       _currentUser = user;
       _requiresPasswordChange = _userService.requiresPasswordChange(user);
+      notifyListeners();
       return SessionValidationResult.authenticated;
     } catch (_) {
       return SessionValidationResult.refreshFailed;
@@ -129,6 +209,44 @@ class AuthService {
 
     return user;
   }
+
+  void _startSessionWatchdog() {
+    if (!enableSessionWatchdog || _sessionWatchdog != null) {
+      return;
+    }
+
+    _sessionWatchdog = Timer.periodic(_watchdogInterval, (_) {
+      unawaited(evaluateSessionExpiry());
+    });
+  }
+
+  Future<void> _invalidateSession({bool notify = true}) async {
+    final hadAuthState =
+        _currentUser != null ||
+        _requiresPasswordChange ||
+        _authenticatedAt != null ||
+        _lastActivityAt != null;
+
+    _sessionWatchdog?.cancel();
+    _sessionWatchdog = null;
+    _currentUser = null;
+    _requiresPasswordChange = false;
+    _authenticatedAt = null;
+    _lastActivityAt = null;
+    await _sessionService.clearSession();
+
+    if (notify && hadAuthState) {
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _sessionWatchdog?.cancel();
+    super.dispose();
+  }
 }
+
+enum SessionExpiryStatus { noSession, valid, expired }
 
 enum SessionValidationResult { authenticated, unauthenticated, refreshFailed }

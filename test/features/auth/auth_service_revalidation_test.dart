@@ -23,7 +23,11 @@ void main() {
     users = _FakeUserRepository();
     userService = UserService(repository: users, passwordService: passwords);
     sessions = SessionService();
-    auth = AuthService(userService: userService, sessionService: sessions);
+    auth = AuthService(
+      userService: userService,
+      sessionService: sessions,
+      enableSessionWatchdog: false,
+    );
   });
 
   Future<void> signIn(User user, {String password = 'password'}) async {

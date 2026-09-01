@@ -25,6 +25,7 @@ void main() {
     authService = AuthService(
       userService: userService,
       sessionService: SessionService(),
+      enableSessionWatchdog: false,
     );
   });
 
@@ -83,6 +84,7 @@ void main() {
       final restartedAuth = AuthService(
         userService: userService,
         sessionService: SessionService(),
+        enableSessionWatchdog: false,
       );
       expect(await restartedAuth.restoreSession(), isFalse);
       expect(restartedAuth.requiresPasswordChange, isFalse);
