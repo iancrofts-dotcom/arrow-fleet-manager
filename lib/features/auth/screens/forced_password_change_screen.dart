@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/user.dart';
 import '../services/auth_service.dart';
+import '../services/password_policy.dart';
 import 'login_screen.dart';
 
 class ForcedPasswordChangeScreen extends StatefulWidget {
@@ -125,9 +126,7 @@ class _ForcedPasswordChangeScreenState
                             labelText: 'New password',
                           ),
                           validator: (value) =>
-                              value == null || value.length < 4
-                              ? 'Password must be at least 4 characters'
-                              : null,
+                              PasswordPolicy.validate(value ?? ''),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(

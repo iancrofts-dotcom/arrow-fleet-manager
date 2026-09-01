@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../models/user_role.dart';
 import '../services/auth_service.dart';
+import '../services/password_policy.dart';
 import '../services/permission_service.dart';
 import '../services/user_service.dart';
 import '../../drivers/models/driver_compliance.dart';
@@ -246,10 +247,13 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                     decoration: const InputDecoration(
                       labelText: 'New Password (optional)',
                     ),
-                    validator: (value) =>
-                        value != null && value.isNotEmpty && value.length < 4
-                        ? 'Password must be at least 4 characters.'
-                        : null,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return null;
+                      }
+
+                      return PasswordPolicy.validate(value);
+                    },
                   ),
                   const SizedBox(height: 12),
                   Text('Role: ${_user!.role.displayName}'),

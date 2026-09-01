@@ -28,9 +28,12 @@ void main() {
     );
   });
 
-  Future<void> enterReplacementPassword(WidgetTester tester) async {
-    await tester.enterText(find.byType(TextFormField).at(0), 'new-password');
-    await tester.enterText(find.byType(TextFormField).at(1), 'new-password');
+  Future<void> enterReplacementPassword(
+    WidgetTester tester, {
+    String password = 'new-password',
+  }) async {
+    await tester.enterText(find.byType(TextFormField).at(0), password);
+    await tester.enterText(find.byType(TextFormField).at(1), password);
     await tester.tap(find.text('Change password'));
     await tester.pumpAndSettle();
   }
@@ -64,7 +67,7 @@ void main() {
         ),
       );
 
-      await enterReplacementPassword(tester);
+      await enterReplacementPassword(tester, password: '12345678');
 
       final updated = await userService.getUserById(seeded.id);
       expect(notified, isTrue);
@@ -88,11 +91,62 @@ void main() {
         isNull,
       );
       expect(
-        await userService.login(username: 'admin', password: 'new-password'),
+        await userService.login(username: 'admin', password: '12345678'),
         isNotNull,
       );
     },
   );
+
+  testWidgets('a seven-character replacement password is rejected', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: ForcedPasswordChangeScreen(
+          user: User(
+            id: 'admin-id',
+            username: 'admin',
+            passwordHash: '',
+            role: UserRole.admin,
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextFormField).at(0), '1234567');
+    await tester.enterText(find.byType(TextFormField).at(1), '1234567');
+    await tester.tap(find.text('Change password'));
+    await tester.pump();
+
+    expect(
+      find.text('Password must be at least 8 characters.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('a mismatched replacement password confirmation is rejected', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: ForcedPasswordChangeScreen(
+          user: User(
+            id: 'admin-id',
+            username: 'admin',
+            passwordHash: '',
+            role: UserRole.admin,
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextFormField).at(0), '12345678');
+    await tester.enterText(find.byType(TextFormField).at(1), '87654321');
+    await tester.tap(find.text('Change password'));
+    await tester.pump();
+
+    expect(find.text('Passwords do not match'), findsOneWidget);
+  });
 
   testWidgets('a failed replacement keeps the screen available for retry', (
     tester,
