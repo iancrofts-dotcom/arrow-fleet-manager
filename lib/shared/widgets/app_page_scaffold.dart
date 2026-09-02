@@ -33,9 +33,8 @@ class AppPageScaffold extends StatelessWidget {
     floatingActionButton: floatingActionButton,
     body: LayoutBuilder(
       builder: (context, constraints) {
-        final padding = constraints.maxWidth < 700
-            ? AppConstants.padding
-            : AppConstants.spaceLg;
+        final compact = constraints.maxWidth < 960;
+        final padding = compact ? AppConstants.spaceMd : AppConstants.spaceLg;
         return Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
@@ -53,7 +52,9 @@ class AppPageScaffold extends StatelessWidget {
                         showBackButton:
                             showBackButton ?? Navigator.of(context).canPop(),
                       ),
-                  SizedBox(height: bodySpacing),
+                  SizedBox(
+                    height: compact ? AppConstants.spaceLg : bodySpacing,
+                  ),
                   Expanded(child: child),
                 ],
               ),
@@ -88,14 +89,14 @@ class PageHeader extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final narrow = constraints.maxWidth < 700;
-        final logoSize = narrow ? 56.0 : 80.0;
+        final compact = MediaQuery.sizeOf(context).width < 960;
+        final logoSize = compact ? 56.0 : 80.0;
         return Container(
           width: double.infinity,
-          padding: EdgeInsets.all(narrow ? AppConstants.padding : 28),
+          padding: EdgeInsets.all(compact ? AppConstants.spaceMd : 28),
           decoration: BoxDecoration(
             color: scheme.primaryContainer,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(compact ? 16 : 24),
           ),
           child: Wrap(
             spacing: 18,
@@ -108,28 +109,29 @@ class PageHeader extends StatelessWidget {
                   onPressed: () => Navigator.of(context).maybePop(),
                   icon: const Icon(Icons.arrow_back),
                 ),
-              Image.asset(
-                'assets/images/arrow_logo.png',
-                width: logoSize,
-                height: logoSize,
-                fit: BoxFit.contain,
-              ),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: narrow ? constraints.maxWidth - 40 : 720,
+              if (!compact)
+                Image.asset(
+                  'assets/images/arrow_logo.png',
+                  width: logoSize,
+                  height: logoSize,
+                  fit: BoxFit.contain,
                 ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      brandLabel,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: scheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w800,
+                    if (!compact) ...[
+                      Text(
+                        brandLabel,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: scheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
+                      const SizedBox(height: 3),
+                    ],
                     Text(
                       title,
                       style: Theme.of(context).textTheme.headlineMedium

@@ -93,6 +93,7 @@ class _DashboardContentState extends State<_DashboardContent> {
   @override
   Widget build(BuildContext context) {
     final dashboardRole = _getDashboardRole();
+    final width = MediaQuery.sizeOf(context).width;
 
     return AppPageScaffold(
       title: 'Dashboard',
@@ -100,8 +101,9 @@ class _DashboardContentState extends State<_DashboardContent> {
       customHeader: DashboardHeroHeader(
         onRefresh: _refreshDashboard,
         onLogout: _logout,
-        showBrand: MediaQuery.sizeOf(context).width < 960,
-        showLogout: MediaQuery.sizeOf(context).width < 960,
+        showBrand: false,
+        showLogout: false,
+        showIdentity: width >= 960,
       ),
       child: dashboardRole == DashboardRole.driver
           ? const DriverDashboard()

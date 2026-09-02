@@ -13,6 +13,7 @@ class InspectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showProductBranding = MediaQuery.sizeOf(context).width >= 960;
     return Card(
       elevation: 5,
       child: Padding(
@@ -20,8 +21,9 @@ class InspectionHeader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
+            if (showProductBranding)
+              Row(
+                children: [
                 Icon(
                   Icons.local_shipping,
                   color: AppConstants.primaryColor,
@@ -53,10 +55,10 @@ class InspectionHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-              ],
-            ),
+                ],
+              ),
 
-const SizedBox(height: 8),
+            if (showProductBranding) const SizedBox(height: 8),
 
 Text(
   'Daily Walkaround Inspection',
@@ -66,93 +68,116 @@ Text(
 ),
 
             const Divider(height: 32),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 480;
+                final date =
+                    '${inspectionDate.day.toString().padLeft(2, '0')}/'
+                    '${inspectionDate.month.toString().padLeft(2, '0')}/'
+                    '${inspectionDate.year}';
+                final time =
+                    '${inspectionDate.hour.toString().padLeft(2, '0')}:'
+                    '${inspectionDate.minute.toString().padLeft(2, '0')}';
 
-            Row(
-              children: [
-                const Icon(Icons.badge_outlined),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "Inspection Number",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                Text(
-                  inspectionNumber,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+                return Column(
+                  children: [
+                    _InspectionMetadata(
+                      compact: compact,
+                      icon: Icons.badge_outlined,
+                      label: 'Inspection Number',
+                      value: Text(
+                        inspectionNumber,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _InspectionMetadata(
+                      compact: compact,
+                      icon: Icons.calendar_today_outlined,
+                      label: 'Inspection Date',
+                      value: Text(date),
+                    ),
+                    const SizedBox(height: 12),
+                    _InspectionMetadata(
+                      compact: compact,
+                      icon: Icons.access_time,
+                      label: 'Inspection Time',
+                      value: Text(time),
+                    ),
+                    const SizedBox(height: 12),
+                    _InspectionMetadata(
+                      compact: compact,
+                      icon: Icons.check_circle,
+                      iconColor: Colors.green,
+                      label: 'Status',
+                      value: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'New Inspection',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                const Icon(Icons.calendar_today_outlined),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "Inspection Date",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                Text(
-                  "${inspectionDate.day.toString().padLeft(2, '0')}/"
-                  "${inspectionDate.month.toString().padLeft(2, '0')}/"
-                  "${inspectionDate.year}",
-                ),
-              ],
-            ),
-
-Row(
-  children: [
-    const Icon(Icons.access_time),
-    const SizedBox(width: 8),
-    const Expanded(
-      child: Text("Inspection Time"),
-    ),
-    Text(
-      "${inspectionDate.hour.toString().padLeft(2,'0')}:"
-      "${inspectionDate.minute.toString().padLeft(2,'0')}",
-    ),
-  ],
-),
-            
-            Row(
-  children: [
-    const Icon(
-      Icons.check_circle,
-      color: Colors.green,
-    ),
-    const SizedBox(width: 8),
-    const Expanded(
-      child: Text("Status"),
-    ),
-    Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.green.shade100,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Text(
-        "New Inspection",
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ),
-  ],
-),
 
           ],
         ),
         
       ),
+    );
+  }
+}
+
+class _InspectionMetadata extends StatelessWidget {
+  const _InspectionMetadata({
+    required this.compact,
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.iconColor,
+  });
+
+  final bool compact;
+  final IconData icon;
+  final Color? iconColor;
+  final String label;
+  final Widget value;
+
+  @override
+  Widget build(BuildContext context) {
+    final labelWidget = Text(
+      label,
+      style: Theme.of(context).textTheme.titleMedium,
+    );
+    return Row(
+      crossAxisAlignment:
+          compact ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      children: [
+        Icon(icon, color: iconColor),
+        const SizedBox(width: 8),
+        if (compact)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [labelWidget, const SizedBox(height: 4), value],
+            ),
+          )
+        else ...[
+          Expanded(child: labelWidget),
+          const SizedBox(width: 12),
+          Flexible(child: value),
+        ],
+      ],
     );
   }
 }

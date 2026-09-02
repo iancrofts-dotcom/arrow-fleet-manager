@@ -1,6 +1,7 @@
 import 'package:arrow_fleet_manager/shared/status_badge.dart';
 import 'package:arrow_fleet_manager/shared/widgets/app_page_scaffold.dart';
 import 'package:arrow_fleet_manager/app/theme.dart';
+import 'package:arrow_fleet_manager/features/dashboard/widgets/dashboard_hero_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,6 +9,7 @@ void main() {
   testWidgets('AppPageScaffold renders its header, action, and body', (
     tester,
   ) async {
+    _setViewport(tester, const Size(1280, 800));
     await tester.pumpWidget(
       MaterialApp(
         home: AppPageScaffold(
@@ -23,6 +25,60 @@ void main() {
     expect(find.text('Fleet Vehicles'), findsOneWidget);
     expect(find.text('Page body'), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
+  });
+
+  testWidgets('compact headers retain page context without product branding', (
+    tester,
+  ) async {
+    _setViewport(tester, const Size(390, 844));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AppPageScaffold(
+          title: 'Fleet Calendar',
+          subtitle: 'Upcoming fleet, maintenance and compliance dates.',
+          actions: [
+            OutlinedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh'),
+            ),
+          ],
+          child: const SizedBox(),
+        ),
+      ),
+    );
+
+    expect(find.text('Arrow Fleet Manager'), findsNothing);
+    expect(find.text('Fleet Calendar'), findsOneWidget);
+    expect(find.text('Upcoming fleet, maintenance and compliance dates.'), findsOneWidget);
+    expect(find.text('Refresh'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('compact dashboard header retains refresh without branding', (
+    tester,
+  ) async {
+    _setViewport(tester, const Size(390, 844));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DashboardHeroHeader(
+            onRefresh: () {},
+            onLogout: () {},
+            showBrand: false,
+            showLogout: false,
+            showIdentity: false,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Arrow Fleet Manager'), findsNothing);
+    expect(find.text('Dashboard'), findsNothing);
+    expect(find.text('Refresh'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('AppPageScaffold uses a supplied custom header', (tester) async {
@@ -97,4 +153,11 @@ void main() {
     await tester.tap(find.text('Refresh'));
     expect(invoked, isTrue);
   });
+}
+
+void _setViewport(WidgetTester tester, Size size) {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
 }

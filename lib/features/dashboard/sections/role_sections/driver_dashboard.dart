@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/router.dart';
 import '../../../auth/screens/my_account_screen.dart';
 import '../../../auth/services/auth_service.dart';
 import '../../../auth/services/permission_service.dart';
@@ -102,6 +103,7 @@ class DriverDashboard extends StatelessWidget {
               subtitle: 'Complete today\'s vehicle walkaround',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
+                  settings: const RouteSettings(name: AppRouter.dashboard),
                   builder: (_) => ProtectedScreen(
                     allow: (permissions) =>
                         permissions.canPerformDailyInspection,

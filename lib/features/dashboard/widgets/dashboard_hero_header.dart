@@ -7,12 +7,14 @@ class DashboardHeroHeader extends StatelessWidget {
     required this.onLogout,
     this.showBrand = true,
     this.showLogout = true,
+    this.showIdentity = true,
   });
 
   final VoidCallback onRefresh;
   final VoidCallback onLogout;
   final bool showBrand;
   final bool showLogout;
+  final bool showIdentity;
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +22,7 @@ class DashboardHeroHeader extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final narrow = constraints.maxWidth < 800;
+        final compact = MediaQuery.sizeOf(context).width < 960;
         final actions = Wrap(
           spacing: 10,
           children: [
@@ -79,7 +82,7 @@ class DashboardHeroHeader extends StatelessWidget {
         );
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(compact ? 16 : 24),
           decoration: BoxDecoration(
             color: scheme.primaryContainer,
             borderRadius: BorderRadius.circular(24),
@@ -89,9 +92,10 @@ class DashboardHeroHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (showBrand) brand,
-                    const SizedBox(height: 20),
-                    identity,
-                    const SizedBox(height: 20),
+                    if (showBrand || showIdentity)
+                      const SizedBox(height: 20),
+                    if (showIdentity) identity,
+                    if (showIdentity) const SizedBox(height: 20),
                     actions,
                   ],
                 )
@@ -101,7 +105,7 @@ class DashboardHeroHeader extends StatelessWidget {
                       SizedBox(width: 360, child: brand),
                       const SizedBox(width: 32),
                     ],
-                    Expanded(child: identity),
+                    if (showIdentity) Expanded(child: identity),
                     actions,
                   ],
                 ),

@@ -104,7 +104,13 @@ class AppShell extends StatelessWidget {
       builder: (context, constraints) {
         if (constraints.maxWidth < 960 ||
             !(isAuthenticated ?? AuthService.instance.isLoggedIn)) {
-          return child;
+          return (isAuthenticated ?? AuthService.instance.isLoggedIn)
+              ? _MobileShell(
+                  navigatorKey: navigatorKey,
+                  currentRoute: currentRoute,
+                  child: child,
+                )
+              : child;
         }
         return Row(
           children: [
@@ -116,6 +122,241 @@ class AppShell extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _MobileShell extends StatelessWidget {
+  const _MobileShell({
+    required this.navigatorKey,
+    required this.currentRoute,
+    required this.child,
+  });
+
+  final GlobalKey<NavigatorState> navigatorKey;
+  final ValueListenable<String> currentRoute;
+  final Widget child;
+
+  void _navigate(String route) {
+    if (currentRoute.value != route) {
+      navigatorKey.currentState?.pushNamedAndRemoveUntil(route, (_) => false);
+    }
+  }
+
+  void _showMore(List<AppShellDestination> destinations) {
+    navigatorKey.currentState?.push(
+      MaterialPageRoute<void>(
+        builder: (_) => _MobileMoreScreen(
+          destinations: destinations,
+          onNavigate: _navigate,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String>(
+      valueListenable: currentRoute,
+      builder: (context, route, _) {
+        final permissions = PermissionService.instance;
+        final primary = AppShellDestinations.all
+            .where(
+              (destination) =>
+                  destination.route == AppRouter.dashboard ||
+                  destination.route == AppRouter.vehicles ||
+                  destination.route == AppRouter.drivers ||
+                  destination.route == AppRouter.calendar,
+            )
+            .where((destination) => destination.isVisible(permissions))
+            .toList();
+        final secondary = AppShellDestinations.all
+            .where(
+              (destination) =>
+                  destination.route != AppRouter.dashboard &&
+                  destination.route != AppRouter.vehicles &&
+                  destination.route != AppRouter.drivers &&
+                  destination.route != AppRouter.calendar,
+            )
+            .where((destination) => destination.isVisible(permissions))
+            .toList();
+        final selectedPrimaryIndex = primary.indexWhere(
+          (destination) => destination.route == route,
+        );
+
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: AppConstants.brandNavy,
+            foregroundColor: Colors.white,
+            titleSpacing: 0,
+            leadingWidth: 52,
+            leading: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Image.asset(
+                'assets/images/arrow_logo_high.png',
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
+            ),
+            title: Text(_titleFor(route)),
+          ),
+          body: child,
+          bottomNavigationBar: _CompactBottomNavigation(
+            destinations: primary,
+            selectedIndex: selectedPrimaryIndex < 0 ? 0 : selectedPrimaryIndex,
+            onNavigate: _navigate,
+            onMore: () => _showMore(secondary),
+          ),
+        );
+      },
+    );
+  }
+
+  String _titleFor(String route) {
+    for (final destination in AppShellDestinations.all) {
+      if (destination.route == route) return destination.label;
+    }
+    return 'Fleet Manager';
+  }
+}
+
+class _CompactBottomNavigation extends StatelessWidget {
+  const _CompactBottomNavigation({
+    required this.destinations,
+    required this.selectedIndex,
+    required this.onNavigate,
+    required this.onMore,
+  });
+
+  final List<AppShellDestination> destinations;
+  final int selectedIndex;
+  final ValueChanged<String> onNavigate;
+  final VoidCallback onMore;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      key: const Key('compact-bottom-navigation'),
+      color: Colors.white,
+      child: SizedBox(
+        height: 64,
+        child: SafeArea(
+          top: false,
+          child: Container(
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(color: AppConstants.borderColor),
+              ),
+            ),
+            child: Row(
+              children: [
+                for (var index = 0; index < destinations.length; index++)
+                  Expanded(
+                    child: _CompactNavigationDestination(
+                      destination: destinations[index],
+                      selected: index == selectedIndex,
+                      onTap: () => onNavigate(destinations[index].route),
+                    ),
+                  ),
+                Expanded(
+                  child: _CompactNavigationDestination(
+                    label: 'More',
+                    icon: Icons.more_horiz,
+                    selected: false,
+                    onTap: onMore,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CompactNavigationDestination extends StatelessWidget {
+  const _CompactNavigationDestination({
+    this.destination,
+    this.label,
+    this.icon,
+    required this.selected,
+    required this.onTap,
+  }) : assert(destination != null || (label != null && icon != null));
+
+  final AppShellDestination? destination;
+  final String? label;
+  final IconData? icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final destinationLabel = destination?.label ?? label!;
+    final destinationIcon = destination?.icon ?? icon!;
+    final color = selected ? AppConstants.arrowBlue : AppConstants.neutralColor;
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: destinationLabel,
+      child: InkWell(
+        key: Key('compact-destination-$destinationLabel'),
+        onTap: onTap,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(destinationIcon, color: color, size: 21),
+              const SizedBox(height: 2),
+              Text(
+                destinationLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileMoreScreen extends StatelessWidget {
+  const _MobileMoreScreen({
+    required this.destinations,
+    required this.onNavigate,
+  });
+
+  final List<AppShellDestination> destinations;
+  final ValueChanged<String> onNavigate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('More')),
+      body: ListView(
+        padding: const EdgeInsets.all(AppConstants.spaceMd),
+        children: [
+          for (final destination in destinations)
+            ListTile(
+              leading: Icon(destination.icon),
+              title: Text(destination.label),
+              onTap: () => onNavigate(destination.route),
+            ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Logout'),
+            onTap: () => AuthService.instance.logout(),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -158,36 +399,41 @@ class _DesktopSidebar extends StatelessWidget {
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.white.withValues(alpha: 0.06),
-                      blurRadius: 8,
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppConstants.borderColor),
+                      ),
+                      child: SizedBox(
+                        width: 160,
+                        height: 132,
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppConstants.spaceXs),
+                          child: Image.asset(
+                            'assets/images/arrow_logo_high.png',
+                            key: const Key('sidebar-official-logo'),
+                            fit: BoxFit.contain,
+                            alignment: Alignment.center,
+                            filterQuality: FilterQuality.high,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceXs),
+                    const Text(
+                      'Fleet Manager',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
-                ),
-                child: SizedBox(
-                  width: 160,
-                  height: 132,
-                  child: Image.asset(
-                    'assets/images/arrow_logo_high.png',
-                    key: const Key('sidebar-official-logo'),
-                    fit: BoxFit.contain,
-                    alignment: Alignment.centerLeft,
-                    filterQuality: FilterQuality.high,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppConstants.spaceXs),
-              const Text(
-                'Fleet Manager',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: AppConstants.spaceMd),
