@@ -6,13 +6,22 @@ class AppTheme {
     final scheme = ColorScheme.fromSeed(
       seedColor: AppConstants.primaryColor,
       brightness: Brightness.light,
+    ).copyWith(
+      primary: AppConstants.arrowBlue,
+      secondary: AppConstants.brandNavy,
+      surface: AppConstants.surfaceColor,
+      error: AppConstants.dangerColor,
     );
+    final typography = Typography.material2021().black;
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: const Color(0xFFF5F7F9),
-      dividerTheme: DividerThemeData(color: scheme.outlineVariant, space: 1),
+      scaffoldBackgroundColor: AppConstants.appBackgroundColor,
+      dividerTheme: const DividerThemeData(
+        color: AppConstants.borderColor,
+        space: 1,
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surface,
         foregroundColor: scheme.onSurface,
@@ -26,6 +35,33 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.borderRadius),
           side: BorderSide(color: scheme.outlineVariant),
+        ),
+      ),
+      textTheme: typography.copyWith(
+        headlineMedium: typography.headlineMedium?.copyWith(
+          color: AppConstants.primaryTextColor,
+          fontWeight: FontWeight.w800,
+        ),
+        headlineSmall: typography.headlineSmall?.copyWith(
+          color: AppConstants.primaryTextColor,
+          fontWeight: FontWeight.w700,
+        ),
+        titleLarge: typography.titleLarge?.copyWith(
+          color: AppConstants.primaryTextColor,
+          fontWeight: FontWeight.w700,
+        ),
+        titleMedium: typography.titleMedium?.copyWith(
+          color: AppConstants.primaryTextColor,
+          fontWeight: FontWeight.w600,
+        ),
+        bodyMedium: typography.bodyMedium?.copyWith(
+          color: AppConstants.primaryTextColor,
+        ),
+        bodySmall: typography.bodySmall?.copyWith(
+          color: AppConstants.secondaryTextColor,
+        ),
+        labelLarge: typography.labelLarge?.copyWith(
+          fontWeight: FontWeight.w700,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -50,7 +86,7 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(0, 44),
+          minimumSize: const Size(0, AppConstants.controlHeight),
           padding: const EdgeInsets.symmetric(
             horizontal: AppConstants.spaceMd,
             vertical: AppConstants.spaceSm,
@@ -59,11 +95,17 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(0, 44),
+          minimumSize: const Size(0, AppConstants.controlHeight),
           padding: const EdgeInsets.symmetric(
             horizontal: AppConstants.spaceMd,
             vertical: AppConstants.spaceSm,
           ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          minimumSize: const Size(0, AppConstants.controlHeight),
+          padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceMd),
         ),
       ),
     );

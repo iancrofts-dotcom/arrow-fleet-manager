@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../app/constants.dart';
 
+enum SectionCardVariant { standard, kpi, action, alert, compact, dashboardPanel }
+
 class AppPageScaffold extends StatelessWidget {
   const AppPageScaffold({
     super.key,
@@ -212,6 +214,7 @@ class SectionCard extends StatelessWidget {
     this.trailing,
     this.padding = const EdgeInsets.all(AppConstants.padding),
     this.margin,
+    this.variant = SectionCardVariant.standard,
   });
 
   final Widget child;
@@ -220,13 +223,26 @@ class SectionCard extends StatelessWidget {
   final Widget? trailing;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
+  final SectionCardVariant variant;
+
+  Color? _surfaceColor(ColorScheme scheme) => switch (variant) {
+    SectionCardVariant.kpi => scheme.surfaceContainerLow,
+    SectionCardVariant.action => scheme.surfaceContainerLowest,
+    SectionCardVariant.alert => scheme.errorContainer,
+    SectionCardVariant.compact => scheme.surface,
+    SectionCardVariant.dashboardPanel => scheme.surfaceContainerLow,
+    SectionCardVariant.standard => null,
+  };
 
   @override
   Widget build(BuildContext context) => Card(
     margin: margin,
-    elevation: 0,
+    elevation: variant == SectionCardVariant.action ? 1 : 0,
+    color: _surfaceColor(Theme.of(context).colorScheme),
     child: Padding(
-      padding: padding,
+      padding: variant == SectionCardVariant.compact
+          ? const EdgeInsets.all(AppConstants.spaceMd)
+          : padding,
       child: title == null
           ? child
           : Column(

@@ -1,5 +1,6 @@
 import 'package:arrow_fleet_manager/shared/status_badge.dart';
 import 'package:arrow_fleet_manager/shared/widgets/app_page_scaffold.dart';
+import 'package:arrow_fleet_manager/app/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -69,5 +70,31 @@ void main() {
 
     expect(find.text('Not Recorded'), findsOneWidget);
     expect(find.byIcon(Icons.info_outline), findsOneWidget);
+  });
+
+  testWidgets('shared surface variants and themed actions remain usable', (
+    tester,
+  ) async {
+    var invoked = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: SectionCard(
+            title: 'Operational summary',
+            variant: SectionCardVariant.dashboardPanel,
+            child: FilledButton.icon(
+              onPressed: () => invoked = true,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Operational summary'), findsOneWidget);
+    await tester.tap(find.text('Refresh'));
+    expect(invoked, isTrue);
   });
 }

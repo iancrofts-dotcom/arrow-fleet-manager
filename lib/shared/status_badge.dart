@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-enum StatusBadgeTone { success, warning, error, info, neutral }
+import '../app/constants.dart';
+
+enum StatusBadgeTone { success, warning, critical, error, info, neutral }
 
 class StatusBadge extends StatelessWidget {
   const StatusBadge({
@@ -28,8 +30,13 @@ class StatusBadge extends StatelessWidget {
     icon: Icons.warning_amber_rounded,
   );
 
-  factory StatusBadge.error(String label) =>
-      StatusBadge(label: label, tone: StatusBadgeTone.error, icon: Icons.error);
+  factory StatusBadge.critical(String label) => StatusBadge(
+    label: label,
+    tone: StatusBadgeTone.critical,
+    icon: Icons.error,
+  );
+
+  factory StatusBadge.error(String label) => StatusBadge.critical(label);
 
   factory StatusBadge.info(String label) =>
       StatusBadge(label: label, tone: StatusBadgeTone.info, icon: Icons.info);
@@ -40,25 +47,26 @@ class StatusBadge extends StatelessWidget {
     icon: Icons.info_outline,
   );
 
-  Color _resolveColor(ColorScheme scheme) {
+  Color _resolveColor() {
     if (color != null) return color!;
     switch (tone!) {
       case StatusBadgeTone.success:
-        return scheme.primary;
+        return AppConstants.successColor;
       case StatusBadgeTone.warning:
-        return Colors.orange.shade800;
+        return AppConstants.warningColor;
+      case StatusBadgeTone.critical:
       case StatusBadgeTone.error:
-        return scheme.error;
+        return AppConstants.dangerColor;
       case StatusBadgeTone.info:
-        return scheme.secondary;
+        return AppConstants.infoColor;
       case StatusBadgeTone.neutral:
-        return scheme.onSurfaceVariant;
+        return AppConstants.neutralColor;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final resolvedColor = _resolveColor(Theme.of(context).colorScheme);
+    final resolvedColor = _resolveColor();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
