@@ -35,7 +35,7 @@ class FleetReportService {
       motDue: vehicleMetrics.motDue,
       serviceDue: vehicleMetrics.serviceDue,
       overdue: vehicleMetrics.overdue,
-      fleetHealth: summary.fleetHealth,
+      fleetHealth: _dashboardService.getFleetHealth(summary).score.round(),
     );
   }
 }

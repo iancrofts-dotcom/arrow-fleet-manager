@@ -50,7 +50,7 @@ class DashboardContent extends StatelessWidget {
 
                     const SizedBox(height: 30),
 
-                    const DashboardKpiSection(),
+                    DashboardKpiSection(summary: this.context.summary),
 
                     if (this.context.summary.workshopDashboard != null) ...[
                       const SizedBox(height: 24),
@@ -70,7 +70,10 @@ class DashboardContent extends StatelessWidget {
                       rightColumn: [
                         MaintenanceSection(summary: this.context.summary),
 
-                        AnalyticsSection(summary: this.context.summary),
+                        AnalyticsSection(
+                          summary: this.context.summary,
+                          fleetHealth: this.context.fleetHealth,
+                        ),
 
                         ...children,
                       ],

@@ -1,4 +1,5 @@
 import '../models/dashboard_summary.dart';
+import '../models/fleet_health.dart';
 
 class FleetIntelligenceService {
   const FleetIntelligenceService();
@@ -39,7 +40,7 @@ class FleetIntelligenceService {
     return 'Compliant';
   }
 
-  bool fleetHealthy(DashboardSummary summary) {
-    return summary.fleetHealth >= 90;
+  bool fleetHealthy(FleetHealth fleetHealth) {
+    return fleetHealth.isHealthy;
   }
 }

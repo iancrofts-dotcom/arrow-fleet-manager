@@ -20,6 +20,9 @@ class DashboardSummary {
     required this.complianceExpired,
     required this.recentActivity,
     required this.alerts,
+    this.vehicleMotDue = 0,
+    this.maintenanceRecordCount = 0,
+    this.compliancePercentage = 100,
     this.workshopDashboard,
   });
 
@@ -47,6 +50,16 @@ class DashboardSummary {
   final int complianceDue;
   final int complianceExpired;
 
+  /// Persisted-vehicle MOT expiries within the next 30 days.
+  final int vehicleMotDue;
+
+  /// All persisted maintenance records, irrespective of due status.
+  final int maintenanceRecordCount;
+
+  /// Completed compliance checks divided by all required checks for active
+  /// vehicles and active drivers. An empty set of required checks scores 100.
+  final int compliancePercentage;
+
   // Activity
 
   final List<DashboardActivity> recentActivity;
@@ -66,25 +79,9 @@ class DashboardSummary {
 
   int get defects => workshopDashboard?.defectTotal ?? 0;
 
-  int get motDue => complianceDue;
-
   int get serviceDue => maintenanceDue;
 
   int get overdue => maintenanceOverdue;
-
-  int get fleetHealth {
-    if (vehicleCount == 0) {
-      return 100;
-    }
-
-    final issues =
-        maintenanceOverdue + complianceExpired;
-
-    final score =
-        100 - ((issues / vehicleCount) * 100);
-
-    return score.clamp(0, 100).round();
-  }
 
   List<DashboardInsight> get insights {
     final list = <DashboardInsight>[];
@@ -148,6 +145,9 @@ class DashboardSummary {
     int? maintenanceOverdue,
     int? complianceDue,
     int? complianceExpired,
+    int? vehicleMotDue,
+    int? maintenanceRecordCount,
+    int? compliancePercentage,
     List<DashboardActivity>? recentActivity,
     List<DashboardAlert>? alerts,
     WorkshopDashboardData? workshopDashboard,
@@ -168,6 +168,10 @@ class DashboardSummary {
       complianceDue: complianceDue ?? this.complianceDue,
       complianceExpired:
           complianceExpired ?? this.complianceExpired,
+      vehicleMotDue: vehicleMotDue ?? this.vehicleMotDue,
+      maintenanceRecordCount:
+          maintenanceRecordCount ?? this.maintenanceRecordCount,
+      compliancePercentage: compliancePercentage ?? this.compliancePercentage,
       recentActivity:
           recentActivity ?? this.recentActivity,
       alerts: alerts ?? this.alerts,

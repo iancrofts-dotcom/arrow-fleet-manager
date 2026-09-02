@@ -83,7 +83,7 @@ class FleetOverviewSection extends StatelessWidget {
                   child: KpiCard(
                     icon: Icons.assignment_turned_in,
                     title: "MOT Due",
-                    value: summary.motDue.toString(),
+                    value: summary.vehicleMotDue.toString(),
                     subtitle: "Upcoming inspections",
                     color: Colors.orange,
                     onTap: () => DashboardNavigation.openMotDue(context),

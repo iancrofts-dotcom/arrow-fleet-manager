@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/dashboard_summary.dart';
+import '../models/fleet_health.dart';
 import '../widgets/fleet_health_card.dart';
 import '../widgets/fleet_operations_card.dart';
 import '../widgets/fleet_analytics_card.dart';
@@ -11,10 +12,12 @@ import '../widgets/recent_activity_card.dart';
 
 class AnalyticsSection extends StatelessWidget {
   final DashboardSummary summary;
+  final FleetHealth fleetHealth;
 
   const AnalyticsSection({
     super.key,
     required this.summary,
+    required this.fleetHealth,
   });
 
   @override
@@ -22,11 +25,10 @@ class AnalyticsSection extends StatelessWidget {
     return Column(
       children: [
         FleetHealthCard(
-          healthScore: summary.fleetHealth,
+          fleetHealth: fleetHealth,
           maintenanceOverdue: summary.maintenanceOverdue,
           complianceExpired: summary.complianceExpired,
-          healthyVehicles:
-              summary.vehicleCount - summary.maintenanceOverdue,
+          healthyVehicles: summary.vehicleCount - summary.maintenanceOverdue,
         ),
 
         const SizedBox(height: 30),
@@ -36,7 +38,7 @@ class AnalyticsSection extends StatelessWidget {
           totalVehicles: summary.vehicleCount,
           assignedDrivers: summary.assignedDrivers,
           totalDrivers: summary.driverCount,
-          fleetHealth: summary.fleetHealth,
+          fleetHealth: fleetHealth.score.round(),
         ),
 
         const SizedBox(height: 30),
@@ -46,7 +48,7 @@ class AnalyticsSection extends StatelessWidget {
           driverCount: summary.driverCount,
           assignedVehicles: summary.assignedVehicles,
           assignedDrivers: summary.assignedDrivers,
-          fleetHealth: summary.fleetHealth,
+          fleetHealth: fleetHealth.score.round(),
         ),
 
         const SizedBox(height: 30),
@@ -58,7 +60,7 @@ class AnalyticsSection extends StatelessWidget {
         const SizedBox(height: 30),
 
         ComplianceSummaryCard(
-          motDue: summary.motDue,
+          motDue: summary.vehicleMotDue,
           serviceDue: summary.serviceDue,
           overdue: summary.overdue,
         ),

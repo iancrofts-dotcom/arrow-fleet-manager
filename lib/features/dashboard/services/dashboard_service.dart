@@ -3,13 +3,17 @@ import '../../documents/services/document_service.dart';
 import '../../drivers/services/driver_assignment_service.dart';
 import '../../drivers/services/driver_compliance_service.dart';
 import '../../drivers/services/driver_service.dart';
+import '../../drivers/models/driver.dart';
+import '../../drivers/models/driver_compliance.dart';
 import '../../maintenance/services/maintenance_service.dart';
 import '../../vehicles/services/vehicle_service.dart';
+import '../../vehicles/models/vehicle.dart';
 import '../models/dashboard_alert.dart';
 import '../models/dashboard_summary.dart';
 import '../repositories/fleet_dashboard_repository.dart';
 import '../models/fleet_health.dart';
 import 'fleet_health_service.dart';
+import 'fleet_metrics_service.dart';
 import '../../workshop/repositories/workshop_repository.dart';
 import '../../workshop/services/workshop_dashboard_service.dart';
 
@@ -39,6 +43,7 @@ class DashboardService {
   final FleetDashboardRepository _dashboardRepository =
       FleetDashboardRepository.instance;
   final FleetHealthService _fleetHealthService = const FleetHealthService();
+  final FleetMetricsService _fleetMetricsService = const FleetMetricsService();
 
   void _addAlert(
     List<DashboardAlert> alerts, {
@@ -77,6 +82,47 @@ class DashboardService {
     return _fleetHealthService.calculate(summary);
   }
 
+  int _compliancePercentage({
+    required List<Vehicle> vehicles,
+    required List<Driver> drivers,
+    required List<DriverCompliance> complianceRecords,
+  }) {
+    final complianceByDriver = {
+      for (final record in complianceRecords) record.driverId: record,
+    };
+    final now = DateTime.now();
+    var requiredChecks = 0;
+    var compliantChecks = 0;
+
+    for (final vehicle in vehicles.where((vehicle) => vehicle.active)) {
+      for (final date in [vehicle.motExpiry, vehicle.serviceDue]) {
+        requiredChecks++;
+        if (date != null && !date.isBefore(now)) {
+          compliantChecks++;
+        }
+      }
+    }
+
+    for (final driver in drivers.where((driver) => driver.isActive)) {
+      final record = driver.id == null ? null : complianceByDriver[driver.id];
+      for (final date in [
+        record?.licenceExpiry,
+        record?.cpcExpiry,
+        record?.medicalExpiry,
+        record?.dbsExpiry,
+      ]) {
+        requiredChecks++;
+        if (date != null && !date.isBefore(now)) {
+          compliantChecks++;
+        }
+      }
+    }
+
+    return requiredChecks == 0
+        ? 100
+        : ((compliantChecks / requiredChecks) * 100).round();
+  }
+
   Future<DashboardSummary> loadSummary() async {
     final vehicleCount = await _dashboardRepository.getVehicleCount();
 
@@ -102,9 +148,22 @@ class DashboardService {
 
     final documents = await DocumentService().getAll();
 
-    final vehicleMap = await _vehicleService.getVehicleMap();
-
-    final driverMap = await _driverService.getDriverMap();
+    final vehicles = await _vehicleService.getVehicles();
+    final drivers = await _driverService.getDrivers();
+    final vehicleMap = {
+      for (final vehicle in vehicles)
+        if (vehicle.id != null) vehicle.id!: vehicle,
+    };
+    final driverMap = {
+      for (final driver in drivers)
+        if (driver.id != null) driver.id!: driver,
+    };
+    final fleetMetrics = _fleetMetricsService.calculate(vehicles);
+    final compliancePercentage = _compliancePercentage(
+      vehicles: vehicles,
+      drivers: drivers,
+      complianceRecords: compliance,
+    );
 
     final activities = [
       ...await _assignmentService.getRecentActivities(),
@@ -320,6 +379,9 @@ class DashboardService {
       maintenanceOverdue: maintenanceOverdue,
       complianceDue: complianceDue,
       complianceExpired: complianceExpired,
+      vehicleMotDue: fleetMetrics.motDue,
+      maintenanceRecordCount: maintenance.length,
+      compliancePercentage: compliancePercentage,
       recentActivity: recentActivity,
       alerts: alerts.take(15).toList(),
       workshopDashboard: workshopDashboard,

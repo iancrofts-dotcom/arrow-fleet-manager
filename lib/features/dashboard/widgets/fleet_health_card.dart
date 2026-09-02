@@ -1,41 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/navigation/dashboard_navigation.dart';
+import '../models/fleet_health.dart';
 
 class FleetHealthCard extends StatelessWidget {
   const FleetHealthCard({
     super.key,
-    required this.healthScore,
+    required this.fleetHealth,
     required this.maintenanceOverdue,
     required this.complianceExpired,
     required this.healthyVehicles,
   });
 
-  final int healthScore;
+  final FleetHealth fleetHealth;
   final int maintenanceOverdue;
   final int complianceExpired;
   final int healthyVehicles;
 
-  String get status {
-    if (healthScore >= 90) return 'Excellent';
-    if (healthScore >= 75) return 'Good';
-    if (healthScore >= 50) return 'Needs Attention';
-    return 'Critical';
-  }
-
-  Color _statusColor(BuildContext context) {
-    if (healthScore >= 90) {
-      return Colors.green;
-    }
-    if (healthScore >= 75) {
-      return Colors.orange;
-    }
-    return Colors.red;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final statusColor = _statusColor(context);
+    final statusColor = fleetHealth.colour;
 
     return Card(
       elevation: 3,
@@ -55,7 +39,7 @@ class FleetHealthCard extends StatelessWidget {
             const SizedBox(height: 20),
 
             LinearProgressIndicator(
-              value: healthScore / 100,
+              value: fleetHealth.score / 100,
               minHeight: 10,
               borderRadius: BorderRadius.circular(20),
             ),
@@ -66,7 +50,7 @@ class FleetHealthCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '$healthScore%',
+                  fleetHealth.formattedScore,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -77,7 +61,7 @@ class FleetHealthCard extends StatelessWidget {
                     size: 18,
                     color: statusColor,
                   ),
-                  label: Text(status),
+                  label: Text(fleetHealth.label),
                 ),
               ],
             ),
