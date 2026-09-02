@@ -100,6 +100,8 @@ class _DashboardContentState extends State<_DashboardContent> {
       customHeader: DashboardHeroHeader(
         onRefresh: _refreshDashboard,
         onLogout: _logout,
+        showBrand: MediaQuery.sizeOf(context).width < 960,
+        showLogout: MediaQuery.sizeOf(context).width < 960,
       ),
       child: dashboardRole == DashboardRole.driver
           ? const DriverDashboard()

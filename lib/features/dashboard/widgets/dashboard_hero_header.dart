@@ -5,10 +5,14 @@ class DashboardHeroHeader extends StatelessWidget {
     super.key,
     required this.onRefresh,
     required this.onLogout,
+    this.showBrand = true,
+    this.showLogout = true,
   });
 
   final VoidCallback onRefresh;
   final VoidCallback onLogout;
+  final bool showBrand;
+  final bool showLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +28,12 @@ class DashboardHeroHeader extends StatelessWidget {
               icon: const Icon(Icons.refresh),
               label: const Text('Refresh'),
             ),
-            FilledButton.icon(
-              onPressed: onLogout,
-              icon: const Icon(Icons.logout),
-              label: const Text('Logout'),
-            ),
+            if (showLogout)
+              FilledButton.icon(
+                onPressed: onLogout,
+                icon: const Icon(Icons.logout),
+                label: const Text('Logout'),
+              ),
           ],
         );
         final brand = Row(
@@ -83,7 +88,7 @@ class DashboardHeroHeader extends StatelessWidget {
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    brand,
+                    if (showBrand) brand,
                     const SizedBox(height: 20),
                     identity,
                     const SizedBox(height: 20),
@@ -92,8 +97,10 @@ class DashboardHeroHeader extends StatelessWidget {
                 )
               : Row(
                   children: [
-                    SizedBox(width: 360, child: brand),
-                    const SizedBox(width: 32),
+                    if (showBrand) ...[
+                      SizedBox(width: 360, child: brand),
+                      const SizedBox(width: 32),
+                    ],
                     Expanded(child: identity),
                     actions,
                   ],
