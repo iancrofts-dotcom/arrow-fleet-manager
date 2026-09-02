@@ -55,7 +55,7 @@ class DashboardHeader extends StatelessWidget {
         side: BorderSide(color: theme.colorScheme.outlineVariant),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final mobile = constraints.maxWidth < 700;
@@ -65,7 +65,7 @@ class DashboardHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildLeft(theme, now, currentUser?.username ?? "User"),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   _buildRight(theme, currentRole),
                 ],
               );
@@ -81,7 +81,7 @@ class DashboardHeader extends StatelessWidget {
                     currentUser?.username ?? "User",
                   ),
                 ),
-                const SizedBox(width: 24),
+                const SizedBox(width: 20),
                 _buildRight(theme, currentRole),
               ],
             );
@@ -122,12 +122,12 @@ class DashboardHeader extends StatelessWidget {
             Text("3"),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         Chip(
           avatar: Icon(_roleIcon(role), size: 18),
           label: Text(role?.displayName ?? "Unknown"),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [

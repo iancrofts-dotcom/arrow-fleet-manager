@@ -9,6 +9,7 @@ class AppPageScaffold extends StatelessWidget {
     required this.child,
     this.subtitle,
     this.actions,
+    this.customHeader,
     this.floatingActionButton,
     this.maxContentWidth = AppConstants.contentMaxWidth,
     this.showBackButton,
@@ -19,6 +20,7 @@ class AppPageScaffold extends StatelessWidget {
   final String? subtitle;
   final Widget child;
   final List<Widget>? actions;
+  final Widget? customHeader;
   final Widget? floatingActionButton;
   final double maxContentWidth;
   final bool? showBackButton;
@@ -41,13 +43,14 @@ class AppPageScaffold extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  PageHeader(
-                    title: title,
-                    subtitle: subtitle,
-                    actions: actions,
-                    showBackButton:
-                        showBackButton ?? Navigator.of(context).canPop(),
-                  ),
+                  customHeader ??
+                      PageHeader(
+                        title: title,
+                        subtitle: subtitle,
+                        actions: actions,
+                        showBackButton:
+                            showBackButton ?? Navigator.of(context).canPop(),
+                      ),
                   SizedBox(height: bodySpacing),
                   Expanded(child: child),
                 ],

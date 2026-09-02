@@ -37,7 +37,7 @@ class WorkshopKpiSection extends StatelessWidget {
           children: items
               .map(
                 (item) => SizedBox(
-                  width: 200,
+                  width: 224,
                   child: Card(
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -47,11 +47,14 @@ class WorkshopKpiSection extends StatelessWidget {
                       ),
                     ),
                     child: ListTile(
+                      minVerticalPadding: 12,
                       leading: Icon(item.$3),
-                      title: Text(item.$1),
+                      title: Text(item.$1, maxLines: 2),
                       trailing: Text(
                         '${item.$2}',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),

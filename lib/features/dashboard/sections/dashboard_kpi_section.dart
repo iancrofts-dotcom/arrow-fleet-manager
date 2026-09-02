@@ -119,7 +119,7 @@ class _DashboardKpiSectionState extends State<DashboardKpiSection> {
                 crossAxisCount: columns,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 1.6,
+                mainAxisExtent: 236,
               ),
               itemBuilder: (context, index) {
                 final kpi = kpis[index];

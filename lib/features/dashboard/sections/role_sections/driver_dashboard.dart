@@ -39,11 +39,30 @@ class DriverDashboard extends StatelessWidget {
 
         final vehicle = snapshot.data;
         if (vehicle == null) {
-          return const AppEmptyState(
-            icon: Icons.local_shipping_outlined,
-            title: 'No vehicle assigned',
-            message:
-                'Contact your fleet manager to be assigned a vehicle before completing a daily inspection.',
+          return ListView(
+            padding: const EdgeInsets.all(24),
+            children: [
+              const AppEmptyState(
+                icon: Icons.local_shipping_outlined,
+                title: 'No vehicle assigned',
+                message:
+                    'Contact your fleet manager to be assigned a vehicle before completing a daily inspection.',
+              ),
+              const SizedBox(height: 20),
+              _DriverActionCard(
+                icon: Icons.person_outline,
+                title: 'My Account',
+                subtitle: 'View your signed-in account',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ProtectedScreen(
+                      allow: (permissions) => permissions.canViewOwnAccount,
+                      child: const MyAccountScreen(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           );
         }
 

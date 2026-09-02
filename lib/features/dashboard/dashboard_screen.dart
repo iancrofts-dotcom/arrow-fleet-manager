@@ -13,6 +13,7 @@ import 'models/dashboard_summary.dart';
 import 'models/dashboard_context.dart';
 import 'services/dashboard_service.dart';
 import '../../shared/widgets/app_page_scaffold.dart';
+import 'widgets/dashboard_hero_header.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -96,18 +97,10 @@ class _DashboardContentState extends State<_DashboardContent> {
     return AppPageScaffold(
       title: 'Dashboard',
       subtitle: 'Fleet overview and operational status.',
-      actions: [
-        IconButton(
-          tooltip: 'Refresh',
-          icon: const Icon(Icons.refresh),
-          onPressed: _refreshDashboard,
-        ),
-        IconButton(
-          tooltip: 'Logout',
-          icon: const Icon(Icons.logout),
-          onPressed: _logout,
-        ),
-      ],
+      customHeader: DashboardHeroHeader(
+        onRefresh: _refreshDashboard,
+        onLogout: _logout,
+      ),
       child: dashboardRole == DashboardRole.driver
           ? const DriverDashboard()
           : dashboardRole == DashboardRole.technician

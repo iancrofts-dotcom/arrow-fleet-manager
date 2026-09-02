@@ -24,6 +24,22 @@ void main() {
     expect(find.byIcon(Icons.add), findsOneWidget);
   });
 
+  testWidgets('AppPageScaffold uses a supplied custom header', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: AppPageScaffold(
+          title: 'Hidden default title',
+          customHeader: Text('Dashboard custom header'),
+          child: Center(child: Text('Custom header body')),
+        ),
+      ),
+    );
+
+    expect(find.text('Dashboard custom header'), findsOneWidget);
+    expect(find.text('Custom header body'), findsOneWidget);
+    expect(find.text('Hidden default title'), findsNothing);
+  });
+
   testWidgets('shared states render configured text and retry action', (
     tester,
   ) async {
