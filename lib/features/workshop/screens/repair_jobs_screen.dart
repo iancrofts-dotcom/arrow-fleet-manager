@@ -738,13 +738,6 @@ class _RepairJobsScreenState extends State<RepairJobsScreen> {
       subtitle: _isTechnicianView
           ? 'Workshop work assigned to your technician account.'
           : 'Workshop repairs and technician work.',
-      actions: [
-        IconButton(
-          tooltip: 'Refresh',
-          onPressed: _refresh,
-          icon: const Icon(Icons.refresh_rounded),
-        ),
-      ],
       child: FutureBuilder<List<RepairJob>>(
         future: _future,
         builder: (context, snapshot) {

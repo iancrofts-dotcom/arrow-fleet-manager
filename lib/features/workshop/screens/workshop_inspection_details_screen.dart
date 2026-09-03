@@ -169,13 +169,6 @@ class _WorkshopInspectionDetailsScreenState
           title: 'Inspection Details',
           subtitle:
               '${inspection.inspectionNumber} • ${inspection.registration}',
-          actions: [
-            IconButton(
-              tooltip: 'Refresh inspection',
-              onPressed: _refresh,
-              icon: const Icon(Icons.refresh_rounded),
-            ),
-          ],
           child: RefreshIndicator(
             onRefresh: _refresh,
             child: ListView(

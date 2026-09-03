@@ -63,13 +63,6 @@ class _WorkshopDashboardScreenState extends State<WorkshopDashboardScreen> {
     return AppPageScaffold(
       title: 'Workshop',
       subtitle: 'Inspections, repairs and workshop activity.',
-      actions: [
-        IconButton(
-          tooltip: 'Refresh dashboard',
-          onPressed: _refreshDashboard,
-          icon: const Icon(Icons.refresh_rounded),
-        ),
-      ],
       child: FutureBuilder<WorkshopDashboardData>(
         future: _dashboardFuture,
         builder: (context, snapshot) {
@@ -141,8 +134,8 @@ class _WorkshopDashboardScreenState extends State<WorkshopDashboardScreen> {
                               icon: Icons.add_circle_outline,
                               title: 'New Inspection',
                               subtitle: 'Start a new vehicle inspection',
-                              onTap: () {
-                                Navigator.push(
+                              onTap: () async {
+                                final created = await Navigator.push<bool>(
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => ProtectedScreen(
@@ -152,6 +145,10 @@ class _WorkshopDashboardScreenState extends State<WorkshopDashboardScreen> {
                                     ),
                                   ),
                                 );
+
+                                if (created == true && context.mounted) {
+                                  await _refreshDashboard();
+                                }
                               },
                             ),
                           ),

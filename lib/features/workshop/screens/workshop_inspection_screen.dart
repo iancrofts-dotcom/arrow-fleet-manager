@@ -49,13 +49,15 @@ class _WorkshopInspectionScreenState extends State<WorkshopInspectionScreen> {
           'Vehicle inspections, Driver Daily submissions and sign-off status.',
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          await Navigator.of(context).push(
+          final created = await Navigator.of(context).push<bool>(
             MaterialPageRoute(
               builder: (_) => const NewWorkshopInspectionScreen(),
             ),
           );
 
-          _refresh();
+          if (created == true && mounted) {
+            await _refresh();
+          }
         },
         icon: const Icon(Icons.add),
         label: const Text('New Inspection'),
@@ -146,7 +148,7 @@ class _WorkshopInspectionScreenState extends State<WorkshopInspectionScreen> {
                     ),
                     isThreeLine: false,
                     trailing: _statusBadge(inspection.status.name),
-                    onTap: () {
+                    onTap: () async {
                       final inspectionId = inspection.id;
 
                       if (inspectionId == null) {
@@ -160,13 +162,17 @@ class _WorkshopInspectionScreenState extends State<WorkshopInspectionScreen> {
                         return;
                       }
 
-                      Navigator.of(context).push(
+                      await Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => WorkshopInspectionDetailsScreen(
                             inspectionId: inspectionId,
                           ),
                         ),
                       );
+
+                      if (mounted) {
+                        await _refresh();
+                      }
                     },
                   ),
                 );
