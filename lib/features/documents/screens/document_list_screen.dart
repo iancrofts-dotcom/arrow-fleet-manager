@@ -82,13 +82,6 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     return AppPageScaffold(
       title: 'Documents',
       subtitle: 'Fleet and compliance document records.',
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          tooltip: 'Refresh documents',
-          onPressed: _refresh,
-        ),
-      ],
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addDocument,
         icon: const Icon(Icons.add),

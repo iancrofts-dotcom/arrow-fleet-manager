@@ -55,24 +55,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       return const _CalendarAccessDenied();
     }
 
-    final compact = MediaQuery.sizeOf(context).width < 960;
     return AppPageScaffold(
       title: 'Fleet Calendar',
       subtitle: 'Upcoming fleet, maintenance and compliance dates.',
-      actions: [
-        if (compact)
-          OutlinedButton.icon(
-            onPressed: _refresh,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Refresh'),
-          )
-        else
-          IconButton(
-            tooltip: 'Refresh calendar',
-            onPressed: _refresh,
-            icon: const Icon(Icons.refresh),
-          ),
-      ],
       child: FutureBuilder<List<CalendarEvent>>(
         future: _eventsFuture,
         builder: (context, snapshot) {
