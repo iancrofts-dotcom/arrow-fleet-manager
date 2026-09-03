@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../app/constants.dart';
 
-enum SectionCardVariant { standard, kpi, action, alert, compact, dashboardPanel }
+enum SectionCardVariant {
+  standard,
+  kpi,
+  action,
+  alert,
+  compact,
+  dashboardPanel,
+}
 
 class AppPageScaffold extends StatelessWidget {
   const AppPageScaffold({
@@ -34,7 +41,12 @@ class AppPageScaffold extends StatelessWidget {
     body: LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 960;
-        final padding = compact ? AppConstants.spaceMd : AppConstants.spaceLg;
+        final phone = constraints.maxWidth <= 480;
+        final padding = phone
+            ? AppConstants.spaceSm
+            : compact
+            ? AppConstants.spaceMd
+            : AppConstants.spaceLg;
         return Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
@@ -53,7 +65,11 @@ class AppPageScaffold extends StatelessWidget {
                             showBackButton ?? Navigator.of(context).canPop(),
                       ),
                   SizedBox(
-                    height: compact ? AppConstants.spaceLg : bodySpacing,
+                    height: phone
+                        ? AppConstants.spaceMd
+                        : compact
+                        ? AppConstants.spaceLg
+                        : bodySpacing,
                   ),
                   Expanded(child: child),
                 ],
@@ -90,23 +106,34 @@ class PageHeader extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = MediaQuery.sizeOf(context).width < 960;
+        final phone = MediaQuery.sizeOf(context).width <= 480;
         final logoSize = compact ? 56.0 : 80.0;
         return Container(
+          key: const Key('page-header'),
           width: double.infinity,
-          padding: EdgeInsets.all(compact ? AppConstants.spaceMd : 28),
+          padding: phone
+              ? const EdgeInsets.all(AppConstants.spaceSm)
+              : EdgeInsets.all(compact ? AppConstants.spaceMd : 28),
           decoration: BoxDecoration(
             color: scheme.primaryContainer,
             borderRadius: BorderRadius.circular(compact ? 16 : 24),
           ),
           child: Wrap(
-            spacing: 18,
-            runSpacing: AppConstants.spaceMd,
+            spacing: phone ? AppConstants.spaceSm : 18,
+            runSpacing: phone ? AppConstants.spaceXs : AppConstants.spaceMd,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               if (showBackButton)
                 IconButton(
+                  key: const Key('page-header-back'),
                   tooltip: 'Back',
                   onPressed: () => Navigator.of(context).maybePop(),
+                  style: phone
+                      ? IconButton.styleFrom(
+                          minimumSize: const Size(40, 40),
+                          padding: const EdgeInsets.all(8),
+                        )
+                      : null,
                   icon: const Icon(Icons.arrow_back),
                 ),
               if (!compact)
@@ -134,19 +161,24 @@ class PageHeader extends StatelessWidget {
                     ],
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(
-                            color: scheme.onPrimaryContainer,
-                            fontWeight: FontWeight.w900,
-                          ),
+                      style:
+                          (phone
+                                  ? Theme.of(context).textTheme.titleLarge
+                                  : Theme.of(context).textTheme.headlineMedium)
+                              ?.copyWith(
+                                color: scheme.onPrimaryContainer,
+                                fontWeight: FontWeight.w900,
+                              ),
                     ),
                     if (subtitle != null) ...[
-                      const SizedBox(height: 6),
+                      SizedBox(height: phone ? AppConstants.spaceXxs : 6),
                       Text(
                         subtitle!,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: scheme.onPrimaryContainer,
-                        ),
+                        style:
+                            (phone
+                                    ? Theme.of(context).textTheme.bodyMedium
+                                    : Theme.of(context).textTheme.bodyLarge)
+                                ?.copyWith(color: scheme.onPrimaryContainer),
                       ),
                     ],
                   ],

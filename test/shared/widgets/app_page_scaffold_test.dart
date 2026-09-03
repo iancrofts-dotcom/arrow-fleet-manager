@@ -31,6 +31,7 @@ void main() {
     tester,
   ) async {
     _setViewport(tester, const Size(390, 844));
+    var refreshed = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -39,7 +40,7 @@ void main() {
           subtitle: 'Upcoming fleet, maintenance and compliance dates.',
           actions: [
             OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () => refreshed = true,
               icon: const Icon(Icons.refresh),
               label: const Text('Refresh'),
             ),
@@ -51,9 +52,39 @@ void main() {
 
     expect(find.text('Arrow Fleet Manager'), findsNothing);
     expect(find.text('Fleet Calendar'), findsOneWidget);
-    expect(find.text('Upcoming fleet, maintenance and compliance dates.'), findsOneWidget);
+    expect(
+      find.text('Upcoming fleet, maintenance and compliance dates.'),
+      findsOneWidget,
+    );
     expect(find.text('Refresh'), findsOneWidget);
+    expect(
+      tester.widget<Container>(find.byKey(const Key('page-header'))).padding,
+      const EdgeInsets.all(12),
+    );
+    await tester.tap(find.text('Refresh'));
+    expect(refreshed, isTrue);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('desktop headers retain the full desktop presentation', (
+    tester,
+  ) async {
+    _setViewport(tester, const Size(1280, 800));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: AppPageScaffold(
+          title: 'Fleet Vehicles',
+          subtitle: 'Operational fleet overview.',
+          child: SizedBox(),
+        ),
+      ),
+    );
+
+    expect(find.text('Arrow Fleet Manager'), findsOneWidget);
+    expect(
+      tester.widget<Container>(find.byKey(const Key('page-header'))).padding,
+      const EdgeInsets.all(28),
+    );
   });
 
   testWidgets('compact dashboard header retains refresh without branding', (
