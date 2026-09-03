@@ -6,6 +6,7 @@ import '../repositories/driver_repository.dart';
 import '../../auth/services/user_sync_service.dart';
 import '../../auth/models/user.dart';
 import '../../auth/services/user_service.dart';
+import 'driver_username_service.dart';
 
 class DriverService {
   DriverService({
@@ -13,16 +14,19 @@ class DriverService {
     UserSyncService? userSyncService,
     UserService? userService,
     DriverAssignmentRepository? assignmentRepository,
+    DriverUsernameService? usernameService,
   }) : _repository = repository ?? DriverRepository(),
        _userSyncService = userSyncService ?? UserSyncService.instance,
        _userService = userService ?? UserService.instance,
        _assignmentRepository =
-           assignmentRepository ?? DriverAssignmentRepository();
+           assignmentRepository ?? DriverAssignmentRepository(),
+       _usernameService = usernameService ?? DriverUsernameService();
 
   final DriverRepository _repository;
   final UserSyncService _userSyncService;
   final UserService _userService;
   final DriverAssignmentRepository _assignmentRepository;
+  final DriverUsernameService _usernameService;
 
   Future<List<Driver>> getDrivers() async {
     final entities = await _repository.getAllDrivers();
@@ -53,22 +57,20 @@ class DriverService {
   /// including the generated ID.
   Future<Driver> addDriver(DriverCreationRequest request) async {
     final driver = request.driver;
-    final username = driver.username;
-    if (username == null || username.isEmpty) {
-      throw ArgumentError('A username is required to create a driver account.');
-    }
     if (request.password.isEmpty) {
       throw ArgumentError('A password is required to create a driver account.');
     }
 
-    if (await _userSyncService.isUsernameInUse(username)) {
-      throw StateError('Username already exists.');
-    }
+    final username = await _usernameService.generateUsername(
+      firstName: driver.firstName,
+      lastName: driver.lastName,
+    );
+    final driverWithUsername = driver.copyWith(username: username);
 
     int? insertedDriverId;
     try {
       insertedDriverId = await _repository.insertDriver(
-        DriverEntity.fromDriver(driver),
+        DriverEntity.fromDriver(driverWithUsername),
       );
 
       final savedEntity = await _repository.getDriverById(insertedDriverId);

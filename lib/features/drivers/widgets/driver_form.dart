@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/driver.dart';
+import '../services/driver_username_service.dart';
 import 'driver_details_section.dart';
 import 'driver_status_section.dart';
 import 'licence_details_section.dart';
@@ -57,6 +58,12 @@ class _DriverFormState extends State<DriverForm> {
 
     _username = TextEditingController(text: driver?.username ?? '');
 
+    if (driver == null) {
+      _firstName.addListener(_updateGeneratedUsername);
+      _lastName.addListener(_updateGeneratedUsername);
+      _updateGeneratedUsername();
+    }
+
     _password = TextEditingController();
 
     _confirmPassword = TextEditingController();
@@ -78,6 +85,19 @@ class _DriverFormState extends State<DriverForm> {
     _confirmPassword.dispose();
 
     super.dispose();
+  }
+
+  void _updateGeneratedUsername() {
+    final username = DriverUsernameService.baseUsername(
+      _firstName.text,
+      _lastName.text,
+    );
+    if (_username.text != username) {
+      _username.value = TextEditingValue(
+        text: username,
+        selection: TextSelection.collapsed(offset: username.length),
+      );
+    }
   }
 
   Future<void> _selectLicenceExpiry() async {
@@ -140,6 +160,7 @@ class _DriverFormState extends State<DriverForm> {
             passwordController: _password,
             confirmPasswordController: _confirmPassword,
             showPasswordFields: widget.driver == null,
+            usernameReadOnly: widget.driver == null,
           ),
           DriverStatusSection(
             isActive: _isActive,

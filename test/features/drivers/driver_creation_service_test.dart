@@ -10,6 +10,7 @@ import 'package:arrow_fleet_manager/features/drivers/models/driver_creation_requ
 import 'package:arrow_fleet_manager/features/drivers/models/driver_entity.dart';
 import 'package:arrow_fleet_manager/features/drivers/repositories/driver_repository.dart';
 import 'package:arrow_fleet_manager/features/drivers/services/driver_service.dart';
+import 'package:arrow_fleet_manager/features/drivers/services/driver_username_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -23,16 +24,15 @@ void main() {
     () async {
       final drivers = _FakeDriverRepository();
       final users = _FakeUserRepository();
+      final driverUserService = userService(users);
       final service = DriverService(
         repository: drivers,
-        userSyncService: UserSyncService(userService: userService(users)),
+        userSyncService: UserSyncService(userService: driverUserService),
+        usernameService: DriverUsernameService(userService: driverUserService),
       );
 
       final savedDriver = await service.addDriver(
-        DriverCreationRequest(
-          driver: _driver(username: 'driver.one'),
-          password: 'correct-password',
-        ),
+        DriverCreationRequest(driver: _driver(), password: 'correct-password'),
       );
       final linkedUser = users.userForDriver(savedDriver.id!);
 
@@ -40,18 +40,22 @@ void main() {
       expect(linkedUser, isNotNull);
       expect(linkedUser!.role, UserRole.driver);
       expect(linkedUser.driverId, savedDriver.id);
+      expect(savedDriver.username, 'alex.driver');
+      expect(linkedUser.username, savedDriver.username);
       expect(linkedUser.passwordHash, isNot('correct-password'));
       expect(passwords.isSecureHash(linkedUser.passwordHash), isTrue);
       expect(
-        await userService(
-          users,
-        ).login(username: 'driver.one', password: 'correct-password'),
+        await driverUserService.login(
+          username: 'alex.driver',
+          password: 'correct-password',
+        ),
         isNotNull,
       );
       expect(
-        await userService(
-          users,
-        ).login(username: 'driver.one', password: 'incorrect-password'),
+        await driverUserService.login(
+          username: 'alex.driver',
+          password: 'incorrect-password',
+        ),
         isNull,
       );
     },
@@ -59,22 +63,19 @@ void main() {
 
   test('returns exact IDs for duplicate-looking driver inserts', () async {
     final drivers = _FakeDriverRepository();
+    final users = _FakeUserRepository();
+    final driverUserService = userService(users);
     final service = DriverService(
       repository: drivers,
-      userSyncService: _RecordingUserSyncService(),
+      userSyncService: UserSyncService(userService: driverUserService),
+      usernameService: DriverUsernameService(userService: driverUserService),
     );
 
     final first = await service.addDriver(
-      DriverCreationRequest(
-        driver: _driver(username: 'driver.one'),
-        password: 'password-one',
-      ),
+      DriverCreationRequest(driver: _driver(), password: 'password-one'),
     );
     final second = await service.addDriver(
-      DriverCreationRequest(
-        driver: _driver(username: 'driver.two'),
-        password: 'password-two',
-      ),
+      DriverCreationRequest(driver: _driver(), password: 'password-two'),
     );
 
     expect(first.id, 1);
@@ -82,24 +83,26 @@ void main() {
     expect(first.firstName, second.firstName);
     expect(first.lastName, second.lastName);
     expect(first.licenceNumber, second.licenceNumber);
-    expect(first.username, 'driver.one');
-    expect(second.username, 'driver.two');
+    expect(first.username, 'alex.driver');
+    expect(second.username, 'alex.driver2');
   });
 
   test(
     'removes only the newly inserted driver when linked user creation fails',
     () async {
       final drivers = _FakeDriverRepository();
+      final users = _FakeUserRepository();
       drivers.seed(_driver(id: 1, username: 'existing.driver'));
       final service = DriverService(
         repository: drivers,
         userSyncService: _FailingUserSyncService(),
+        usernameService: DriverUsernameService(userService: userService(users)),
       );
 
       await expectLater(
         service.addDriver(
           DriverCreationRequest(
-            driver: _driver(username: 'driver.one'),
+            driver: _driver(),
             password: 'correct-password',
           ),
         ),
@@ -139,6 +142,61 @@ void main() {
         password: 'existing-password',
       ),
       isNull,
+    );
+  });
+
+  test('generates the base username when no persisted User has it', () async {
+    final users = _FakeUserRepository();
+    final generator = DriverUsernameService(userService: userService(users));
+
+    expect(
+      await generator.generateUsername(firstName: 'Ian', lastName: 'Crofts'),
+      'ian.crofts',
+    );
+  });
+
+  test(
+    'generates the next available username after existing candidates',
+    () async {
+      final users = _FakeUserRepository()..seed(_user('ian.crofts'));
+      final generator = DriverUsernameService(userService: userService(users));
+
+      expect(
+        await generator.generateUsername(firstName: 'Ian', lastName: 'Crofts'),
+        'ian.crofts2',
+      );
+
+      users.seed(_user('ian.crofts2'));
+      expect(
+        await generator.generateUsername(firstName: 'Ian', lastName: 'Crofts'),
+        'ian.crofts3',
+      );
+    },
+  );
+
+  test('fills the first available username suffix gap', () async {
+    final users = _FakeUserRepository()
+      ..seed(_user('ian.crofts'))
+      ..seed(_user('ian.crofts2'))
+      ..seed(_user('ian.crofts4'));
+    final generator = DriverUsernameService(userService: userService(users));
+
+    expect(
+      await generator.generateUsername(firstName: 'Ian', lastName: 'Crofts'),
+      'ian.crofts3',
+    );
+  });
+
+  test('normalizes whitespace and case in generated usernames', () async {
+    final users = _FakeUserRepository();
+    final generator = DriverUsernameService(userService: userService(users));
+
+    expect(
+      await generator.generateUsername(
+        firstName: '  Mary   Jane ',
+        lastName: ' SMITH  ',
+      ),
+      'maryjane.smith',
     );
   });
 }
@@ -229,18 +287,7 @@ class _FakeUserRepository extends UserRepository {
   }
 }
 
-class _RecordingUserSyncService extends UserSyncService {
-  @override
-  Future<bool> isUsernameInUse(String username) async => false;
-
-  @override
-  Future<void> createDriverUser(
-    Driver driver, {
-    required String password,
-  }) async {}
-}
-
-class _FailingUserSyncService extends _RecordingUserSyncService {
+class _FailingUserSyncService extends UserSyncService {
   @override
   Future<void> createDriverUser(
     Driver driver, {
@@ -250,12 +297,19 @@ class _FailingUserSyncService extends _RecordingUserSyncService {
   }
 }
 
-Driver _driver({int? id, required String username, bool isActive = true}) =>
-    Driver(
-      id: id,
-      firstName: 'Alex',
-      lastName: 'Driver',
-      licenceNumber: 'LIC-100',
-      username: username,
-      isActive: isActive,
-    );
+User _user(String username) => User(
+  id: 'user-$username',
+  username: username,
+  passwordHash: 'hash',
+  role: UserRole.driver,
+  driverId: 99,
+);
+
+Driver _driver({int? id, String? username, bool isActive = true}) => Driver(
+  id: id,
+  firstName: 'Alex',
+  lastName: 'Driver',
+  licenceNumber: 'LIC-100',
+  username: username,
+  isActive: isActive,
+);

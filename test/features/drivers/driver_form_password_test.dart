@@ -15,6 +15,19 @@ void main() {
     expect(_field('Confirm Password'), findsOneWidget);
   });
 
+  testWidgets('create mode previews a read-only generated username', (
+    tester,
+  ) async {
+    await _pumpDriverForm(tester);
+    await _enterText(tester, 'First Name', 'Ian');
+    await _enterText(tester, 'Last Name', 'Crofts');
+    await _scrollToField(tester, 'Username');
+
+    final usernameField = tester.widget<TextField>(_field('Username'));
+    expect(usernameField.readOnly, isTrue);
+    expect(usernameField.controller!.text, 'ian.crofts');
+  });
+
   testWidgets('create mode rejects a seven-character password', (tester) async {
     var submitted = false;
     await _pumpDriverForm(
@@ -101,6 +114,29 @@ void main() {
     expect(submittedDriver, driver.copyWith(username: 'updated.driver'));
     expect(submittedPassword, isEmpty);
   });
+
+  testWidgets('edit mode does not regenerate the existing username', (
+    tester,
+  ) async {
+    Driver? submittedDriver;
+    final driver = _driver();
+    await _pumpDriverForm(
+      tester,
+      driver: driver,
+      onSubmit: (updatedDriver, _) async {
+        submittedDriver = updatedDriver;
+      },
+    );
+
+    await _enterText(tester, 'First Name', 'Irene');
+    await _enterText(tester, 'Last Name', 'Crofts');
+    await _submit(tester);
+
+    expect(
+      submittedDriver,
+      driver.copyWith(firstName: 'Irene', lastName: 'Crofts'),
+    );
+  });
 }
 
 Future<void> _pumpDriverForm(
@@ -121,7 +157,6 @@ Future<void> _fillRequiredCreateFields(WidgetTester tester) async {
   await _enterText(tester, 'First Name', 'Ava');
   await _enterText(tester, 'Last Name', 'Driver');
   await _enterText(tester, 'Licence Number', 'LIC-123');
-  await _enterText(tester, 'Username', 'ava.driver');
 }
 
 Finder _field(String label) {
@@ -173,10 +208,7 @@ Future<void> _scrollUntilBuilt(WidgetTester tester, Finder target) async {
   fail('Unable to reveal the requested DriverForm widget.');
 }
 
-Future<void> _scrollUntilHitTestable(
-  WidgetTester tester,
-  Finder target,
-) async {
+Future<void> _scrollUntilHitTestable(WidgetTester tester, Finder target) async {
   final list = _driverFormList();
   expect(list, findsOneWidget);
 

@@ -8,6 +8,7 @@ class LoginDetailsSection extends StatefulWidget {
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
   final bool showPasswordFields;
+  final bool usernameReadOnly;
 
   const LoginDetailsSection({
     super.key,
@@ -15,6 +16,7 @@ class LoginDetailsSection extends StatefulWidget {
     required this.passwordController,
     required this.confirmPasswordController,
     this.showPasswordFields = true,
+    this.usernameReadOnly = false,
   });
 
   @override
@@ -33,9 +35,13 @@ class _LoginDetailsSectionState extends State<LoginDetailsSection> {
         children: [
           TextFormField(
             controller: widget.usernameController,
-            decoration: const InputDecoration(
+            readOnly: widget.usernameReadOnly,
+            decoration: InputDecoration(
               labelText: 'Username',
-              prefixIcon: Icon(Icons.person_outline),
+              helperText: widget.usernameReadOnly
+                  ? 'Generated from the driver name.'
+                  : null,
+              prefixIcon: const Icon(Icons.person_outline),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
