@@ -2,7 +2,6 @@ import 'package:arrow_fleet_manager/features/dashboard/models/dashboard_context.
 import 'package:arrow_fleet_manager/features/dashboard/models/dashboard_summary.dart';
 import 'package:arrow_fleet_manager/features/dashboard/models/fleet_health.dart';
 import 'package:arrow_fleet_manager/features/dashboard/sections/dashboard_kpi_section.dart';
-import 'package:arrow_fleet_manager/features/dashboard/sections/quick_actions_section.dart';
 import 'package:arrow_fleet_manager/features/dashboard/widgets/dashboard_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,15 +34,14 @@ const _dashboardContext = DashboardContext(
 );
 
 void main() {
-  testWidgets('Quick Actions render before the core KPI section', (
+  testWidgets('Priority Centre renders before the core KPI section', (
     tester,
   ) async {
     await _pumpDashboard(tester, 1000);
 
-    expect(find.byType(QuickActionsSection), findsOneWidget);
     expect(find.byType(DashboardKpiSection), findsOneWidget);
     expect(
-      tester.getTopLeft(find.byType(QuickActionsSection)).dy,
+      tester.getTopLeft(find.text('Priority Centre')).dy,
       lessThan(tester.getTopLeft(find.byType(DashboardKpiSection)).dy),
     );
     expect(find.text('Priority Centre'), findsOneWidget);
@@ -55,7 +53,6 @@ void main() {
     ) async {
       await _pumpDashboard(tester, width);
 
-      expect(find.byType(QuickActionsSection), findsOneWidget);
       expect(find.byType(DashboardKpiSection), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
