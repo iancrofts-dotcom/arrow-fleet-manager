@@ -45,7 +45,7 @@ class RecentActivityCard extends StatelessWidget {
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
 
             if (activities.isEmpty)
               const ListTile(
@@ -55,7 +55,9 @@ class RecentActivityCard extends StatelessWidget {
             else
               ...activities.map(
                 (activity) => ListTile(
-                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                  dense: true,
+                  minVerticalPadding: 6,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 2),
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -72,9 +74,14 @@ class RecentActivityCard extends StatelessWidget {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(activity.relativeDate),
+                      Text(
+                        activity.relativeDate,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
                       if (DashboardNavigation.canOpenRoute(activity.route)) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         const Icon(Icons.chevron_right, size: 18),
                       ],
                     ],

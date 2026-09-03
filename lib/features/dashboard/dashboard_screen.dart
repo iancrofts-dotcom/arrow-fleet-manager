@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../auth/models/user_role.dart';
@@ -12,54 +14,111 @@ import 'sections/role_sections/technician_dashboard.dart';
 import 'models/dashboard_summary.dart';
 import 'models/dashboard_context.dart';
 import 'services/dashboard_service.dart';
+import 'services/dashboard_refresh_controller.dart';
 import '../../shared/widgets/app_page_scaffold.dart';
 import 'widgets/dashboard_hero_header.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({
+    super.key,
+    this.dashboardService,
+    this.refreshInterval = const Duration(seconds: 60),
+  });
+
+  final DashboardService? dashboardService;
+  final Duration refreshInterval;
 
   @override
   Widget build(BuildContext context) {
     return ProtectedScreen(
       allow: (_) => true,
-      child: const _DashboardContent(),
+      child: _DashboardContent(
+        dashboardService: dashboardService,
+        refreshInterval: refreshInterval,
+      ),
     );
   }
 }
 
 class _DashboardContent extends StatefulWidget {
-  const _DashboardContent();
+  const _DashboardContent({
+    this.dashboardService,
+    required this.refreshInterval,
+  });
+
+  final DashboardService? dashboardService;
+  final Duration refreshInterval;
 
   @override
   State<_DashboardContent> createState() => _DashboardContentState();
 }
 
-class _DashboardContentState extends State<_DashboardContent> {
+class _DashboardContentState extends State<_DashboardContent>
+    with WidgetsBindingObserver {
   late final DashboardService _dashboardService;
-
-  Future<DashboardSummary>? summaryFuture;
+  DashboardRefreshController? _refreshController;
+  DashboardSummary? _summary;
+  Object? _initialLoadError;
 
   @override
   void initState() {
     super.initState();
 
-    _dashboardService = DashboardService();
+    _dashboardService = widget.dashboardService ?? DashboardService();
+    WidgetsBinding.instance.addObserver(this);
 
     if (PermissionService.instance.canViewKpis) {
-      summaryFuture = _dashboardService.loadSummary();
+      _refreshController = DashboardRefreshController(
+        loadSummary: _dashboardService.loadSummary,
+        onData: _setSummary,
+        onInitialError: _setInitialLoadError,
+        interval: widget.refreshInterval,
+      )..startPeriodicRefresh();
+      unawaited(_refreshController!.loadInitial());
     }
   }
 
-  Future<void> _refreshDashboard() async {
-    if (!PermissionService.instance.canViewKpis) {
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _refreshController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final active = state == AppLifecycleState.resumed;
+    _refreshController?.setActive(active);
+    if (active) {
+      unawaited(_refreshDashboard());
+    }
+  }
+
+  void _setSummary(DashboardSummary summary) {
+    if (!mounted) {
       return;
     }
-
     setState(() {
-      summaryFuture = _dashboardService.loadSummary();
+      _summary = summary;
+      _initialLoadError = null;
     });
+  }
 
-    await summaryFuture;
+  void _setInitialLoadError(Object error) {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _initialLoadError = error;
+    });
+  }
+
+  Future<void> _refreshDashboard() async {
+    final controller = _refreshController;
+    if (controller == null) {
+      return;
+    }
+    await controller.refresh();
   }
 
   Future<void> _logout() async {
@@ -98,56 +157,47 @@ class _DashboardContentState extends State<_DashboardContent> {
     return AppPageScaffold(
       title: 'Dashboard',
       subtitle: 'Fleet overview and operational status.',
-      customHeader: DashboardHeroHeader(
-        onRefresh: _refreshDashboard,
-        onLogout: _logout,
-        showBrand: false,
-        showLogout: false,
-        showIdentity: width >= 960,
-      ),
+      customHeader: width >= 960
+          ? DashboardHeroHeader(
+              onRefresh: _refreshDashboard,
+              onLogout: _logout,
+              showBrand: false,
+              showLogout: false,
+              showIdentity: true,
+              showRefresh: false,
+            )
+          : const SizedBox.shrink(),
       child: dashboardRole == DashboardRole.driver
           ? const DriverDashboard()
           : dashboardRole == DashboardRole.technician
           ? const TechnicianDashboard()
-          : FutureBuilder<DashboardSummary>(
-              future: summaryFuture!,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const AppLoadingState(label: 'Loading dashboard...');
-                }
+          : _buildFleetDashboard(dashboardRole),
+    );
+  }
 
-                if (snapshot.hasError) {
-                  return AppErrorState(
-                    title: 'Unable to load dashboard',
-                    message: 'Please try again.',
-                    onRetry: _refreshDashboard,
-                  );
-                }
+  Widget _buildFleetDashboard(DashboardRole dashboardRole) {
+    final summary = _summary;
+    if (summary == null) {
+      if (_initialLoadError != null) {
+        return AppErrorState(
+          title: 'Unable to load dashboard',
+          message: 'Please try again.',
+          onRetry: _refreshDashboard,
+        );
+      }
+      return const AppLoadingState(label: 'Loading dashboard...');
+    }
 
-                if (!snapshot.hasData) {
-                  return const AppEmptyState(
-                    icon: Icons.dashboard_outlined,
-                    title: 'No dashboard data available',
-                    message: 'Refresh to load the latest operational summary.',
-                  );
-                }
+    final fleetHealth = _dashboardService.getFleetHealth(summary);
+    final dashboardContext = DashboardContext(
+      summary: summary,
+      fleetHealth: fleetHealth,
+      onRefresh: _refreshDashboard,
+    );
 
-                final summary = snapshot.data!;
-
-                final fleetHealth = _dashboardService.getFleetHealth(summary);
-
-                final dashboardContext = DashboardContext(
-                  summary: summary,
-                  fleetHealth: fleetHealth,
-                  onRefresh: _refreshDashboard,
-                );
-
-                return DashboardRouter.build(
-                  role: dashboardRole,
-                  context: dashboardContext,
-                );
-              },
-            ),
+    return DashboardRouter.build(
+      role: dashboardRole,
+      context: dashboardContext,
     );
   }
 }

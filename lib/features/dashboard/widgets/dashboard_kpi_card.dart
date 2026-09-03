@@ -23,29 +23,15 @@ class DashboardKpiCard extends StatefulWidget {
 class _DashboardKpiCardState extends State<DashboardKpiCard> {
   bool _hovering = false;
 
-  Color _trendColor(BuildContext context) {
-    switch (widget.kpi.trend) {
-      case DashboardKpiTrend.up:
-        return Colors.green;
-
-      case DashboardKpiTrend.down:
-        return Colors.orange;
-
-      case DashboardKpiTrend.stable:
-        return Theme.of(context).colorScheme.primary;
-    }
-  }
-
-  IconData _trendIcon() {
-    switch (widget.kpi.trend) {
-      case DashboardKpiTrend.up:
-        return Icons.trending_up;
-
-      case DashboardKpiTrend.down:
-        return Icons.trending_down;
-
-      case DashboardKpiTrend.stable:
-        return Icons.trending_flat;
+  Color _accentColor(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    switch (widget.kpi.title) {
+      case 'Compliance':
+        return scheme.tertiary;
+      case 'Maintenance':
+        return scheme.secondary;
+      default:
+        return scheme.primary;
     }
   }
 
@@ -67,8 +53,10 @@ class _DashboardKpiCardState extends State<DashboardKpiCard> {
 
   @override
   Widget build(BuildContext context) {
-    final trendColor = _trendColor(context);
+    final accentColor = _accentColor(context);
+    final scheme = Theme.of(context).colorScheme;
     final isInteractive = widget.onTap != null || widget.routeName != null;
+    final phone = MediaQuery.sizeOf(context).width <= 480;
 
     return MouseRegion(
       cursor: isInteractive
@@ -76,83 +64,110 @@ class _DashboardKpiCardState extends State<DashboardKpiCard> {
           : SystemMouseCursors.basic,
       onEnter: isInteractive ? (_) => setState(() => _hovering = true) : null,
       onExit: isInteractive ? (_) => setState(() => _hovering = false) : null,
-      child: AnimatedScale(
-        scale: _hovering ? 1.01 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: _hovering
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
-          child: Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: isInteractive ? _openRoute : null,
-              child: Padding(
-                padding: const EdgeInsets.all(18),
+      child: Card(
+        elevation: isInteractive && _hovering ? 4 : 1,
+        color: scheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: scheme.outlineVariant),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: isInteractive ? _openRoute : null,
+          child: Stack(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  phone ? 10 : 18,
+                  phone ? 10 : 20,
+                  phone ? 10 : 18,
+                  phone ? 16 : 24,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 22,
-                          backgroundColor: trendColor.withValues(alpha: 0.15),
-                          child: Icon(widget.icon, color: trendColor),
-                        ),
-                        const Spacer(),
-                        Icon(_trendIcon(), color: trendColor),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Text(
-                      widget.kpi.title,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Text(
-                      widget.kpi.value,
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-
-                    const Spacer(),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            widget.kpi.subtitle,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(color: trendColor),
+                        Container(
+                          padding: EdgeInsets.all(phone ? 6 : 11),
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            widget.icon,
+                            color: accentColor,
+                            size: phone ? 18 : 22,
                           ),
                         ),
+                        const Spacer(),
                         if (isInteractive)
                           Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
+                            Icons.arrow_forward,
+                            size: 18,
                             color: Theme.of(context).colorScheme.primary,
                           ),
                       ],
                     ),
+
+                    SizedBox(height: phone ? 6 : 18),
+
+                    Text(
+                      widget.kpi.title.toUpperCase(),
+                      style: phone
+                          ? Theme.of(context).textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            )
+                          : Theme.of(context).textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.7,
+                            ),
+                    ),
+
+                    SizedBox(height: phone ? 2 : 4),
+
+                    Text(
+                      widget.kpi.value,
+                      style:
+                          (phone
+                                  ? Theme.of(context).textTheme.titleLarge
+                                  : Theme.of(context).textTheme.headlineMedium)
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+
+                    const Spacer(),
+
+                    Text(
+                      widget.kpi.subtitle,
+                      maxLines: phone ? 1 : 2,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          (phone
+                                  ? Theme.of(context).textTheme.labelSmall
+                                  : Theme.of(context).textTheme.bodySmall)
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                    ),
                   ],
                 ),
               ),
-            ),
+              Positioned(
+                left: phone ? 10 : 18,
+                right: phone ? 10 : 18,
+                bottom: phone ? 8 : 12,
+                child: Container(
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.72),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

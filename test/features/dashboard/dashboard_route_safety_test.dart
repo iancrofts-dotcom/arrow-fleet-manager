@@ -1,9 +1,7 @@
 import 'package:arrow_fleet_manager/core/navigation/dashboard_navigation.dart';
 import 'package:arrow_fleet_manager/features/dashboard/models/dashboard_alert.dart';
 import 'package:arrow_fleet_manager/features/dashboard/models/dashboard_summary.dart';
-import 'package:arrow_fleet_manager/features/dashboard/sections/compliance_section.dart';
-import 'package:arrow_fleet_manager/features/dashboard/sections/maintenance_section.dart';
-import 'package:arrow_fleet_manager/features/dashboard/widgets/dashboard_alerts_card.dart';
+import 'package:arrow_fleet_manager/features/dashboard/sections/priority_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -30,29 +28,7 @@ void main() {
     expect(DashboardNavigation.canOpenRoute('/maintenance'), isFalse);
   });
 
-  testWidgets('compliance and overdue maintenance cards remain informational', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: Column(
-              children: [
-                ComplianceSection(summary: summary),
-                MaintenanceSection(summary: summary),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    final inkWells = tester.widgetList<InkWell>(find.byType(InkWell)).toList();
-    expect(inkWells.where((inkWell) => inkWell.onTap != null), hasLength(1));
-  });
-
-  testWidgets('unsupported alert routes do not expose navigation', (
+  testWidgets('unsupported priority routes do not expose navigation', (
     tester,
   ) async {
     final alerts = [
@@ -76,14 +52,14 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(body: DashboardAlertsCard(alerts: alerts)),
+        home: Scaffold(
+          body: PrioritySection(summary: summary.copyWith(alerts: alerts)),
+        ),
       ),
     );
 
-    final alertTiles = tester
-        .widgetList<ListTile>(find.byType(ListTile))
-        .toList();
-    expect(alertTiles.where((tile) => tile.onTap != null), isEmpty);
+    final inkWells = tester.widgetList<InkWell>(find.byType(InkWell)).toList();
+    expect(inkWells.where((inkWell) => inkWell.onTap != null), isEmpty);
     expect(find.text('Overdue maintenance remains visible.'), findsOneWidget);
     expect(find.text('Expired compliance remains visible.'), findsOneWidget);
   });

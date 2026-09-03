@@ -36,14 +36,14 @@ class PrioritySection extends StatelessWidget {
           ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
 
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
 
         Text(
           'Items requiring your immediate attention.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 14),
 
         if (alerts.isEmpty)
           const PriorityCard(
@@ -65,7 +65,7 @@ class PrioritySection extends StatelessWidget {
                     ? () => DashboardNavigation.openRoute(context, alert.route)
                     : null,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
             ],
           ),
       ],

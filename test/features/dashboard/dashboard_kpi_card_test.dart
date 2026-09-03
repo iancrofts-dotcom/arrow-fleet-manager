@@ -29,11 +29,11 @@ void main() {
       ),
     );
 
-    expect(find.text('Maintenance'), findsOneWidget);
+    expect(find.text('MAINTENANCE'), findsOneWidget);
     expect(find.text('12'), findsOneWidget);
     expect(find.text('Maintenance records'), findsOneWidget);
 
-    await tester.tap(find.text('Maintenance'));
+    await tester.tap(find.text('MAINTENANCE'));
 
     expect(tapped, isTrue);
   });
@@ -49,6 +49,27 @@ void main() {
       ),
     );
 
+    expect(tester.widget<InkWell>(find.byType(InkWell)).onTap, isNull);
+  });
+
+  testWidgets('Compliance KPI remains non-interactive', (tester) async {
+    const complianceKpi = DashboardKpi(
+      title: 'Compliance',
+      value: '92%',
+      subtitle: 'Fleet compliance',
+      icon: 'compliance',
+      trend: DashboardKpiTrend.stable,
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: DashboardKpiCard(kpi: complianceKpi, icon: Icons.verified_user),
+        ),
+      ),
+    );
+
+    expect(find.text('Fleet compliance'), findsOneWidget);
     expect(tester.widget<InkWell>(find.byType(InkWell)).onTap, isNull);
   });
 }

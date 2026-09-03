@@ -8,6 +8,7 @@ class DashboardHeroHeader extends StatelessWidget {
     this.showBrand = true,
     this.showLogout = true,
     this.showIdentity = true,
+    this.showRefresh = true,
   });
 
   final VoidCallback onRefresh;
@@ -15,6 +16,7 @@ class DashboardHeroHeader extends StatelessWidget {
   final bool showBrand;
   final bool showLogout;
   final bool showIdentity;
+  final bool showRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -26,11 +28,12 @@ class DashboardHeroHeader extends StatelessWidget {
         final actions = Wrap(
           spacing: 10,
           children: [
-            OutlinedButton.icon(
-              onPressed: onRefresh,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Refresh'),
-            ),
+            if (showRefresh)
+              OutlinedButton.icon(
+                onPressed: onRefresh,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Refresh'),
+              ),
             if (showLogout)
               FilledButton.icon(
                 onPressed: onLogout,
@@ -92,8 +95,7 @@ class DashboardHeroHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (showBrand) brand,
-                    if (showBrand || showIdentity)
-                      const SizedBox(height: 20),
+                    if (showBrand || showIdentity) const SizedBox(height: 20),
                     if (showIdentity) identity,
                     if (showIdentity) const SizedBox(height: 20),
                     actions,

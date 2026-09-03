@@ -8,7 +8,6 @@ class FleetOperationsCard extends StatelessWidget {
   final int totalVehicles;
   final int assignedDrivers;
   final int totalDrivers;
-  final int fleetHealth;
 
   const FleetOperationsCard({
     super.key,
@@ -16,7 +15,6 @@ class FleetOperationsCard extends StatelessWidget {
     required this.totalVehicles,
     required this.assignedDrivers,
     required this.totalDrivers,
-    required this.fleetHealth,
   });
 
   @override
@@ -29,10 +27,12 @@ class FleetOperationsCard extends StatelessWidget {
         ? 0
         : (((totalDrivers - assignedDrivers) / totalDrivers) * 100).round();
 
-    final compliance = fleetHealth.round();
-
     return Card(
-      elevation: 2,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -40,15 +40,17 @@ class FleetOperationsCard extends StatelessWidget {
           children: [
             Text(
               'Fleet Operations',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
 
             _MetricRow(
               label: 'Fleet Utilisation',
               value: '$utilisation%',
               icon: Icons.local_shipping,
-              color: Colors.blue,
+              color: Theme.of(context).colorScheme.primary,
               onTap: () => DashboardNavigation.openFleet(context),
             ),
 
@@ -58,28 +60,10 @@ class FleetOperationsCard extends StatelessWidget {
               label: 'Driver Availability',
               value: '$availability%',
               icon: Icons.person,
-              color: Colors.green,
+              color: Theme.of(context).colorScheme.tertiary,
               onTap: PermissionService.instance.canViewDrivers
                   ? () => DashboardNavigation.openDrivers(context)
                   : null,
-            ),
-
-            const Divider(),
-
-            _MetricRow(
-              label: 'Fleet Health',
-              value: '$fleetHealth%',
-              icon: Icons.favorite,
-              color: Colors.orange,
-            ),
-
-            const Divider(),
-
-            _MetricRow(
-              label: 'Compliance Score',
-              value: '$compliance%',
-              icon: Icons.verified,
-              color: Colors.teal,
             ),
           ],
         ),
@@ -109,10 +93,17 @@ class _MetricRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            Icon(icon, color: color),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(label, style: Theme.of(context).textTheme.bodyLarge),

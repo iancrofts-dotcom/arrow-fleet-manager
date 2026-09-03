@@ -56,26 +56,27 @@ class DashboardKpiSection extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        var columns = 1;
-        if (constraints.maxWidth >= 1000) {
+        var columns = 2;
+        if (constraints.maxWidth >= 960) {
           columns = 4;
-        } else if (constraints.maxWidth >= 640) {
-          columns = 2;
         }
+        final phone = constraints.maxWidth <= 480;
 
         return GridView.builder(
+          key: const Key('dashboard-primary-kpi-grid'),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: kpis.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            mainAxisExtent: 236,
+            crossAxisSpacing: phone ? 12 : 16,
+            mainAxisSpacing: phone ? 12 : 16,
+            mainAxisExtent: phone ? 168 : 208,
           ),
           itemBuilder: (context, index) {
             final kpi = kpis[index];
             return DashboardKpiCard(
+              key: Key('dashboard-kpi-${kpi.title.toLowerCase()}'),
               kpi: kpi,
               icon: _iconFor(kpi.title),
               routeName: _routeFor(kpi.title),

@@ -1,82 +1,59 @@
 import 'package:flutter/material.dart';
 
 import '../models/dashboard_summary.dart';
-import '../models/fleet_health.dart';
-import '../widgets/fleet_health_card.dart';
 import '../widgets/fleet_operations_card.dart';
-import '../widgets/fleet_analytics_card.dart';
-import '../widgets/dashboard_insights_card.dart';
-import '../widgets/compliance_summary_card.dart';
-import '../widgets/dashboard_alerts_card.dart';
 import '../widgets/recent_activity_card.dart';
 
 class AnalyticsSection extends StatelessWidget {
   final DashboardSummary summary;
-  final FleetHealth fleetHealth;
+  final List<Widget> children;
 
   const AnalyticsSection({
     super.key,
     required this.summary,
-    required this.fleetHealth,
+    this.children = const [],
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        FleetHealthCard(
-          fleetHealth: fleetHealth,
-          maintenanceOverdue: summary.maintenanceOverdue,
-          complianceExpired: summary.complianceExpired,
-          healthyVehicles: summary.vehicleCount - summary.maintenanceOverdue,
-        ),
+    final operations = FleetOperationsCard(
+      assignedVehicles: summary.assignedVehicles,
+      totalVehicles: summary.vehicleCount,
+      assignedDrivers: summary.assignedDrivers,
+      totalDrivers: summary.driverCount,
+    );
+    final activity = RecentActivityCard(
+      activities: summary.recentActivity.take(5).toList(),
+    );
 
-        const SizedBox(height: 30),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final desktop = constraints.maxWidth >= 960;
+        final pair = desktop
+            ? Row(
+                key: const Key('dashboard-operations-activity-pair'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: operations),
+                  const SizedBox(width: 24),
+                  Expanded(child: activity),
+                ],
+              )
+            : Column(
+                key: const Key('dashboard-operations-activity-pair'),
+                children: [operations, const SizedBox(height: 24), activity],
+              );
 
-        FleetOperationsCard(
-          assignedVehicles: summary.assignedVehicles,
-          totalVehicles: summary.vehicleCount,
-          assignedDrivers: summary.assignedDrivers,
-          totalDrivers: summary.driverCount,
-          fleetHealth: fleetHealth.score.round(),
-        ),
-
-        const SizedBox(height: 30),
-
-        FleetAnalyticsCard(
-          vehicleCount: summary.vehicleCount,
-          driverCount: summary.driverCount,
-          assignedVehicles: summary.assignedVehicles,
-          assignedDrivers: summary.assignedDrivers,
-          fleetHealth: fleetHealth.score.round(),
-        ),
-
-        const SizedBox(height: 30),
-
-        DashboardInsightsCard(
-          insights: summary.insights,
-        ),
-
-        const SizedBox(height: 30),
-
-        ComplianceSummaryCard(
-          motDue: summary.vehicleMotDue,
-          serviceDue: summary.serviceDue,
-          overdue: summary.overdue,
-        ),
-
-        const SizedBox(height: 30),
-
-        DashboardAlertsCard(
-          alerts: summary.alerts,
-        ),
-
-        const SizedBox(height: 30),
-
-        RecentActivityCard(
-          activities: summary.recentActivity,
-        ),
-      ],
+        return Column(
+          children: [
+            pair,
+            if (children.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              ...children,
+            ],
+          ],
+        );
+      },
     );
   }
 }
