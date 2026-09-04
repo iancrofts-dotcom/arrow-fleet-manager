@@ -133,6 +133,79 @@ void main() {
     },
   );
 
+  testWidgets(
+    'filters attention locally by search metadata and clears filters',
+    (tester) async {
+      await _pump(tester, () async => _summary());
+      expect(find.text('67%'), findsOneWidget);
+      await _scrollTo(
+        tester,
+        find.byKey(const Key('compliance-attention-search')),
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('compliance-attention-search')),
+        '  f10  ',
+      );
+      await tester.pump();
+
+      expect(find.text('Showing 1 of 3 attention items'), findsOneWidget);
+      expect(find.text('AB12 CDE'), findsOneWidget);
+      expect(find.text('Jane Smith'), findsNothing);
+      await _scrollToTop(tester);
+      expect(
+        find.byKey(const Key('compliance-status-Expired')),
+        findsOneWidget,
+      );
+
+      await _scrollTo(
+        tester,
+        find.byKey(const Key('compliance-attention-clear-filters')),
+      );
+      await tester.tap(
+        find.byKey(const Key('compliance-attention-clear-filters')),
+      );
+      await tester.pump();
+
+      expect(find.text('Showing 3 of 3 attention items'), findsOneWidget);
+      await _scrollTo(tester, find.text('Jane Smith'));
+      expect(find.text('Jane Smith'), findsOneWidget);
+      await _scrollTo(tester, find.text('Fleet Compliance'), delta: -300);
+      expect(find.text('67%'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'filters attention by status and subject with a resettable empty state',
+    (tester) async {
+      await _pump(tester, () async => _summary());
+      await _scrollTo(
+        tester,
+        find.byKey(const Key('compliance-attention-search')),
+      );
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Drivers'));
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Expired'));
+      await tester.pump();
+
+      expect(
+        find.text('No attention items match the current filters.'),
+        findsOneWidget,
+      );
+      expect(find.text('AB12 CDE'), findsNothing);
+      expect(find.text('Jane Smith'), findsNothing);
+
+      final clearFilters = find
+          .widgetWithText(TextButton, 'Clear filters')
+          .last;
+      await _scrollTo(tester, clearFilters);
+      await tester.tap(clearFilters);
+      await tester.pump();
+
+      expect(find.text('Showing 3 of 3 attention items'), findsOneWidget);
+    },
+  );
+
   for (final width in [390.0, 700.0, 1280.0]) {
     testWidgets('renders without overflow at ${width.toInt()}px', (
       tester,
@@ -160,6 +233,10 @@ void main() {
       );
       await _scrollTo(tester, find.text('Needs Attention'));
       expect(find.text('Needs Attention'), findsOneWidget);
+      expect(
+        find.byKey(const Key('compliance-attention-search')),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
   }
@@ -189,13 +266,38 @@ Future<void> _pump(
   }
 }
 
-Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
-  await tester.scrollUntilVisible(
-    finder,
-    240,
-    scrollable: find.byType(Scrollable),
+Future<void> _scrollTo(
+  WidgetTester tester,
+  Finder finder, {
+  double delta = 300,
+}) async {
+  final page = find.byKey(const Key('compliance-centre-scroll'));
+  final scrollable = find.descendant(
+    of: page,
+    matching: find.byWidgetPredicate(
+      (widget) =>
+          widget is Scrollable && widget.axisDirection == AxisDirection.down,
+    ),
   );
+  expect(page, findsOneWidget);
+  expect(scrollable, findsOneWidget);
+  await tester.scrollUntilVisible(finder, delta, scrollable: scrollable);
   await tester.pump();
+}
+
+Future<void> _scrollToTop(WidgetTester tester) async {
+  final page = find.byKey(const Key('compliance-centre-scroll'));
+  final scrollable = find.descendant(
+    of: page,
+    matching: find.byWidgetPredicate(
+      (widget) =>
+          widget is Scrollable && widget.axisDirection == AxisDirection.down,
+    ),
+  );
+  expect(page, findsOneWidget);
+  expect(scrollable, findsOneWidget);
+  tester.state<ScrollableState>(scrollable).position.jumpTo(0);
+  await tester.pumpAndSettle();
 }
 
 FleetComplianceSummary _summary({

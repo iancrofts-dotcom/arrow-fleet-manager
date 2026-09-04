@@ -18,6 +18,7 @@ class ComplianceCentreContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
+    key: const Key('compliance-centre-scroll'),
     physics: const AlwaysScrollableScrollPhysics(),
     padding: const EdgeInsets.only(bottom: 32),
     children: [
@@ -213,26 +214,169 @@ class _StatusMetricCard extends StatelessWidget {
   }
 }
 
-class _AttentionSection extends StatelessWidget {
+class _AttentionSection extends StatefulWidget {
   const _AttentionSection({required this.items, this.onAttentionTap});
 
   final List<FleetComplianceAttentionItem> items;
   final ValueChanged<FleetComplianceAttentionItem>? onAttentionTap;
 
   @override
-  Widget build(BuildContext context) => SectionCard(
-    title: 'Needs Attention',
-    subtitle: 'Required checks that need operational follow-up.',
-    child: items.isEmpty
-        ? const _AttentionEmptyState()
-        : Column(
-            children: [
-              for (final item in items) ...[
-                _AttentionRow(item: item, onTap: onAttentionTap),
-                if (item != items.last) const Divider(height: 24),
+  State<_AttentionSection> createState() => _AttentionSectionState();
+}
+
+class _AttentionSectionState extends State<_AttentionSection> {
+  final _searchController = TextEditingController();
+  FleetComplianceStatus? _status;
+  FleetComplianceSubjectType? _subjectType;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  bool get _hasFilters =>
+      _searchController.text.trim().isNotEmpty ||
+      _status != null ||
+      _subjectType != null;
+
+  List<FleetComplianceAttentionItem> get _visibleItems {
+    final query = _searchController.text.trim().toLowerCase();
+    return widget.items
+        .where((item) {
+          final matchesStatus = _status == null || item.status == _status;
+          final matchesSubject =
+              _subjectType == null || item.subjectType == _subjectType;
+          final matchesSearch =
+              query.isEmpty ||
+              [
+                item.subjectDisplay,
+                item.secondaryDisplay,
+                _checkLabel(item.checkType),
+              ].whereType<String>().any(
+                (value) => value.toLowerCase().contains(query),
+              );
+          return matchesStatus && matchesSubject && matchesSearch;
+        })
+        .toList(growable: false);
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _searchController.clear();
+      _status = null;
+      _subjectType = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _visibleItems;
+    final theme = Theme.of(context);
+    return SectionCard(
+      title: 'Needs Attention',
+      subtitle: 'Required checks that need operational follow-up.',
+      child: widget.items.isEmpty
+          ? const _AttentionEmptyState()
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  key: const Key('compliance-attention-search'),
+                  controller: _searchController,
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    labelText: 'Search needs attention',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _FilterGroup<FleetComplianceStatus>(
+                  label: 'Status',
+                  selected: _status,
+                  options: const [
+                    (null, 'All'),
+                    (FleetComplianceStatus.dueSoon, 'Due Soon'),
+                    (FleetComplianceStatus.expired, 'Expired'),
+                    (FleetComplianceStatus.notRecorded, 'Not Recorded'),
+                  ],
+                  onSelected: (value) => setState(() => _status = value),
+                ),
+                const SizedBox(height: 12),
+                _FilterGroup<FleetComplianceSubjectType>(
+                  label: 'Subject',
+                  selected: _subjectType,
+                  options: const [
+                    (null, 'All subjects'),
+                    (FleetComplianceSubjectType.vehicle, 'Vehicles'),
+                    (FleetComplianceSubjectType.driver, 'Drivers'),
+                  ],
+                  onSelected: (value) => setState(() => _subjectType = value),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Showing ${items.length} of ${widget.items.length} attention items',
+                        key: const Key('compliance-attention-result-count'),
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
+                    if (_hasFilters)
+                      TextButton(
+                        key: const Key('compliance-attention-clear-filters'),
+                        onPressed: _clearFilters,
+                        child: const Text('Clear filters'),
+                      ),
+                  ],
+                ),
+                const Divider(height: 24),
+                if (items.isEmpty)
+                  _FilteredAttentionEmptyState(onClearFilters: _clearFilters)
+                else
+                  for (final item in items) ...[
+                    _AttentionRow(item: item, onTap: widget.onAttentionTap),
+                    if (item != items.last) const Divider(height: 24),
+                  ],
               ],
-            ],
-          ),
+            ),
+    );
+  }
+}
+
+class _FilterGroup<T> extends StatelessWidget {
+  const _FilterGroup({
+    required this.label,
+    required this.selected,
+    required this.options,
+    required this.onSelected,
+  });
+
+  final String label;
+  final T? selected;
+  final List<(T?, String)> options;
+  final ValueChanged<T?> onSelected;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: Theme.of(context).textTheme.labelLarge),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final option in options)
+            ChoiceChip(
+              label: Text(option.$2),
+              selected: selected == option.$1,
+              onSelected: (_) => onSelected(option.$1),
+            ),
+        ],
+      ),
+    ],
   );
 }
 
@@ -250,6 +394,33 @@ class _AttentionEmptyState extends StatelessWidget {
           child: Text(
             'All required compliance checks are currently up to date.',
           ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _FilteredAttentionEmptyState extends StatelessWidget {
+  const _FilteredAttentionEmptyState({required this.onClearFilters});
+
+  final VoidCallback onClearFilters;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 16),
+    child: Column(
+      children: [
+        const Icon(Icons.search_off_outlined),
+        const SizedBox(height: 8),
+        Text(
+          'No attention items match the current filters.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: onClearFilters,
+          child: const Text('Clear filters'),
         ),
       ],
     ),
