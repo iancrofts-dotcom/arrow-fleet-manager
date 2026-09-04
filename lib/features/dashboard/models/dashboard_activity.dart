@@ -6,6 +6,8 @@ class DashboardActivity {
     required this.type,
     this.route,
     this.entityId,
+    this.driverId,
+    this.vehicleId,
   });
 
   final String title;
@@ -19,6 +21,12 @@ class DashboardActivity {
   /// Optional ID of the related record
   final String? entityId;
 
+  /// Persisted Driver identity associated with this activity, when applicable.
+  final int? driverId;
+
+  /// Persisted Vehicle identity associated with this activity, when applicable.
+  final int? vehicleId;
+
   String get formattedDate {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
@@ -30,20 +38,11 @@ class DashboardActivity {
   String get relativeDate {
     final now = DateTime.now();
 
-    final today = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
+    final today = DateTime(now.year, now.month, now.day);
 
-    final activityDay = DateTime(
-      date.year,
-      date.month,
-      date.day,
-    );
+    final activityDay = DateTime(date.year, date.month, date.day);
 
-    final difference =
-        today.difference(activityDay).inDays;
+    final difference = today.difference(activityDay).inDays;
 
     if (difference == 0) {
       return 'Today';
@@ -67,6 +66,8 @@ class DashboardActivity {
     DashboardActivityType? type,
     String? route,
     String? entityId,
+    int? driverId,
+    int? vehicleId,
   }) {
     return DashboardActivity(
       title: title ?? this.title,
@@ -75,6 +76,8 @@ class DashboardActivity {
       type: type ?? this.type,
       route: route ?? this.route,
       entityId: entityId ?? this.entityId,
+      driverId: driverId ?? this.driverId,
+      vehicleId: vehicleId ?? this.vehicleId,
     );
   }
 }
@@ -85,4 +88,5 @@ enum DashboardActivityType {
   assignment,
   maintenance,
   compliance,
+  dailyCheck,
 }

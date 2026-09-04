@@ -16,6 +16,8 @@ class RecentActivityCard extends StatelessWidget {
         return Icons.build;
       case DashboardActivityType.compliance:
         return Icons.verified_user;
+      case DashboardActivityType.dailyCheck:
+        return Icons.fact_check;
       case DashboardActivityType.vehicle:
         return Icons.local_shipping;
       case DashboardActivityType.driver:

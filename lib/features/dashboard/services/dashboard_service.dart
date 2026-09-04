@@ -14,6 +14,7 @@ import '../repositories/fleet_dashboard_repository.dart';
 import '../models/fleet_health.dart';
 import 'fleet_health_service.dart';
 import 'fleet_metrics_service.dart';
+import 'driver_daily_check_activity_service.dart';
 import '../../workshop/repositories/workshop_repository.dart';
 import '../../workshop/services/workshop_dashboard_service.dart';
 
@@ -25,6 +26,7 @@ class DashboardService {
     DriverComplianceService? complianceService,
     MaintenanceService? maintenanceService,
     WorkshopDashboardService? workshopDashboardService,
+    DriverDailyCheckActivityService? driverDailyCheckActivityService,
   }) : _vehicleService = vehicleService ?? VehicleService(),
        _driverService = driverService ?? DriverService(),
        _assignmentService = assignmentService ?? DriverAssignmentService(),
@@ -32,7 +34,9 @@ class DashboardService {
        _maintenanceService = maintenanceService ?? MaintenanceService(),
        _workshopDashboardService =
            workshopDashboardService ??
-           WorkshopDashboardService(WorkshopRepository());
+           WorkshopDashboardService(WorkshopRepository()),
+       _driverDailyCheckActivityService =
+           driverDailyCheckActivityService ?? DriverDailyCheckActivityService();
 
   final VehicleService _vehicleService;
   final DriverService _driverService;
@@ -40,6 +44,7 @@ class DashboardService {
   final DriverComplianceService _complianceService;
   final MaintenanceService _maintenanceService;
   final WorkshopDashboardService _workshopDashboardService;
+  final DriverDailyCheckActivityService _driverDailyCheckActivityService;
   final FleetDashboardRepository _dashboardRepository =
       FleetDashboardRepository.instance;
   final FleetHealthService _fleetHealthService = const FleetHealthService();
@@ -169,6 +174,7 @@ class DashboardService {
       ...await _assignmentService.getRecentActivities(),
       ...await _maintenanceService.getRecentActivities(),
       ...await _complianceService.getRecentActivities(),
+      ...await _driverDailyCheckActivityService.getRecentActivities(),
     ];
 
     activities.sort((a, b) => b.date.compareTo(a.date));
