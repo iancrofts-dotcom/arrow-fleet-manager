@@ -89,6 +89,50 @@ void main() {
     expect(find.text('Fleet Compliance'), findsOneWidget);
   });
 
+  testWidgets(
+    'opens attention subjects by persisted ID and reloads on return',
+    (tester) async {
+      var loads = 0;
+      final openedItems = <FleetComplianceAttentionItem>[];
+      await _pump(
+        tester,
+        () async {
+          loads++;
+          return _summary();
+        },
+        onOpenAttention: (_, item) async {
+          openedItems.add(item);
+        },
+      );
+
+      await _scrollTo(tester, find.text('AB12 CDE'));
+      final vehicleRow = find.ancestor(
+        of: find.text('AB12 CDE'),
+        matching: find.byType(InkWell),
+      );
+      expect(tester.widget<InkWell>(vehicleRow).onTap, isNotNull);
+      await tester.tap(find.text('AB12 CDE'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        openedItems.single.subjectType,
+        FleetComplianceSubjectType.vehicle,
+      );
+      expect(openedItems.single.subjectId, 10);
+      expect(loads, 2);
+
+      await _scrollTo(tester, find.text('Jane Smith'));
+      await tester.tap(find.text('Jane Smith'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(openedItems.last.subjectType, FleetComplianceSubjectType.driver);
+      expect(openedItems.last.subjectId, 20);
+      expect(loads, 3);
+    },
+  );
+
   for (final width in [390.0, 700.0, 1280.0]) {
     testWidgets('renders without overflow at ${width.toInt()}px', (
       tester,
@@ -125,9 +169,19 @@ Future<void> _pump(
   WidgetTester tester,
   Future<FleetComplianceSummary> Function() loadSummary, {
   bool settle = true,
+  Future<void> Function(
+    BuildContext context,
+    FleetComplianceAttentionItem item,
+  )?
+  onOpenAttention,
 }) async {
   await tester.pumpWidget(
-    MaterialApp(home: ComplianceCentreScreen(loadSummary: loadSummary)),
+    MaterialApp(
+      home: ComplianceCentreScreen(
+        loadSummary: loadSummary,
+        onOpenAttention: onOpenAttention,
+      ),
+    ),
   );
   await tester.pump();
   if (settle) {

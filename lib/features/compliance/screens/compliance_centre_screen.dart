@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/navigation/compliance_navigation.dart';
 import '../../../shared/widgets/app_page_scaffold.dart';
 import '../models/fleet_compliance_summary.dart';
 import '../services/fleet_compliance_service.dart';
 import '../widgets/compliance_centre_content.dart';
 
 class ComplianceCentreScreen extends StatefulWidget {
-  const ComplianceCentreScreen({super.key, this.loadSummary});
+  const ComplianceCentreScreen({
+    super.key,
+    this.loadSummary,
+    this.onOpenAttention,
+  });
 
   final Future<FleetComplianceSummary> Function()? loadSummary;
+  final Future<void> Function(
+    BuildContext context,
+    FleetComplianceAttentionItem item,
+  )?
+  onOpenAttention;
 
   @override
   State<ComplianceCentreScreen> createState() => _ComplianceCentreScreenState();
@@ -32,6 +42,15 @@ class _ComplianceCentreScreenState extends State<ComplianceCentreScreen> {
     await _summaryFuture;
   }
 
+  Future<void> _openAttention(FleetComplianceAttentionItem item) async {
+    final openAttention =
+        widget.onOpenAttention ?? ComplianceNavigation.openAttention;
+    await openAttention(context, item);
+    if (mounted) {
+      await _refresh();
+    }
+  }
+
   @override
   Widget build(BuildContext context) => AppPageScaffold(
     title: 'Compliance Centre',
@@ -51,7 +70,10 @@ class _ComplianceCentreScreenState extends State<ComplianceCentreScreen> {
         }
         return RefreshIndicator(
           onRefresh: _refresh,
-          child: ComplianceCentreContent(summary: snapshot.data!),
+          child: ComplianceCentreContent(
+            summary: snapshot.data!,
+            onAttentionTap: _openAttention,
+          ),
         );
       },
     ),

@@ -7,9 +7,14 @@ import '../../../shared/widgets/app_page_scaffold.dart';
 import '../models/fleet_compliance_summary.dart';
 
 class ComplianceCentreContent extends StatelessWidget {
-  const ComplianceCentreContent({super.key, required this.summary});
+  const ComplianceCentreContent({
+    super.key,
+    required this.summary,
+    this.onAttentionTap,
+  });
 
   final FleetComplianceSummary summary;
+  final ValueChanged<FleetComplianceAttentionItem>? onAttentionTap;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -20,7 +25,10 @@ class ComplianceCentreContent extends StatelessWidget {
       const SizedBox(height: 20),
       _StatusMetrics(summary: summary),
       const SizedBox(height: 24),
-      _AttentionSection(items: summary.attentionItems),
+      _AttentionSection(
+        items: summary.attentionItems,
+        onAttentionTap: onAttentionTap,
+      ),
       const SizedBox(height: 24),
       _BreakdownSection(summary: summary),
     ],
@@ -206,9 +214,10 @@ class _StatusMetricCard extends StatelessWidget {
 }
 
 class _AttentionSection extends StatelessWidget {
-  const _AttentionSection({required this.items});
+  const _AttentionSection({required this.items, this.onAttentionTap});
 
   final List<FleetComplianceAttentionItem> items;
+  final ValueChanged<FleetComplianceAttentionItem>? onAttentionTap;
 
   @override
   Widget build(BuildContext context) => SectionCard(
@@ -219,7 +228,7 @@ class _AttentionSection extends StatelessWidget {
         : Column(
             children: [
               for (final item in items) ...[
-                _AttentionRow(item: item),
+                _AttentionRow(item: item, onTap: onAttentionTap),
                 if (item != items.last) const Divider(height: 24),
               ],
             ],
@@ -248,55 +257,74 @@ class _AttentionEmptyState extends StatelessWidget {
 }
 
 class _AttentionRow extends StatelessWidget {
-  const _AttentionRow({required this.item});
+  const _AttentionRow({required this.item, this.onTap});
 
   final FleetComplianceAttentionItem item;
+  final ValueChanged<FleetComplianceAttentionItem>? onTap;
 
   @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        height: 40,
-        width: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: _toneColor(
-            _toneForStatus(item.status),
-          ).withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(
-          item.subjectType == FleetComplianceSubjectType.vehicle
-              ? Icons.local_shipping_outlined
-              : Icons.person_outline,
-          color: _toneColor(_toneForStatus(item.status)),
-        ),
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
+  Widget build(BuildContext context) => Semantics(
+    button: onTap != null,
+    label: 'View ${item.subjectDisplay} compliance',
+    child: InkWell(
+      onTap: onTap == null ? null : () => onTap!(item),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              item.subjectDisplay,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${_checkLabel(item.checkType)} • ${_dateLabel(item.date)}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+            Container(
+              height: 40,
+              width: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: _toneColor(
+                  _toneForStatus(item.status),
+                ).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                item.subjectType == FleetComplianceSubjectType.vehicle
+                    ? Icons.local_shipping_outlined
+                    : Icons.person_outline,
+                color: _toneColor(_toneForStatus(item.status)),
               ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.subjectDisplay,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_checkLabel(item.checkType)} • ${_dateLabel(item.date)}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            _badgeForStatus(item.status),
+            if (onTap != null) ...[
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ],
           ],
         ),
       ),
-      const SizedBox(width: 8),
-      _badgeForStatus(item.status),
-    ],
+    ),
   );
 }
 
