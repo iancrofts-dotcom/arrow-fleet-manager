@@ -4,6 +4,7 @@ import '../features/auth/widgets/auth_gate.dart';
 import '../features/auth/widgets/protected_screen.dart';
 import '../features/auth/screens/user_management_screen.dart';
 import '../features/calendar/screens/calendar_screen.dart';
+import '../features/compliance/screens/compliance_centre_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/documents/screens/document_list_screen.dart';
 import '../features/vehicles/screens/vehicle_list_screen.dart';
@@ -28,55 +29,58 @@ class AppRouter {
   static const String users = '/users';
   static const String workshop = '/workshop';
   static const String calendar = '/calendar';
+  static const String compliance = '/compliance';
 
   static Map<String, WidgetBuilder> get routes => {
-        // Authentication
-        root: (_) => const AuthGate(),
+    // Authentication
+    root: (_) => const AuthGate(),
 
-        // Dashboard
-        dashboard: (_) => const DashboardScreen(),
+    // Dashboard
+    dashboard: (_) => const DashboardScreen(),
 
-        // Fleet
-        vehicles: (_) => ProtectedScreen(
-          allow: (permissions) => permissions.canViewVehicles,
-          child: const VehicleListScreen(),
-        ),
+    // Fleet
+    vehicles: (_) => ProtectedScreen(
+      allow: (permissions) => permissions.canViewVehicles,
+      child: const VehicleListScreen(),
+    ),
 
-        // Drivers
-        drivers: (_) => ProtectedScreen(
-          allow: (permissions) => permissions.canViewDrivers,
-          child: const DriverListScreen(),
-        ),
-        // Workshop
-        workshop: (_) => ProtectedScreen(
-          allow: (permissions) => permissions.canAccessWorkshop,
-          child: const WorkshopDashboardScreen(),
-        ),
-        calendar: (_) => ProtectedScreen(
-          allow: (permissions) => permissions.canAccessCalendar,
-          child: const CalendarScreen(),
-        ),
-        reports: (_) => ProtectedScreen(
-          allow: (permissions) => permissions.canViewReports,
-          child: const ReportsScreen(),
-        ),
-        documents: (_) => ProtectedScreen(
-          allow: (permissions) => permissions.canViewVehicles,
-          child: const DocumentListScreen(),
-        ),
-        users: (_) => ProtectedScreen(
-          allow: (permissions) => permissions.canManageUsers,
-          child: const UserManagementScreen(),
-        ),
-      };
+    // Drivers
+    drivers: (_) => ProtectedScreen(
+      allow: (permissions) => permissions.canViewDrivers,
+      child: const DriverListScreen(),
+    ),
+    // Workshop
+    workshop: (_) => ProtectedScreen(
+      allow: (permissions) => permissions.canAccessWorkshop,
+      child: const WorkshopDashboardScreen(),
+    ),
+    calendar: (_) => ProtectedScreen(
+      allow: (permissions) => permissions.canAccessCalendar,
+      child: const CalendarScreen(),
+    ),
+    compliance: (_) => ProtectedScreen(
+      allow: (permissions) => permissions.canViewCompliance,
+      child: const ComplianceCentreScreen(),
+    ),
+    reports: (_) => ProtectedScreen(
+      allow: (permissions) => permissions.canViewReports,
+      child: const ReportsScreen(),
+    ),
+    documents: (_) => ProtectedScreen(
+      allow: (permissions) => permissions.canViewVehicles,
+      child: const DocumentListScreen(),
+    ),
+    users: (_) => ProtectedScreen(
+      allow: (permissions) => permissions.canManageUsers,
+      child: const UserManagementScreen(),
+    ),
+  };
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute(
       settings: settings,
       builder: (_) => Scaffold(
-        appBar: AppBar(
-          title: const Text('Coming Soon'),
-        ),
+        appBar: AppBar(title: const Text('Coming Soon')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),

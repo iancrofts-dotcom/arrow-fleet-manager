@@ -62,6 +62,12 @@ class AppShellDestinations {
       isVisible: _canAccessWorkshop,
     ),
     AppShellDestination(
+      label: 'Compliance',
+      route: AppRouter.compliance,
+      icon: Icons.verified_user_outlined,
+      isVisible: _canViewCompliance,
+    ),
+    AppShellDestination(
       label: 'Reports',
       route: AppRouter.reports,
       icon: Icons.assessment_outlined,
@@ -81,6 +87,7 @@ class AppShellDestinations {
   static bool _canManageUsers(PermissionService p) => p.canManageUsers;
   static bool _canAccessCalendar(PermissionService p) => p.canAccessCalendar;
   static bool _canAccessWorkshop(PermissionService p) => p.canAccessWorkshop;
+  static bool _canViewCompliance(PermissionService p) => p.canViewCompliance;
   static bool _canViewReports(PermissionService p) => p.canViewReports;
 }
 
@@ -244,9 +251,7 @@ class _CompactBottomNavigation extends StatelessWidget {
           top: false,
           child: Container(
             decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(color: AppConstants.borderColor),
-              ),
+              border: Border(top: BorderSide(color: AppConstants.borderColor)),
             ),
             child: Row(
               children: [
@@ -397,85 +402,87 @@ class _DesktopSidebar extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(AppConstants.spaceMd),
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppConstants.borderColor),
-                      ),
-                      child: SizedBox(
-                        width: 160,
-                        height: 132,
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppConstants.spaceXs),
-                          child: Image.asset(
-                            'assets/images/arrow_logo_high.png',
-                            key: const Key('sidebar-official-logo'),
-                            fit: BoxFit.contain,
-                            alignment: Alignment.center,
-                            filterQuality: FilterQuality.high,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppConstants.borderColor),
+                        ),
+                        child: SizedBox(
+                          width: 160,
+                          height: 132,
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppConstants.spaceXs),
+                            child: Image.asset(
+                              'assets/images/arrow_logo_high.png',
+                              key: const Key('sidebar-official-logo'),
+                              fit: BoxFit.contain,
+                              alignment: Alignment.center,
+                              filterQuality: FilterQuality.high,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: AppConstants.spaceXs),
-                    const Text(
-                      'Fleet Manager',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppConstants.spaceMd),
-              Expanded(
-                child: ValueListenableBuilder<String>(
-                  valueListenable: currentRoute,
-                  builder: (context, route, _) => ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      for (final destination in destinations)
-                        _SidebarDestination(
-                          destination: destination,
-                          selected: _isSelected(destination.route, route),
-                          onTap: () => _navigate(destination.route),
+                      const SizedBox(height: AppConstants.spaceXs),
+                      const Text(
+                        'Fleet Manager',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
                         ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-              const Divider(color: Color(0x55FFFFFF)),
-              ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: const CircleAvatar(child: Icon(Icons.person_outline)),
-                title: Text(
-                  user?.username ?? 'Signed in',
-                  style: const TextStyle(color: Colors.white),
+                const SizedBox(height: AppConstants.spaceMd),
+                Expanded(
+                  child: ValueListenableBuilder<String>(
+                    valueListenable: currentRoute,
+                    builder: (context, route, _) => ListView(
+                      padding: EdgeInsets.zero,
+                      children: [
+                        for (final destination in destinations)
+                          _SidebarDestination(
+                            destination: destination,
+                            selected: _isSelected(destination.route, route),
+                            onTap: () => _navigate(destination.route),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-                subtitle: Text(
-                  user == null ? '' : user.role.displayName,
-                  style: const TextStyle(color: Color(0xFFD0D5DD)),
+                const Divider(color: Color(0x55FFFFFF)),
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const CircleAvatar(
+                    child: Icon(Icons.person_outline),
+                  ),
+                  title: Text(
+                    user?.username ?? 'Signed in',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  subtitle: Text(
+                    user == null ? '' : user.role.displayName,
+                    style: const TextStyle(color: Color(0xFFD0D5DD)),
+                  ),
                 ),
-              ),
-              TextButton.icon(
-                onPressed: () => AuthService.instance.logout(),
-                icon: const Icon(Icons.logout, color: Colors.white),
-                label: const Text(
-                  'Logout',
-                  style: TextStyle(color: Colors.white),
+                TextButton.icon(
+                  onPressed: () => AuthService.instance.logout(),
+                  icon: const Icon(Icons.logout, color: Colors.white),
+                  label: const Text(
+                    'Logout',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
-              ),
-            ],
+              ],
             ),
           ),
         ),
@@ -497,7 +504,7 @@ class _SidebarDestination extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-            const radius = BorderRadius.all(Radius.circular(10));
+    const radius = BorderRadius.all(Radius.circular(10));
     return Padding(
       padding: const EdgeInsets.only(bottom: AppConstants.spaceXxs),
       child: Semantics(

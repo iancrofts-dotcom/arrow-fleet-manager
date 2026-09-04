@@ -43,6 +43,9 @@ class DashboardKpiSection extends StatelessWidget {
   }
 
   VoidCallback? _onTapFor(BuildContext context, String title) {
+    if (title == 'Compliance' && PermissionService.instance.canViewCompliance) {
+      return () => DashboardNavigation.openCompliance(context);
+    }
     if (title == 'Maintenance' &&
         PermissionService.instance.canAccessWorkshop) {
       return () => DashboardNavigation.openWorkshop(context);
