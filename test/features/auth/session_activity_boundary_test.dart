@@ -11,7 +11,10 @@ import 'package:arrow_fleet_manager/features/auth/widgets/session_activity_bound
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../helpers/fake_security_audit_service.dart';
 
 void main() {
   const passwords = PasswordService(workFactor: 4);
@@ -26,7 +29,11 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     now = DateTime(2026, 9, 1, 9);
     users = _FakeUserRepository();
-    userService = UserService(repository: users, passwordService: passwords);
+    userService = UserService(
+      repository: users,
+      passwordService: passwords,
+      securityAuditService: FakeSecurityAuditService(),
+    );
     auth = AuthService(
       userService: userService,
       sessionService: SessionService(),
@@ -191,6 +198,10 @@ User _user() => const User(
 );
 
 class _FakeUserRepository extends UserRepository {
+  @override
+  Future<T> transaction<T>(Future<T> Function(DatabaseExecutor?) action) =>
+      action(null);
+
   final _users = <String, UserEntity>{};
 
   @override
@@ -205,12 +216,12 @@ class _FakeUserRepository extends UserRepository {
   }
 
   @override
-  Future<void> insertUser(UserEntity user) async {
+  Future<void> insertUser(UserEntity user, {Object? executor}) async {
     _users[user.id] = user;
   }
 
   @override
-  Future<void> updateUser(UserEntity user) async {
+  Future<void> updateUser(UserEntity user, {Object? executor}) async {
     _users[user.id] = user;
   }
 }

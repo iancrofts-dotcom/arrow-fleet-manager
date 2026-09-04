@@ -7,6 +7,9 @@ import 'package:arrow_fleet_manager/features/auth/services/user_service.dart';
 import 'package:arrow_fleet_manager/features/auth/widgets/user_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite/sqflite.dart';
+
+import '../../helpers/fake_security_audit_service.dart';
 
 void main() {
   test(
@@ -15,7 +18,7 @@ void main() {
       final users = _FakeUserRepository()
         ..seed(_user('first', 'first.username'))
         ..seed(_user('second', 'second.username'));
-      final service = UserService(repository: users);
+      final service = _service(users);
 
       expect(
         await service.isUsernameAvailable(
@@ -42,7 +45,7 @@ void main() {
     'addUser rejects a seven-character password before persistence',
     () async {
       final users = _FakeUserRepository();
-      final service = UserService(repository: users);
+      final service = _service(users);
 
       expect(
         () => service.addUser(_user('new', 'new.user'), password: '1234567'),
@@ -56,7 +59,7 @@ void main() {
     'addUser accepts an eight-character password and stores a hash',
     () async {
       final users = _FakeUserRepository();
-      final service = UserService(repository: users);
+      final service = _service(users);
 
       await service.addUser(_user('new', 'new.user'), password: '12345678');
 
@@ -70,7 +73,7 @@ void main() {
     'addUser rejects an unlinked Driver account before persistence',
     () async {
       final users = _FakeUserRepository();
-      final service = UserService(repository: users);
+      final service = _service(users);
       final invalidDriver = User(
         id: 'driver',
         username: 'invalid.driver',
@@ -96,7 +99,7 @@ void main() {
     'addUser permits a linked Driver account and hashes its password',
     () async {
       final users = _FakeUserRepository();
-      final service = UserService(repository: users);
+      final service = _service(users);
       final linkedDriver = User(
         id: 'driver',
         username: 'linked.driver',
@@ -119,7 +122,7 @@ void main() {
     () async {
       final original = _user('manager', 'manager.user');
       final users = _FakeUserRepository()..seed(original);
-      final service = UserService(repository: users);
+      final service = _service(users);
 
       await expectLater(
         service.updateUser(original.copyWith(role: UserRole.driver)),
@@ -132,7 +135,7 @@ void main() {
   test('updateUser permits ordinary non-Driver role changes', () async {
     final original = _user('manager', 'manager.user');
     final users = _FakeUserRepository()..seed(original);
-    final service = UserService(repository: users);
+    final service = _service(users);
 
     await service.updateUser(original.copyWith(role: UserRole.workshop));
 
@@ -149,7 +152,7 @@ void main() {
         role: UserRole.driver,
       );
       final users = _FakeUserRepository()..seed(legacyDriver);
-      final service = UserService(repository: users);
+      final service = _service(users);
 
       await service.updateUser(
         legacyDriver.copyWith(role: UserRole.technician),
@@ -163,7 +166,7 @@ void main() {
 
   test('createFirstAdministrator rejects a seven-character password', () async {
     final users = _FakeUserRepository();
-    final service = UserService(repository: users);
+    final service = _service(users);
 
     expect(
       () => service.createFirstAdministrator(
@@ -179,7 +182,7 @@ void main() {
     'createFirstAdministrator accepts eight characters and stores a hash',
     () async {
       final users = _FakeUserRepository();
-      final service = UserService(repository: users);
+      final service = _service(users);
 
       final created = await service.createFirstAdministrator(
         _user('admin', 'first.admin'),
@@ -205,7 +208,7 @@ void main() {
       isActive: false,
     );
     final users = _FakeUserRepository()..seed(original);
-    final service = UserService(repository: users);
+    final service = _service(users);
 
     expect(
       () => service.updateUser(
@@ -231,7 +234,7 @@ void main() {
         isActive: false,
       );
       final users = _FakeUserRepository()..seed(original);
-      final service = UserService(repository: users);
+      final service = _service(users);
       final updated = original.copyWith(username: 'updated.user');
 
       await service.updateUser(updated, newPassword: '12345678');
@@ -255,7 +258,7 @@ void main() {
       'historic.short',
     ).copyWith(passwordHash: passwords.hash('1234'));
     final users = _FakeUserRepository()..seed(historicUser);
-    final service = UserService(repository: users, passwordService: passwords);
+    final service = _service(users, passwordService: passwords);
 
     final authenticated = await service.login(
       username: historicUser.username,
@@ -458,7 +461,20 @@ User _user(String id, String username) => User(
   role: UserRole.manager,
 );
 
+UserService _service(
+  _FakeUserRepository repository, {
+  PasswordService? passwordService,
+}) => UserService(
+  repository: repository,
+  passwordService: passwordService ?? const PasswordService(),
+  securityAuditService: FakeSecurityAuditService(),
+);
+
 class _FakeUserRepository extends UserRepository {
+  @override
+  Future<T> transaction<T>(Future<T> Function(DatabaseExecutor?) action) =>
+      action(null);
+
   final _users = <String, UserEntity>{};
 
   void seed(User user) {
@@ -477,12 +493,12 @@ class _FakeUserRepository extends UserRepository {
   Future<UserEntity?> getUserById(String id) async => _users[id];
 
   @override
-  Future<void> insertUser(UserEntity user) async {
+  Future<void> insertUser(UserEntity user, {Object? executor}) async {
     _users[user.id] = user;
   }
 
   @override
-  Future<void> updateUser(UserEntity user) async {
+  Future<void> updateUser(UserEntity user, {Object? executor}) async {
     _users[user.id] = user;
   }
 

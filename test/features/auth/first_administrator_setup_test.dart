@@ -6,12 +6,18 @@ import 'package:arrow_fleet_manager/features/auth/services/auth_initializer.dart
 import 'package:arrow_fleet_manager/features/auth/services/password_service.dart';
 import 'package:arrow_fleet_manager/features/auth/services/user_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite/sqflite.dart';
+
+import '../../helpers/fake_security_audit_service.dart';
 
 void main() {
   const passwords = PasswordService(workFactor: 4);
 
-  UserService service(_FakeUserRepository repository) =>
-      UserService(repository: repository, passwordService: passwords);
+  UserService service(_FakeUserRepository repository) => UserService(
+    repository: repository,
+    passwordService: passwords,
+    securityAuditService: FakeSecurityAuditService(),
+  );
 
   test('fresh database requires setup and creates no default users', () async {
     final users = _FakeUserRepository();
@@ -218,6 +224,10 @@ User _user(String id, UserRole role, {bool isActive = true}) => User(
 );
 
 class _FakeUserRepository extends UserRepository {
+  @override
+  Future<T> transaction<T>(Future<T> Function(DatabaseExecutor?) action) =>
+      action(null);
+
   final _users = <String, UserEntity>{};
 
   void seed(User user) {
@@ -253,7 +263,7 @@ class _FakeUserRepository extends UserRepository {
   }
 
   @override
-  Future<void> insertUser(UserEntity user) async {
+  Future<void> insertUser(UserEntity user, {Object? executor}) async {
     if (await getUserByUsername(user.username) != null) {
       throw StateError('Username already exists.');
     }
@@ -261,7 +271,7 @@ class _FakeUserRepository extends UserRepository {
   }
 
   @override
-  Future<void> updateUser(UserEntity user) async {
+  Future<void> updateUser(UserEntity user, {Object? executor}) async {
     _users[user.id] = user;
   }
 }

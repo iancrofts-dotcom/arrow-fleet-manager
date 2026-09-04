@@ -4,10 +4,15 @@ import 'package:arrow_fleet_manager/features/auth/models/user_role.dart';
 import 'package:arrow_fleet_manager/features/auth/repositories/user_repository.dart';
 import 'package:arrow_fleet_manager/features/auth/services/user_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite/sqflite.dart';
+
+import '../../helpers/fake_security_audit_service.dart';
 
 void main() {
-  UserService service(_FakeUserRepository repository) =>
-      UserService(repository: repository);
+  UserService service(_FakeUserRepository repository) => UserService(
+    repository: repository,
+    securityAuditService: FakeSecurityAuditService(),
+  );
 
   test(
     'last active Administrator cannot be deactivated or role downgraded',
@@ -148,6 +153,10 @@ User _driverUser() => const User(
 );
 
 class _FakeUserRepository extends UserRepository {
+  @override
+  Future<T> transaction<T>(Future<T> Function(DatabaseExecutor?) action) =>
+      action(null);
+
   final _users = <String, UserEntity>{};
 
   void seed(User user) {
@@ -170,12 +179,12 @@ class _FakeUserRepository extends UserRepository {
       );
 
   @override
-  Future<void> updateUser(UserEntity user) async {
+  Future<void> updateUser(UserEntity user, {Object? executor}) async {
     _users[user.id] = user;
   }
 
   @override
-  Future<void> deleteUser(String id) async {
+  Future<void> deleteUser(String id, {Object? executor}) async {
     _users.remove(id);
   }
 }

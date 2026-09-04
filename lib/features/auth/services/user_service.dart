@@ -4,16 +4,23 @@ import '../models/user_role.dart';
 import '../repositories/user_repository.dart';
 import 'password_service.dart';
 import 'password_policy.dart';
+import 'security_audit_service.dart';
+import '../models/security_audit_event.dart';
 
 class UserService {
-  UserService({UserRepository? repository, PasswordService? passwordService})
-    : _repository = repository ?? UserRepository(),
-      _passwordService = passwordService ?? const PasswordService();
+  UserService({
+    UserRepository? repository,
+    PasswordService? passwordService,
+    SecurityAuditService? securityAuditService,
+  }) : _repository = repository ?? UserRepository(),
+       _passwordService = passwordService ?? const PasswordService(),
+       _securityAuditService = securityAuditService ?? SecurityAuditService();
 
   static final UserService instance = UserService();
 
   final UserRepository _repository;
   final PasswordService _passwordService;
+  final SecurityAuditService _securityAuditService;
 
   static const _legacySeedCredentials = <String, String>{
     'admin': 'admin',
@@ -187,7 +194,18 @@ class UserService {
       passwordHash: _passwordService.hash(password),
     );
 
-    await _repository.insertUser(UserEntity.fromUser(userWithPasswordHash));
+    await _repository.transaction((transaction) async {
+      await _repository.insertUser(
+        UserEntity.fromUser(userWithPasswordHash),
+        executor: transaction,
+      );
+      await _securityAuditService.record(
+        type: SecurityAuditEventType.userCreated,
+        target: userWithPasswordHash,
+        detail: user.role == UserRole.driver ? 'Driver-linked account' : null,
+        executor: transaction,
+      );
+    });
   }
 
   /// Atomically provisions the first usable Administrator.
@@ -214,7 +232,13 @@ class UserService {
 
   /// Updates an existing user and only changes the stored password when a
   /// replacement plaintext password is supplied.
-  Future<void> updateUser(User user, {String? newPassword}) async {
+  Future<void> updateUser(
+    User user, {
+    String? newPassword,
+    bool recordAudit = true,
+    SecurityAuditEventType? auditType,
+    String? auditDetail,
+  }) async {
     _ensureDriverAccountIsLinked(user);
     if (newPassword != null) {
       _validateNewPassword(newPassword);
@@ -223,7 +247,24 @@ class UserService {
         ? user
         : user.copyWith(passwordHash: _passwordService.hash(newPassword));
 
-    await _repository.updateUser(UserEntity.fromUser(userWithPasswordHash));
+    await _repository.transaction((transaction) async {
+      await _repository.updateUser(
+        UserEntity.fromUser(userWithPasswordHash),
+        executor: transaction,
+      );
+      if (recordAudit) {
+        await _securityAuditService.record(
+          type:
+              auditType ??
+              (newPassword == null
+                  ? SecurityAuditEventType.userUpdated
+                  : SecurityAuditEventType.passwordChangedByAdministrator),
+          target: userWithPasswordHash,
+          detail: auditDetail,
+          executor: transaction,
+        );
+      }
+    });
   }
 
   void _validateNewPassword(String password) {
@@ -255,7 +296,76 @@ class UserService {
     _ensureLinkedDriverUserRemainsManagedByDriver(existing, user);
     await _ensureActiveAdministratorIsRetained(existing, user);
 
-    await updateUser(user, newPassword: newPassword);
+    if (newPassword != null) {
+      _validateNewPassword(newPassword);
+    }
+    final updated = newPassword == null
+        ? user
+        : user.copyWith(passwordHash: _passwordService.hash(newPassword));
+    final events = _managedUpdateEvents(
+      before: existing,
+      after: updated,
+      passwordChanged: newPassword != null,
+    );
+    final actor = await getUserById(actingUserId);
+    await _repository.transaction((transaction) async {
+      await _repository.updateUser(
+        UserEntity.fromUser(updated),
+        executor: transaction,
+      );
+      for (final event in events) {
+        await _securityAuditService.record(
+          type: event.type,
+          actor: actor,
+          target: updated,
+          detail: event.detail,
+          executor: transaction,
+        );
+      }
+    });
+  }
+
+  List<_AuditEventDefinition> _managedUpdateEvents({
+    required User before,
+    required User after,
+    required bool passwordChanged,
+  }) {
+    final events = <_AuditEventDefinition>[];
+    if (before.username != after.username) {
+      events.add(
+        _AuditEventDefinition(
+          SecurityAuditEventType.userUpdated,
+          'Username changed from ${before.username} to ${after.username}',
+        ),
+      );
+    }
+    if (before.role != after.role) {
+      events.add(
+        _AuditEventDefinition(
+          SecurityAuditEventType.roleChanged,
+          '${before.role.displayName} -> ${after.role.displayName}',
+        ),
+      );
+    }
+    if (before.isActive != after.isActive) {
+      events.add(
+        _AuditEventDefinition(
+          after.isActive
+              ? SecurityAuditEventType.userActivated
+              : SecurityAuditEventType.userDeactivated,
+          null,
+        ),
+      );
+    }
+    if (passwordChanged) {
+      events.add(
+        const _AuditEventDefinition(
+          SecurityAuditEventType.passwordChangedByAdministrator,
+          null,
+        ),
+      );
+    }
+    return events;
   }
 
   /// Deletes an unlinked user from User Management only when doing so keeps
@@ -287,7 +397,16 @@ class UserService {
       );
     }
 
-    await _repository.deleteUser(existing.id);
+    final actor = await getUserById(actingUserId);
+    await _repository.transaction((transaction) async {
+      await _repository.deleteUser(existing.id, executor: transaction);
+      await _securityAuditService.record(
+        type: SecurityAuditEventType.userDeleted,
+        actor: actor,
+        target: existing,
+        executor: transaction,
+      );
+    });
   }
 
   void _ensureLinkedDriverUserRemainsManagedByDriver(
@@ -354,4 +473,11 @@ class UserManagementException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class _AuditEventDefinition {
+  const _AuditEventDefinition(this.type, this.detail);
+
+  final SecurityAuditEventType type;
+  final String? detail;
 }

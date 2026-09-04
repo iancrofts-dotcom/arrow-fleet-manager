@@ -10,6 +10,9 @@ import 'package:arrow_fleet_manager/features/drivers/models/driver_entity.dart';
 import 'package:arrow_fleet_manager/features/drivers/repositories/driver_repository.dart';
 import 'package:arrow_fleet_manager/features/drivers/services/driver_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite/sqflite.dart';
+
+import '../../helpers/fake_security_audit_service.dart';
 
 void main() {
   const passwords = PasswordService(workFactor: 4);
@@ -226,7 +229,11 @@ void main() {
 
 class _Harness {
   _Harness({required PasswordService passwords}) {
-    userService = UserService(repository: users, passwordService: passwords);
+    userService = UserService(
+      repository: users,
+      passwordService: passwords,
+      securityAuditService: FakeSecurityAuditService(),
+    );
     driverService = DriverService(
       repository: drivers,
       userService: userService,
@@ -274,6 +281,10 @@ class _FakeDriverRepository extends DriverRepository {
 }
 
 class _FakeUserRepository extends UserRepository {
+  @override
+  Future<T> transaction<T>(Future<T> Function(DatabaseExecutor?) action) =>
+      action(null);
+
   final _users = <String, UserEntity>{};
   bool failUpdates = false;
 
@@ -294,7 +305,7 @@ class _FakeUserRepository extends UserRepository {
   }
 
   @override
-  Future<void> updateUser(UserEntity user) async {
+  Future<void> updateUser(UserEntity user, {Object? executor}) async {
     if (failUpdates) throw StateError('User write failed.');
     _users[user.id] = user;
   }

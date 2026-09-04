@@ -5,9 +5,9 @@ import '../../../database/schema.dart';
 import '../models/driver_entity.dart';
 
 class DriverRepository {
-  DriverRepository();
+  DriverRepository({AppDatabase? database}) : _database = database ?? AppDatabase();
 
-  final AppDatabase _database = AppDatabase();
+  final AppDatabase _database;
 
   Future<Database> get _db async => _database.database();
 

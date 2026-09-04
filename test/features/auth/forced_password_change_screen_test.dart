@@ -9,7 +9,10 @@ import 'package:arrow_fleet_manager/features/auth/services/session_service.dart'
 import 'package:arrow_fleet_manager/features/auth/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../helpers/fake_security_audit_service.dart';
 
 void main() {
   const passwords = PasswordService(workFactor: 4);
@@ -21,7 +24,11 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     users = _FakeUserRepository();
-    userService = UserService(repository: users, passwordService: passwords);
+    userService = UserService(
+      repository: users,
+      passwordService: passwords,
+      securityAuditService: FakeSecurityAuditService(),
+    );
     authService = AuthService(
       userService: userService,
       sessionService: SessionService(),
@@ -224,6 +231,10 @@ void main() {
 }
 
 class _FakeUserRepository extends UserRepository {
+  @override
+  Future<T> transaction<T>(Future<T> Function(DatabaseExecutor?) action) =>
+      action(null);
+
   final _users = <String, UserEntity>{};
   bool failUpdates = false;
 
@@ -243,12 +254,12 @@ class _FakeUserRepository extends UserRepository {
   }
 
   @override
-  Future<void> insertUser(UserEntity user) async {
+  Future<void> insertUser(UserEntity user, {Object? executor}) async {
     _users[user.id] = user;
   }
 
   @override
-  Future<void> updateUser(UserEntity user) async {
+  Future<void> updateUser(UserEntity user, {Object? executor}) async {
     if (failUpdates) throw StateError('Update failed');
     _users[user.id] = user;
   }

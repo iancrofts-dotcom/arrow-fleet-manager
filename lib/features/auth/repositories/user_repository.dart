@@ -12,6 +12,13 @@ class UserRepository {
 
   Future<Database> get _db async => await _database.database();
 
+  Future<T> transaction<T>(
+    Future<T> Function(DatabaseExecutor? executor) action,
+  ) async {
+    final db = await _db;
+    return db.transaction(action);
+  }
+
   Future<List<UserEntity>> getAllUsers() async {
     final db = await _db;
 
@@ -71,8 +78,8 @@ class UserRepository {
     return UserEntity.fromMap(result.first);
   }
 
-  Future<void> insertUser(UserEntity user) async {
-    final db = await _db;
+  Future<void> insertUser(UserEntity user, {DatabaseExecutor? executor}) async {
+    final db = executor ?? await _db;
 
     await db.insert(
       'users',
@@ -137,8 +144,8 @@ class UserRepository {
     });
   }
 
-  Future<void> updateUser(UserEntity user) async {
-    final db = await _db;
+  Future<void> updateUser(UserEntity user, {DatabaseExecutor? executor}) async {
+    final db = executor ?? await _db;
 
     await db.update(
       'users',
@@ -158,8 +165,8 @@ class UserRepository {
     }
   }
 
-  Future<void> deleteUser(String id) async {
-    final db = await _db;
+  Future<void> deleteUser(String id, {DatabaseExecutor? executor}) async {
+    final db = executor ?? await _db;
 
     await db.delete('users', where: 'id = ?', whereArgs: [id]);
   }

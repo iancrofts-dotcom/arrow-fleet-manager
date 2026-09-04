@@ -6,7 +6,12 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class AppDatabase {
+  // The public test seam intentionally differs from the private field name.
+  // ignore: prefer_initializing_formals
+  AppDatabase({String? databasePath}) : _databasePath = databasePath;
+
   Database? _database;
+  final String? _databasePath;
 
   Future<Database> database() async {
     if (_database != null) {
@@ -14,11 +19,11 @@ class AppDatabase {
     }
 
     final databasesPath = await getDatabasesPath();
-    final path = join(databasesPath, 'arrow_fleet.db');
+    final path = _databasePath ?? join(databasesPath, 'arrow_fleet.db');
 
     _database = await openDatabase(
       path,
-      version: 23,
+      version: 24,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON;');
       },
@@ -521,6 +526,10 @@ class AppDatabase {
             await txn.execute('DROP TABLE fleet_documents_v22');
           });
         }
+
+        if (oldVersion < 24) {
+          await _createSecurityAuditEventsTable(db);
+        }
       },
     );
 
@@ -736,6 +745,26 @@ class AppDatabase {
     ''');
   }
 
+  Future<void> _createSecurityAuditEventsTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS security_audit_events(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_type TEXT NOT NULL,
+        occurred_at TEXT NOT NULL,
+        actor_user_id TEXT,
+        actor_username TEXT,
+        target_user_id TEXT,
+        target_username TEXT,
+        detail TEXT
+      )
+    ''');
+  }
+
+  Future<void> close() async {
+    await _database?.close();
+    _database = null;
+  }
+
   Future<void> _createTables(Database db) async {
     await db.execute('''
       CREATE TABLE inspections(
@@ -808,6 +837,8 @@ class AppDatabase {
           ON DELETE CASCADE
       )
     ''');
+
+    await _createSecurityAuditEventsTable(db);
 
     await db.execute('''
       CREATE TABLE driver_assignments(
