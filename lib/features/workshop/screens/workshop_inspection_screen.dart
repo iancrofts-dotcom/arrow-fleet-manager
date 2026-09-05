@@ -185,11 +185,7 @@ class _WorkshopInspectionScreenState extends State<WorkshopInspectionScreen> {
   }
 
   String _inspectionTypeLabel(WorkshopInspectionType type) {
-    if (type == WorkshopInspectionType.driverDailyInspection) {
-      return 'Driver Daily Inspection';
-    }
-
-    return type.name;
+    return type.label;
   }
 
   StatusBadge _statusBadge(String status) {

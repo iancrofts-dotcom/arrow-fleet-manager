@@ -302,7 +302,7 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
             (inspection) => row([
               inspection.inspectionNumber,
               inspection.registration,
-              inspection.inspectionType.name,
+              inspection.inspectionType.label,
               inspection.overallResult.name,
               inspection.status.name,
               inspection.dateStarted.toIso8601String(),
@@ -717,7 +717,7 @@ class _WorkshopReportsScreenState extends State<WorkshopReportsScreen> {
                     '${inspection.inspectionNumber} | ${inspection.registration}',
                   ),
                   subtitle: Text(
-                    '${_readable(inspection.inspectionType.name)} | ${_readable(inspection.overallResult.name)} | ${_date(inspection.dateStarted)}',
+                    '${inspection.inspectionType.label} | ${_readable(inspection.overallResult.name)} | ${_date(inspection.dateStarted)}',
                   ),
                   trailing: Text(_readable(inspection.status.name)),
                 ),

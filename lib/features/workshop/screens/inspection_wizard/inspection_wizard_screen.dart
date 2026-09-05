@@ -215,25 +215,28 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
       child: AppPageScaffold(
         title: 'Workshop Inspection',
         subtitle: subtitle,
-        child: Column(
-          children: [
-            SectionCard(
-              child: _ProgressStepper(
-                currentStep: currentStep,
-                progress: progress,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: SectionCard(
-                padding: EdgeInsets.zero,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: buildStep(),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              SectionCard(
+                child: _ProgressStepper(
+                  currentStep: currentStep,
+                  progress: progress,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+              Expanded(
+                child: SectionCard(
+                  padding: EdgeInsets.zero,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: buildStep(),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -250,98 +253,126 @@ class _ProgressStepper extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Column(
-      children: [
-        Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth <= 480;
+        return Column(
           children: [
-            Text(
-              'Step ${currentStep + 1} of ${_steps.length} | ${_steps[currentStep]}',
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            Row(
+              children: [
+                Text(
+                  compact
+                      ? 'Step ${currentStep + 1} of ${_steps.length}'
+                      : 'Step ${currentStep + 1} of ${_steps.length} | ${_steps[currentStep]}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const Spacer(),
+                Text(
+                  '${(progress * 100).round()}%',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(color: scheme.primary),
+                ),
+              ],
             ),
-            const Spacer(),
-            Text(
-              '${(progress * 100).round()}%',
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(color: scheme.primary),
-            ),
-          ],
-        ),
 
-        const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-        Row(
-          children: List.generate(_steps.length, (index) {
-            final complete = index < currentStep;
-            final active = index == currentStep;
-
-            final color = complete || active
-                ? scheme.primary
-                : scheme.outlineVariant;
-
-            return Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            complete ? Icons.check : Icons.circle,
-                            size: complete
-                                ? 18
-                                : active
-                                ? 10
-                                : 8,
-                            color: complete || active
-                                ? scheme.onPrimary
-                                : scheme.outline,
-                          ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        Text(
-                          _steps[index],
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: active
-                                    ? scheme.primary
-                                    : scheme.onSurfaceVariant,
-                                fontWeight: active
-                                    ? FontWeight.w800
-                                    : FontWeight.w500,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  if (index != _steps.length - 1)
-                    Expanded(
-                      child: Container(
-                        height: 2,
-                        color: index < currentStep
+            if (compact)
+              Row(
+                children: List.generate(_steps.length, (index) {
+                  final activeOrComplete = index <= currentStep;
+                  return Expanded(
+                    child: Container(
+                      height: 6,
+                      margin: EdgeInsets.only(
+                        right: index == _steps.length - 1 ? 0 : 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: activeOrComplete
                             ? scheme.primary
                             : scheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(6),
                       ),
                     ),
-                ],
+                  );
+                }),
+              )
+            else
+              Row(
+                children: List.generate(_steps.length, (index) {
+                  final complete = index < currentStep;
+                  final active = index == currentStep;
+
+                  final color = complete || active
+                      ? scheme.primary
+                      : scheme.outlineVariant;
+
+                  return Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  complete ? Icons.check : Icons.circle,
+                                  size: complete
+                                      ? 18
+                                      : active
+                                      ? 10
+                                      : 8,
+                                  color: complete || active
+                                      ? scheme.onPrimary
+                                      : scheme.outline,
+                                ),
+                              ),
+
+                              const SizedBox(height: 6),
+
+                              Text(
+                                _steps[index],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: active
+                                          ? scheme.primary
+                                          : scheme.onSurfaceVariant,
+                                      fontWeight: active
+                                          ? FontWeight.w800
+                                          : FontWeight.w500,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        if (index != _steps.length - 1)
+                          Expanded(
+                            child: Container(
+                              height: 2,
+                              color: index < currentStep
+                                  ? scheme.primary
+                                  : scheme.outlineVariant,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }),
               ),
-            );
-          }),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

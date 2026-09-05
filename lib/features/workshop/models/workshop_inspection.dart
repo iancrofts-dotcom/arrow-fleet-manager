@@ -17,12 +17,7 @@ enum WorkshopInspectionStatus {
 /// INSPECTION RESULT
 /// ============================================================================
 
-enum InspectionResult {
-  pending,
-  pass,
-  fail,
-  advisory,
-}
+enum InspectionResult { pending, pass, fail, advisory }
 
 /// ============================================================================
 /// VEHICLE STATUS
@@ -48,6 +43,19 @@ enum WorkshopInspectionType {
   repairInspection,
   returnToService,
   driverDailyInspection,
+}
+
+extension WorkshopInspectionTypePresentation on WorkshopInspectionType {
+  String get label => switch (this) {
+    WorkshopInspectionType.scheduledService => 'Scheduled Service',
+    WorkshopInspectionType.defectInspection => 'Defect Inspection',
+    WorkshopInspectionType.annualInspection => 'Annual Safety Inspection',
+    WorkshopInspectionType.motPreparation => 'MOT Preparation',
+    WorkshopInspectionType.repairInspection => 'Repair Inspection',
+    WorkshopInspectionType.returnToService => 'Return-to-Service Inspection',
+    WorkshopInspectionType.driverDailyInspection =>
+      'Driver Daily Walkaround Check',
+  };
 }
 
 /// ============================================================================
@@ -201,8 +209,7 @@ class WorkshopInspection {
       labourHours: labourHours ?? this.labourHours,
       totalCost: totalCost ?? this.totalCost,
       notes: notes ?? this.notes,
-      technicianSignature:
-          technicianSignature ?? this.technicianSignature,
+      technicianSignature: technicianSignature ?? this.technicianSignature,
       managerSignature: managerSignature ?? this.managerSignature,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

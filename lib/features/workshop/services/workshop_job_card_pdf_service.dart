@@ -48,12 +48,18 @@ class WorkshopJobCardPdfService {
           ]),
           _section('Source inspection', [
             _row('Inspection number', inspection.inspectionNumber),
-            _row('Type', _titleCase(inspection.inspectionType.name)),
+            _row('Type', inspection.inspectionType.label),
             _row('Inspection date', _dateTime(inspection.dateStarted)),
-            _row('Driver / inspector', inspection.driverName?.trim().isNotEmpty == true
-                ? inspection.driverName!
-                : inspection.technicianName),
-            _row('Inspection result', _titleCase(inspection.overallResult.name)),
+            _row(
+              'Driver / inspector',
+              inspection.driverName?.trim().isNotEmpty == true
+                  ? inspection.driverName!
+                  : inspection.technicianName,
+            ),
+            _row(
+              'Inspection result',
+              _titleCase(inspection.overallResult.name),
+            ),
           ]),
           _section('Defect / repair', [
             _row('Defect', job.title),
@@ -61,12 +67,22 @@ class WorkshopJobCardPdfService {
             _row('Priority', _titleCase(job.priority.name)),
             _row('Parts required', job.partsRequired ? 'Yes' : 'No'),
             _row('Source checklist item', sourceItem?.title ?? 'Not available'),
-            _row('Photo evidence', photos.isEmpty ? 'No inspection photos attached' : '${photos.length} attached'),
+            _row(
+              'Photo evidence',
+              photos.isEmpty
+                  ? 'No inspection photos attached'
+                  : '${photos.length} attached',
+            ),
           ]),
           _section('Technician', [
-            _row('Assigned technician', job.technicianId == null
-                ? 'Unassigned'
-                : (job.technicianName.trim().isEmpty ? 'Assigned technician' : job.technicianName)),
+            _row(
+              'Assigned technician',
+              job.technicianId == null
+                  ? 'Unassigned'
+                  : (job.technicianName.trim().isEmpty
+                        ? 'Assigned technician'
+                        : job.technicianName),
+            ),
             _row('Date assigned / created', _dateTime(job.createdAt)),
             _row('Job status', _titleCase(job.status.name)),
           ]),
@@ -78,28 +94,38 @@ class WorkshopJobCardPdfService {
           ]),
           _section('Work and review notes', [
             _row('Operational notes', job.description),
-            _row('Inspection notes', sourceItem?.notes.trim().isNotEmpty == true
-                ? sourceItem!.notes
-                : inspection.notes),
+            _row(
+              'Inspection notes',
+              sourceItem?.notes.trim().isNotEmpty == true
+                  ? sourceItem!.notes
+                  : inspection.notes,
+            ),
           ]),
           _section('Management', [
-            _row('Review status', job.status == RepairJobStatus.completed
-                ? 'Approved / completed'
-                : job.status == RepairJobStatus.awaitingInspection
-                    ? 'Awaiting management review'
-                    : 'Not yet reviewed'),
-            _row('Completion date', job.completedAt == null ? 'Not completed' : _dateTime(job.completedAt!)),
+            _row(
+              'Review status',
+              job.status == RepairJobStatus.completed
+                  ? 'Approved / completed'
+                  : job.status == RepairJobStatus.awaitingInspection
+                  ? 'Awaiting management review'
+                  : 'Not yet reviewed',
+            ),
+            _row(
+              'Completion date',
+              job.completedAt == null
+                  ? 'Not completed'
+                  : _dateTime(job.completedAt!),
+            ),
             _row('Inspection sign-off', _titleCase(inspection.status.name)),
           ]),
           if (photoWidgets.isNotEmpty) ...[
             pw.SizedBox(height: 12),
-            pw.Text('Inspection evidence', style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 8),
-            pw.Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: photoWidgets,
+            pw.Text(
+              'Inspection evidence',
+              style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold),
             ),
+            pw.SizedBox(height: 8),
+            pw.Wrap(spacing: 8, runSpacing: 8, children: photoWidgets),
           ],
         ],
       ),
@@ -109,44 +135,95 @@ class WorkshopJobCardPdfService {
 
   Future<pw.ImageProvider?> _loadLogo() async {
     try {
-      return pw.MemoryImage((await rootBundle.load('assets/images/arrow_logo.png')).buffer.asUint8List());
+      return pw.MemoryImage(
+        (await rootBundle.load(
+          'assets/images/arrow_logo.png',
+        )).buffer.asUint8List(),
+      );
     } catch (_) {
       return null;
     }
   }
 
-  pw.Widget _header(pw.ImageProvider? logo, RepairJob job, DateTime generatedAt) => pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          if (logo != null) pw.Container(width: 58, height: 58, child: pw.Image(logo, fit: pw.BoxFit.contain)),
-          if (logo != null) pw.SizedBox(width: 12),
-          pw.Expanded(child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-            pw.Text('Arrow Fleet Manager', style: pw.TextStyle(fontSize: 17, fontWeight: pw.FontWeight.bold)),
-            pw.Text('Job Card', style: pw.TextStyle(fontSize: 23, fontWeight: pw.FontWeight.bold)),
+  pw.Widget _header(
+    pw.ImageProvider? logo,
+    RepairJob job,
+    DateTime generatedAt,
+  ) => pw.Row(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      if (logo != null)
+        pw.Container(
+          width: 58,
+          height: 58,
+          child: pw.Image(logo, fit: pw.BoxFit.contain),
+        ),
+      if (logo != null) pw.SizedBox(width: 12),
+      pw.Expanded(
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              'Arrow Fleet Manager',
+              style: pw.TextStyle(fontSize: 17, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              'Job Card',
+              style: pw.TextStyle(fontSize: 23, fontWeight: pw.FontWeight.bold),
+            ),
             pw.Text('Repair job ${job.jobNumber}'),
-          ])),
-          pw.Text('Generated\n${_dateTime(generatedAt)}', textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 9)),
-        ],
-      );
+          ],
+        ),
+      ),
+      pw.Text(
+        'Generated\n${_dateTime(generatedAt)}',
+        textAlign: pw.TextAlign.right,
+        style: const pw.TextStyle(fontSize: 9),
+      ),
+    ],
+  );
 
   pw.Widget _section(String title, List<pw.Widget> rows) => pw.Container(
-        margin: const pw.EdgeInsets.only(top: 14),
-        padding: const pw.EdgeInsets.all(10),
-        decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey400), borderRadius: pw.BorderRadius.circular(4)),
-        child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-          pw.Text(title, style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
-          pw.SizedBox(height: 5),
-          ...rows,
-        ]),
-      );
+    margin: const pw.EdgeInsets.only(top: 14),
+    padding: const pw.EdgeInsets.all(10),
+    decoration: pw.BoxDecoration(
+      border: pw.Border.all(color: PdfColors.grey400),
+      borderRadius: pw.BorderRadius.circular(4),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          title,
+          style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 5),
+        ...rows,
+      ],
+    ),
+  );
 
   pw.Widget _row(String label, String value) => pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(vertical: 2),
-        child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-          pw.SizedBox(width: 145, child: pw.Text(label, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
-          pw.Expanded(child: pw.Text(value.isEmpty ? '-' : value, style: const pw.TextStyle(fontSize: 9))),
-        ]),
-      );
+    padding: const pw.EdgeInsets.symmetric(vertical: 2),
+    child: pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(
+          width: 145,
+          child: pw.Text(
+            label,
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
+          ),
+        ),
+        pw.Expanded(
+          child: pw.Text(
+            value.isEmpty ? '-' : value,
+            style: const pw.TextStyle(fontSize: 9),
+          ),
+        ),
+      ],
+    ),
+  );
 
   Future<List<pw.Widget>> _photoWidgets(List<InspectionPhoto> photos) async {
     final widgets = <pw.Widget>[];
@@ -154,7 +231,16 @@ class WorkshopJobCardPdfService {
       final file = File(photo.filePath);
       if (!await file.exists()) continue;
       try {
-        widgets.add(pw.Container(width: 150, height: 105, child: pw.Image(pw.MemoryImage(await file.readAsBytes()), fit: pw.BoxFit.cover)));
+        widgets.add(
+          pw.Container(
+            width: 150,
+            height: 105,
+            child: pw.Image(
+              pw.MemoryImage(await file.readAsBytes()),
+              fit: pw.BoxFit.cover,
+            ),
+          ),
+        );
       } catch (_) {
         // A missing or unsupported evidence file is represented by the
         // evidence count above; it must not prevent card generation.
@@ -163,8 +249,19 @@ class WorkshopJobCardPdfService {
     return widgets;
   }
 
-  static String _titleCase(String value) => value.replaceAllMapped(RegExp(r'(?<=[a-z])(?=[A-Z])|_'), (match) => match.group(0) == '_' ? ' ' : ' ').split(' ').map((part) => part.isEmpty ? '' : '${part[0].toUpperCase()}${part.substring(1)}').join(' ');
-  static String _dateTime(DateTime value) => '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year} ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+  static String _titleCase(String value) => value
+      .replaceAllMapped(
+        RegExp(r'(?<=[a-z])(?=[A-Z])|_'),
+        (match) => match.group(0) == '_' ? ' ' : ' ',
+      )
+      .split(' ')
+      .map(
+        (part) =>
+            part.isEmpty ? '' : '${part[0].toUpperCase()}${part.substring(1)}',
+      )
+      .join(' ');
+  static String _dateTime(DateTime value) =>
+      '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year} ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
   static String _hours(double value) => '${value.toStringAsFixed(1)} hrs';
   static String _money(double value) => 'GBP ${value.toStringAsFixed(2)}';
 }

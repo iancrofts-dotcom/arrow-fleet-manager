@@ -43,7 +43,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Future<void> _openEvent(CalendarEvent event) async {
-    final opened = await _eventNavigator.openVehicleDetails(context, event);
+    final opened = await _eventNavigator.openDetails(context, event);
     if (!opened || !mounted) return;
 
     await _refresh();

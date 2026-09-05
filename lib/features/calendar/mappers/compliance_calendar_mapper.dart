@@ -27,9 +27,8 @@ class ComplianceCalendarMapper {
           date: record.licenceExpiry,
           type: CalendarEventType.licence,
           icon: Icons.badge,
-          color: record.licenceExpired
-              ? Colors.red
-              : Colors.orange,
+          color: record.licenceExpired ? Colors.red : Colors.orange,
+          driverId: record.driverId,
         ),
         CalendarEvent(
           title: 'CPC Renewal',
@@ -37,9 +36,8 @@ class ComplianceCalendarMapper {
           date: record.cpcExpiry,
           type: CalendarEventType.cpc,
           icon: Icons.school,
-          color: record.cpcExpired
-              ? Colors.red
-              : Colors.orange,
+          color: record.cpcExpired ? Colors.red : Colors.orange,
+          driverId: record.driverId,
         ),
         CalendarEvent(
           title: 'Medical Renewal',
@@ -47,11 +45,10 @@ class ComplianceCalendarMapper {
           date: record.medicalExpiry,
           type: CalendarEventType.medical,
           icon: Icons.medical_services,
-          color: record.medicalExpired
-              ? Colors.red
-              : Colors.orange,
+          color: record.medicalExpired ? Colors.red : Colors.orange,
 
-              source: record,
+          source: record,
+          driverId: record.driverId,
         ),
         if (record.dbsExpiry != null)
           CalendarEvent(
@@ -62,6 +59,7 @@ class ComplianceCalendarMapper {
             icon: Icons.verified_user,
             color: record.dbsExpired ? Colors.red : Colors.orange,
             source: record,
+            driverId: record.driverId,
           ),
       ]);
     }

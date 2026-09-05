@@ -97,7 +97,13 @@ class _Step5SignoffState extends State<Step5Signoff> {
         children: [
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(24),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.fromLTRB(
+                24,
+                24,
+                24,
+                MediaQuery.paddingOf(context).bottom + 32,
+              ),
               children: [
                 SectionCard(
                   title: 'Complete Inspection',

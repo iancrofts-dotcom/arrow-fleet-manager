@@ -485,7 +485,13 @@ class _Step2ChecklistState extends State<Step2Checklist> {
         // ===================================================================
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.all(20),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.fromLTRB(
+              20,
+              20,
+              20,
+              MediaQuery.paddingOf(context).bottom + 32,
+            ),
             children: [
               for (final entry in grouped.entries) ...[
                 Padding(

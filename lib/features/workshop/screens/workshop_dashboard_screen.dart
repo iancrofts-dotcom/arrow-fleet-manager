@@ -257,8 +257,7 @@ class _WorkshopDashboardScreenState extends State<WorkshopDashboardScreen> {
                                                       ),
                                                       const SizedBox(height: 3),
                                                       Text(
-                                                        '${inspection.inspectionNumber} • '
-                                                        '${inspection.inspectionType.name}',
+                                                        '${inspection.inspectionNumber} • ${inspection.inspectionType.label}',
                                                       ),
                                                     ],
                                                   ),

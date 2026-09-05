@@ -264,11 +264,7 @@ class _WorkshopInspectionDetailsScreenState
   }
 
   String _inspectionTypeLabel(WorkshopInspectionType type) {
-    if (type == WorkshopInspectionType.driverDailyInspection) {
-      return 'Driver Daily Inspection';
-    }
-
-    return type.name;
+    return type.label;
   }
 
   bool _hasManagerSignOff(WorkshopInspection inspection) {

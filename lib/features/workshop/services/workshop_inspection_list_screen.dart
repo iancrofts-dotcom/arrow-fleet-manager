@@ -52,9 +52,7 @@ class _WorkshopInspectionListScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Workshop Inspections'),
-      ),
+      appBar: AppBar(title: const Text('Workshop Inspections')),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Next sprint
@@ -66,28 +64,19 @@ class _WorkshopInspectionListScreenState
         child: FutureBuilder<List<WorkshopInspection>>(
           future: _future,
           builder: (context, snapshot) {
-            if (snapshot.connectionState ==
-                ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (snapshot.hasError) {
-              return Center(
-                child: Text(
-                  snapshot.error.toString(),
-                ),
-              );
+              return Center(child: Text(snapshot.error.toString()));
             }
 
             final inspections = snapshot.data ?? [];
 
             if (inspections.isEmpty) {
               return const Center(
-                child: Text(
-                  'No workshop inspections found.',
-                ),
+                child: Text('No workshop inspections found.'),
               );
             }
 
@@ -103,24 +92,12 @@ class _WorkshopInspectionListScreenState
                   ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor:
-                          _statusColor(inspection),
-                      child: const Icon(
-                        Icons.build,
-                        color: Colors.white,
-                      ),
+                      backgroundColor: _statusColor(inspection),
+                      child: const Icon(Icons.build, color: Colors.white),
                     ),
-                    title: Text(
-                      inspection.registration,
-                    ),
-                    subtitle: Text(
-                      inspection.inspectionType.name,
-                    ),
-                    trailing: Chip(
-                      label: Text(
-                        _statusText(inspection),
-                      ),
-                    ),
+                    title: Text(inspection.registration),
+                    subtitle: Text(inspection.inspectionType.label),
+                    trailing: Chip(label: Text(_statusText(inspection))),
                     onTap: () {
                       // Sprint 20.2
                     },

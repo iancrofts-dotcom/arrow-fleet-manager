@@ -20,6 +20,7 @@ class CalendarEvent {
     required this.color,
     this.source,
     this.vehicleId,
+    this.driverId,
   });
 
   final String title;
@@ -34,4 +35,9 @@ class CalendarEvent {
 
   /// Persisted Vehicle identity for events that can open Vehicle Details.
   final int? vehicleId;
+
+  /// Persisted Driver identity for compliance events that can open details.
+  final int? driverId;
+
+  bool get isActionable => vehicleId != null || driverId != null;
 }

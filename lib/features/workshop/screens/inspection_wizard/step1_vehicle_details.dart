@@ -242,7 +242,13 @@ class _Step1VehicleDetailsState extends State<Step1VehicleDetails> {
     return Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.all(24),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.paddingOf(context).bottom + 32,
+        ),
         children: [
           SectionCard(
             title: 'Vehicle and inspection context',
@@ -294,6 +300,7 @@ class _Step1VehicleDetailsState extends State<Step1VehicleDetails> {
             subtitle: 'Select the checklist used for this inspection.',
             child: DropdownButtonFormField<String>(
               initialValue: _templateSelection,
+              isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Inspection Template',
                 prefixIcon: Icon(Icons.article_outlined),
@@ -301,12 +308,15 @@ class _Step1VehicleDetailsState extends State<Step1VehicleDetails> {
               items: [
                 const DropdownMenuItem(
                   value: 'default',
-                  child: Text('Default Workshop Checklist'),
+                  child: Text(
+                    'Default Workshop Checklist',
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 ..._templates.map(
                   (template) => DropdownMenuItem(
                     value: template.id.toString(),
-                    child: Text(template.name),
+                    child: Text(template.name, overflow: TextOverflow.ellipsis),
                   ),
                 ),
               ],
@@ -423,6 +433,7 @@ class _Step1VehicleDetailsState extends State<Step1VehicleDetails> {
 
                 DropdownButtonFormField<WorkshopInspectionType>(
                   initialValue: _inspectionType,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Inspection Type',
                   ),
@@ -430,7 +441,10 @@ class _Step1VehicleDetailsState extends State<Step1VehicleDetails> {
                       .map(
                         (type) => DropdownMenuItem(
                           value: type,
-                          child: Text(type.name),
+                          child: Text(
+                            type.label,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       )
                       .toList(),

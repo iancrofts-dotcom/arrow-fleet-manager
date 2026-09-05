@@ -193,7 +193,14 @@ class _Step4RepairsState extends State<Step4Repairs> {
           child: repairJobs.isEmpty
               ? _NoRepairs()
               : ListView(
-                  padding: const EdgeInsets.all(20),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    20,
+                    20,
+                    MediaQuery.paddingOf(context).bottom + 32,
+                  ),
                   children: [
                     // =======================================================
                     // KPI SUMMARY
