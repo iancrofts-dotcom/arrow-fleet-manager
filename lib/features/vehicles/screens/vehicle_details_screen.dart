@@ -8,6 +8,9 @@ import '../../../shared/status_badge.dart';
 import '../../drivers/models/driver.dart';
 import '../../drivers/screens/assign_driver_screen.dart';
 import '../../drivers/screens/assignment_history_screen.dart';
+import '../../documents/models/fleet_document.dart';
+import '../../documents/screens/edit_document_screen.dart';
+import '../../documents/services/document_service.dart';
 
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
@@ -27,16 +30,48 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
 
   final AssignmentRepository _repository = AssignmentRepository.instance;
   final VehicleService _vehicleService = VehicleService();
+  final DocumentService _documentService = DocumentService();
 
   final PermissionService _permissions = PermissionService.instance;
 
   Driver? _assignedDriver;
+  late Future<List<FleetDocument>> _documentsFuture;
 
   @override
   void initState() {
     super.initState();
     _vehicle = widget.vehicle;
     _loadAssignedDriver();
+    _loadDocuments();
+  }
+
+  void _loadDocuments() {
+    final vehicleId = _vehicle.id;
+    _documentsFuture = vehicleId == null
+        ? Future.value(const <FleetDocument>[])
+        : _documentService.getByVehicle(vehicleId);
+  }
+
+  Future<void> _addDocument() async {
+    final vehicleId = _vehicle.id;
+    if (vehicleId == null) return;
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => EditDocumentScreen(initialVehicleId: vehicleId),
+      ),
+    );
+    if (saved == true && mounted) {
+      setState(_loadDocuments);
+    }
+  }
+
+  Future<void> _editDocument(FleetDocument document) async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => EditDocumentScreen(document: document)),
+    );
+    if (saved == true && mounted) {
+      setState(_loadDocuments);
+    }
   }
 
   Future<void> _loadAssignedDriver() async {
@@ -211,6 +246,71 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
     return '${date.day}/${date.month}/${date.year}';
   }
 
+  Widget _documentsSection(BuildContext context) => Card(
+    elevation: 0,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: FutureBuilder<List<FleetDocument>>(
+        future: _documentsFuture,
+        builder: (context, snapshot) {
+          final documents = snapshot.data ?? const <FleetDocument>[];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Documents',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const Spacer(),
+                  if (_permissions.canManageVehicles)
+                    TextButton.icon(
+                      onPressed: _addDocument,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Document'),
+                    ),
+                ],
+              ),
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (snapshot.hasError)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text('Unable to load linked documents.'),
+                )
+              else if (documents.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text('No documents linked to this vehicle.'),
+                )
+              else
+                ...documents.map(
+                  (document) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.description_outlined),
+                    title: Text(document.title),
+                    subtitle: Text(
+                      '${document.category.name} • ${_documentService.status(document.expiryDate)}',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _editDocument(document),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     if (!_permissions.canViewVehicles) {
@@ -373,6 +473,10 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
               ),
             ),
           ),
+
+          const SizedBox(height: 20),
+
+          _documentsSection(context),
 
           const SizedBox(height: 20),
 

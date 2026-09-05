@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_page_scaffold.dart';
 import '../../auth/services/permission_service.dart';
+import '../../vehicles/models/vehicle.dart';
+import '../../vehicles/services/vehicle_service.dart';
 import '../models/fleet_document.dart';
 import '../services/document_service.dart';
 import 'edit_document_screen.dart';
@@ -19,8 +21,9 @@ class DocumentListScreen extends StatefulWidget {
 
 class _DocumentListScreenState extends State<DocumentListScreen> {
   final DocumentService _service = DocumentService();
+  final VehicleService _vehicleService = VehicleService();
 
-  late Future<List<FleetDocument>> _documentsFuture;
+  late Future<_DocumentListData> _documentsFuture;
 
   @override
   void initState() {
@@ -29,8 +32,13 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   }
 
   void _loadDocuments() {
-    _documentsFuture = _service.getAll();
+    _documentsFuture = _loadDocumentData();
   }
+
+  Future<_DocumentListData> _loadDocumentData() async => _DocumentListData(
+    documents: await _service.getAll(),
+    vehicles: await _vehicleService.getVehicleMap(),
+  );
 
   Future<void> _refresh() async {
     setState(() {
@@ -87,7 +95,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
         icon: const Icon(Icons.add),
         label: const Text('Add Document'),
       ),
-      child: FutureBuilder<List<FleetDocument>>(
+      child: FutureBuilder<_DocumentListData>(
         future: _documentsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -101,7 +109,8 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
             );
           }
 
-          final allDocuments = snapshot.data ?? [];
+          final data = snapshot.data;
+          final allDocuments = data?.documents ?? const <FleetDocument>[];
           final permissions = PermissionService.instance;
           final documents = permissions.canViewDriverComplianceDocuments
               ? allDocuments
@@ -144,7 +153,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
                 return ListTile(
                   leading: const CircleAvatar(child: Icon(Icons.description)),
                   title: Text(document.title),
-                  subtitle: Text(document.category.name.toUpperCase()),
+                  subtitle: Text(_subtitleFor(document, data?.vehicles ?? {})),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -181,6 +190,22 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
         return Colors.green.shade100;
     }
   }
+
+  String _subtitleFor(FleetDocument document, Map<int, Vehicle> vehicles) {
+    final vehicle = document.vehicleId == null
+        ? null
+        : vehicles[document.vehicleId!];
+    final category = document.category.name.toUpperCase();
+    if (vehicle == null) return category;
+    return '$category • ${vehicle.registration} • ${vehicle.fleetNumber}';
+  }
+}
+
+class _DocumentListData {
+  const _DocumentListData({required this.documents, required this.vehicles});
+
+  final List<FleetDocument> documents;
+  final Map<int, Vehicle> vehicles;
 }
 
 class _DocumentsAccessDenied extends StatelessWidget {

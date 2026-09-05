@@ -13,45 +13,34 @@ import '../models/fleet_document.dart';
 import '../services/document_service.dart';
 import 'package:file_picker/file_picker.dart';
 
-enum DocumentOwnerType {
-  driver,
-  vehicle,
-}
+enum DocumentOwnerType { driver, vehicle }
 
 class EditDocumentScreen extends StatefulWidget {
-  const EditDocumentScreen({
-    super.key,
-    this.document,
-  });
+  const EditDocumentScreen({super.key, this.document, this.initialVehicleId});
 
   final FleetDocument? document;
+  final int? initialVehicleId;
 
   @override
-  State<EditDocumentScreen> createState() =>
-      _EditDocumentScreenState();
+  State<EditDocumentScreen> createState() => _EditDocumentScreenState();
+}
 
-      }
-
-class _EditDocumentScreenState
-    extends State<EditDocumentScreen> {
+class _EditDocumentScreenState extends State<EditDocumentScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final DocumentService _service =
-      DocumentService();
+  final DocumentService _service = DocumentService();
 
-final DriverRepository _driverRepository =
-    DriverRepository();
+  final DriverRepository _driverRepository = DriverRepository();
 
-late final VehicleRepository _vehicleRepository;
+  late final VehicleRepository _vehicleRepository;
 
-List<DriverEntity> _drivers = [];
-List<Vehicle> _vehicles = [];
+  List<DriverEntity> _drivers = [];
+  List<Vehicle> _vehicles = [];
 
-DocumentOwnerType _ownerType =
-    DocumentOwnerType.driver;
+  DocumentOwnerType? _ownerType;
 
-DriverEntity? _selectedDriver;
-Vehicle? _selectedVehicle;
+  DriverEntity? _selectedDriver;
+  Vehicle? _selectedVehicle;
 
   late TextEditingController _titleController;
   late TextEditingController _notesController;
@@ -65,123 +54,108 @@ Vehicle? _selectedVehicle;
   @override
   void initState() {
     super.initState();
-    _vehicleRepository = VehicleRepository(
-  databaseService: DatabaseService(),
-);
-
-_loadOwners();
-
-
+    _vehicleRepository = VehicleRepository(databaseService: DatabaseService());
     final document = widget.document;
 
-    _titleController = TextEditingController(
-      text: document?.title ?? '',
-    );
+    _ownerType = document?.vehicleId != null || widget.initialVehicleId != null
+        ? DocumentOwnerType.vehicle
+        : document?.driverId != null
+        ? DocumentOwnerType.driver
+        : null;
 
-    _notesController = TextEditingController(
-      text: document?.notes ?? '',
-    );
+    _loadOwners();
 
-    _category =
-        document?.category ??
-        DocumentCategory.other;
+    _titleController = TextEditingController(text: document?.title ?? '');
 
-    _issueDate =
-        document?.issueDate ??
-        DateTime.now();
+    _notesController = TextEditingController(text: document?.notes ?? '');
+
+    _category = document?.category ?? DocumentCategory.other;
+
+    _issueDate = document?.issueDate ?? DateTime.now();
 
     _expiryDate =
-        document?.expiryDate ??
-        DateTime.now().add(
-          const Duration(days: 365),
-        );
-  }
-Future<void> _loadOwners() async {
-  final drivers =
-      await _driverRepository.getAllDrivers();
-
-  final vehicles =
-      await _vehicleRepository.getVehicles();
-
-  if (!mounted) return;
-
-  setState(() {
-    _drivers = drivers;
-    _vehicles = vehicles;
-
-    if (_drivers.isNotEmpty) {
-      _selectedDriver = _drivers.first;
-    }
-
-    if (_vehicles.isNotEmpty) {
-      _selectedVehicle = _vehicles.first;
-    }
-  });
-}
-
-Future<void> _pickFile() 
-async {
-  final result = await FilePicker.platform.pickFiles(
-    type: FileType.custom,
-    allowedExtensions: [
-      'pdf',
-      'jpg',
-      'jpeg',
-      'png',
-    ],
-  );
-
-  if (result == null) {
-    return;
+        document?.expiryDate ?? DateTime.now().add(const Duration(days: 365));
   }
 
-  setState(() {
-    _selectedFilePath = result.files.single.path;
-  });
-}
+  Future<void> _loadOwners() async {
+    final drivers = await _driverRepository.getAllDrivers();
 
-Future<String?> _copySelectedFile() async {
-  if (_selectedFilePath == null) {
+    final vehicles = await _vehicleRepository.getVehicles();
+
+    if (!mounted) return;
+
+    setState(() {
+      _drivers = drivers;
+      _vehicles = vehicles;
+
+      _selectedDriver = _driverForId(widget.document?.driverId);
+      _selectedVehicle = _vehicleForId(
+        widget.initialVehicleId ?? widget.document?.vehicleId,
+      );
+    });
+  }
+
+  DriverEntity? _driverForId(int? id) {
+    if (id == null) return null;
+    for (final driver in _drivers) {
+      if (driver.id == id) return driver;
+    }
     return null;
   }
 
-  final sourceFile = File(_selectedFilePath!);
-
-  if (!await sourceFile.exists()) {
+  Vehicle? _vehicleForId(int? id) {
+    if (id == null) return null;
+    for (final vehicle in _vehicles) {
+      if (vehicle.id == id) return vehicle;
+    }
     return null;
   }
 
-  final appDirectory =
-      await getApplicationDocumentsDirectory();
-
-  final documentsDirectory = Directory(
-    path.join(
-      appDirectory.path,
-      'fleet_documents',
-    ),
-  );
-
-  if (!await documentsDirectory.exists()) {
-    await documentsDirectory.create(
-      recursive: true,
+  Future<void> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
     );
+
+    if (result == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedFilePath = result.files.single.path;
+    });
   }
 
-  final fileName = path.basename(
-    _selectedFilePath!,
-  );
+  Future<String?> _copySelectedFile() async {
+    if (_selectedFilePath == null) {
+      return null;
+    }
 
-  final destination = File(
-    path.join(
-      documentsDirectory.path,
-      fileName,
-    ),
-  );
+    final sourceFile = File(_selectedFilePath!);
 
-  await sourceFile.copy(destination.path);
+    if (!await sourceFile.exists()) {
+      return null;
+    }
 
-  return destination.path;
-}
+    final appDirectory = await getApplicationDocumentsDirectory();
+
+    final documentsDirectory = Directory(
+      path.join(appDirectory.path, 'fleet_documents'),
+    );
+
+    if (!await documentsDirectory.exists()) {
+      await documentsDirectory.create(recursive: true);
+    }
+
+    final fileName = path.basename(_selectedFilePath!);
+
+    final destination = File(path.join(documentsDirectory.path, fileName));
+
+    await sourceFile.copy(destination.path);
+
+    return destination.path;
+  }
+
   Future<void> _pickIssueDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -213,53 +187,27 @@ Future<String?> _copySelectedFile() async {
   }
 
   Future<void> _save() async {
-    final storedFile =
-    await _copySelectedFile();
-if (_ownerType == DocumentOwnerType.driver &&
-    _selectedDriver == null) {
-  if (!mounted) return;
-
-ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Please select a driver.'),
-    ),
-  );
-  return;
-}
-
-if (_ownerType == DocumentOwnerType.vehicle &&
-    _selectedVehicle == null) {
-  if (!mounted) return;
-
-ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Please select a vehicle.'),
-    ),
-  );
-  return;
-}
+    final storedFile = await _copySelectedFile();
 
     if (!_formKey.currentState!.validate()) {
       return;
-      
     }
 
     final document = FleetDocument(
       id: widget.document?.id,
       title: _titleController.text.trim(),
       category: _category,
-      filePath: storedFile ?? '',
+      filePath: storedFile ?? widget.document?.filePath ?? '',
       issueDate: _issueDate,
       expiryDate: _expiryDate,
       lastUpdated: DateTime.now(),
       notes: _notesController.text.trim(),
-     driverId: _ownerType == DocumentOwnerType.driver
-    ? _selectedDriver?.id
-    : null,
-
-vehicleId: _ownerType == DocumentOwnerType.vehicle
-    ? _selectedVehicle?.id
-    : null,
+      driverId: _ownerType == DocumentOwnerType.driver
+          ? _selectedDriver?.id
+          : null,
+      vehicleId: _ownerType == DocumentOwnerType.vehicle
+          ? _selectedVehicle?.id
+          : null,
     );
 
     await _service.save(document);
@@ -273,11 +221,7 @@ vehicleId: _ownerType == DocumentOwnerType.vehicle
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.document == null
-              ? 'Add Document'
-              : 'Edit Document',
-        ),
+        title: Text(widget.document == null ? 'Add Document' : 'Edit Document'),
       ),
       body: Form(
         key: _formKey,
@@ -286,12 +230,9 @@ vehicleId: _ownerType == DocumentOwnerType.vehicle
           children: [
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Document Title',
-              ),
+              decoration: const InputDecoration(labelText: 'Document Title'),
               validator: (value) {
-                if (value == null ||
-                    value.trim().isEmpty) {
+                if (value == null || value.trim().isEmpty) {
                   return 'Enter a title';
                 }
                 return null;
@@ -302,9 +243,7 @@ vehicleId: _ownerType == DocumentOwnerType.vehicle
 
             DropdownButtonFormField<DocumentCategory>(
               initialValue: _category,
-              decoration: const InputDecoration(
-                labelText: 'Category',
-              ),
+              decoration: const InputDecoration(labelText: 'Category'),
               items: DocumentCategory.values
                   .map(
                     (category) => DropdownMenuItem(
@@ -322,83 +261,81 @@ vehicleId: _ownerType == DocumentOwnerType.vehicle
               },
             ),
 
-const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-const Text(
-  'Document Owner',
-  style: TextStyle(
-    fontWeight: FontWeight.bold,
-  ),
-),
-
-RadioGroup<DocumentOwnerType>(
-  groupValue: _ownerType,
-  onChanged: (DocumentOwnerType? value) {
-    if (value == null) return;
-
-    setState(() {
-      _ownerType = value;
-    });
-  },
-  child: Column(
-    children: [
-      RadioListTile<DocumentOwnerType>(
-        title: const Text('Driver'),
-        value: DocumentOwnerType.driver,
-      ),
-      RadioListTile<DocumentOwnerType>(
-        title: const Text('Vehicle'),
-        value: DocumentOwnerType.vehicle,
-      ),
-    ],
-  ),
-),
-
-const SizedBox(height: 12),
-
-if (_ownerType == DocumentOwnerType.driver)
-  DropdownButtonFormField<DriverEntity>(
-    initialValue: _selectedDriver,
-    decoration: const InputDecoration(
-      labelText: 'Driver',
-    ),
-    items: _drivers
-        .map(
-          (driver) => DropdownMenuItem(
-            value: driver,
-            child: Text(
-              '${driver.firstName} ${driver.lastName}',
+            const Text(
+              'Document Owner',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-          ),
-        )
-        .toList(),
-    onChanged: (driver) {
-      setState(() {
-        _selectedDriver = driver;
-      });
-    },
-  ),
 
-  if (_ownerType == DocumentOwnerType.vehicle)
-  DropdownButtonFormField<Vehicle>(
-    initialValue: _selectedVehicle,
-    decoration: const InputDecoration(
-      labelText: 'Vehicle',
-    ),
-    items: _vehicles
-        .map(
-          (vehicle) => DropdownMenuItem(
-            value: vehicle,
-            child: Text(vehicle.fleetNumber),
-          ),
-        )
-        .toList(),
-    onChanged: (vehicle) {
-      setState(() {
-        _selectedVehicle = vehicle;
-      });
-    },
-  ),
+            RadioGroup<DocumentOwnerType?>(
+              groupValue: _ownerType,
+              onChanged: (DocumentOwnerType? value) {
+                setState(() {
+                  _ownerType = value;
+                });
+              },
+              child: Column(
+                children: [
+                  RadioListTile<DocumentOwnerType?>(
+                    title: const Text('No linked owner'),
+                    value: null,
+                  ),
+                  RadioListTile<DocumentOwnerType?>(
+                    title: const Text('Driver'),
+                    value: DocumentOwnerType.driver,
+                  ),
+                  RadioListTile<DocumentOwnerType?>(
+                    title: const Text('Vehicle'),
+                    value: DocumentOwnerType.vehicle,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            if (_ownerType == DocumentOwnerType.driver)
+              DropdownButtonFormField<DriverEntity>(
+                initialValue: _selectedDriver,
+                decoration: const InputDecoration(labelText: 'Driver'),
+                items: _drivers
+                    .map(
+                      (driver) => DropdownMenuItem(
+                        value: driver,
+                        child: Text('${driver.firstName} ${driver.lastName}'),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (driver) {
+                  setState(() {
+                    _selectedDriver = driver;
+                  });
+                },
+              ),
+
+            if (_ownerType == DocumentOwnerType.vehicle)
+              DropdownButtonFormField<Vehicle>(
+                initialValue: _selectedVehicle,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Vehicle'),
+                items: _vehicles
+                    .map(
+                      (vehicle) => DropdownMenuItem(
+                        value: vehicle,
+                        child: Text(
+                          '${vehicle.registration} • ${vehicle.fleetNumber}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (vehicle) {
+                  setState(() {
+                    _selectedVehicle = vehicle;
+                  });
+                },
+              ),
 
             const SizedBox(height: 16),
 
@@ -422,31 +359,26 @@ if (_ownerType == DocumentOwnerType.driver)
 
             const SizedBox(height: 16),
 
-const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-OutlinedButton.icon(
-  onPressed: _pickFile,
-  icon: const Icon(Icons.attach_file),
-  label: const Text('Attach Document'),
-),
+            OutlinedButton.icon(
+              onPressed: _pickFile,
+              icon: const Icon(Icons.attach_file),
+              label: const Text('Attach Document'),
+            ),
 
-if (_selectedFilePath != null)
-  Padding(
-    padding: const EdgeInsets.only(top: 8),
-    child: Text(
-      _selectedFilePath!,
-      style: Theme.of(context)
-          .textTheme
-          .bodySmall,
-    ),
-  ),
+            if (_selectedFilePath != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  _selectedFilePath!,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
 
             TextFormField(
               controller: _notesController,
-              decoration: const InputDecoration(
-                
-                labelText: 'Notes',
-              ),
+              decoration: const InputDecoration(labelText: 'Notes'),
               maxLines: 4,
             ),
 
