@@ -9,6 +9,7 @@ import '../models/inspection_template.dart';
 import '../models/inspection_template_item.dart';
 import '../models/inspection_template_section.dart';
 import '../models/repair_job.dart';
+import '../models/workshop_inspection.dart';
 import '../repositories/inspection_template_repository.dart';
 
 class InspectionTemplatesScreen extends StatefulWidget {
@@ -243,6 +244,8 @@ class _InspectionTemplateBuilderScreenState
   bool _saving = false;
   bool _isActive = true;
   WorkshopVehicleType _vehicleType = WorkshopVehicleType.van;
+  WorkshopInspectionType _inspectionType =
+      WorkshopInspectionType.scheduledService;
 
   @override
   void initState() {
@@ -262,6 +265,8 @@ class _InspectionTemplateBuilderScreenState
     _descriptionController.text = template.description;
     _isActive = template.isActive;
     _vehicleType = template.vehicleType;
+    _inspectionType =
+        template.inspectionType ?? WorkshopInspectionType.scheduledService;
     final templateId = template.id;
     if (templateId != null) {
       final results = await Future.wait([
@@ -386,6 +391,10 @@ class _InspectionTemplateBuilderScreenState
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
         vehicleType: _vehicleType,
+        inspectionType: _inspectionType,
+        version: widget.duplicate || original == null
+            ? 1
+            : original.version + 1,
         isDefault: false,
         isActive: _isActive,
         createdAt: widget.duplicate || original == null
@@ -540,6 +549,20 @@ class _InspectionTemplateBuilderScreenState
               .toList(),
           onChanged: (value) {
             if (value != null) setState(() => _vehicleType = value);
+          },
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<WorkshopInspectionType>(
+          initialValue: _inspectionType,
+          decoration: const InputDecoration(labelText: 'Inspection type'),
+          items: WorkshopInspectionType.values
+              .map(
+                (type) =>
+                    DropdownMenuItem(value: type, child: Text(type.label)),
+              )
+              .toList(),
+          onChanged: (value) {
+            if (value != null) setState(() => _inspectionType = value);
           },
         ),
         SwitchListTile(

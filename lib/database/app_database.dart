@@ -23,7 +23,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 24,
+      version: 25,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON;');
       },
@@ -149,9 +149,7 @@ class AppDatabase {
         }
 
         if (oldVersion < 11) {
-          await db.execute(
-            'ALTER TABLE drivers ADD COLUMN username TEXT',
-          );
+          await db.execute('ALTER TABLE drivers ADD COLUMN username TEXT');
         }
 
         if (oldVersion < 12) {
@@ -498,7 +496,9 @@ class AppDatabase {
         }
 
         if (oldVersion < 22) {
-          await db.execute('ALTER TABLE driver_compliance ADD COLUMN dbsExpiry TEXT');
+          await db.execute(
+            'ALTER TABLE driver_compliance ADD COLUMN dbsExpiry TEXT',
+          );
         }
 
         // Version 23 - Driver compliance document history and audit metadata.
@@ -529,6 +529,18 @@ class AppDatabase {
 
         if (oldVersion < 24) {
           await _createSecurityAuditEventsTable(db);
+        }
+
+        if (oldVersion < 25) {
+          await db.execute(
+            'ALTER TABLE inspection_templates ADD COLUMN inspectionType TEXT',
+          );
+          await db.execute(
+            'ALTER TABLE inspection_templates ADD COLUMN templateVersion INTEGER NOT NULL DEFAULT 1',
+          );
+          await db.execute(
+            'ALTER TABLE inspection_templates ADD COLUMN sourceReference TEXT',
+          );
         }
       },
     );
@@ -1005,6 +1017,9 @@ class AppDatabase {
         name TEXT NOT NULL,
         description TEXT,
         vehicleType TEXT NOT NULL,
+        inspectionType TEXT,
+        templateVersion INTEGER NOT NULL DEFAULT 1,
+        sourceReference TEXT,
         isDefault INTEGER NOT NULL DEFAULT 0,
         isActive INTEGER NOT NULL DEFAULT 1,
         createdAt TEXT NOT NULL,

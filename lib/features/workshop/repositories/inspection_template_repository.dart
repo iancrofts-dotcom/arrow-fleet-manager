@@ -4,6 +4,7 @@ import '../../../database/app_database.dart';
 import '../models/inspection_template.dart';
 import '../models/inspection_template_item.dart';
 import '../models/inspection_template_section.dart';
+import '../models/workshop_inspection.dart';
 
 /// ============================================================================
 /// INSPECTION TEMPLATE REPOSITORY
@@ -13,9 +14,8 @@ import '../models/inspection_template_section.dart';
 /// ============================================================================
 
 class InspectionTemplateRepository {
-  InspectionTemplateRepository({
-    AppDatabase? database,
-  }) : _database = database ?? AppDatabase();
+  InspectionTemplateRepository({AppDatabase? database})
+    : _database = database ?? AppDatabase();
 
   final AppDatabase _database;
 
@@ -29,9 +29,7 @@ class InspectionTemplateRepository {
   // TEMPLATE CRUD
   // ==========================================================================
 
-  Future<int> createTemplate(
-    InspectionTemplate template,
-  ) async {
+  Future<int> createTemplate(InspectionTemplate template) async {
     final db = await _db;
 
     return db.insert(
@@ -44,14 +42,9 @@ class InspectionTemplateRepository {
   Future<List<InspectionTemplate>> getTemplates() async {
     final db = await _db;
 
-    final result = await db.query(
-      _templateTable,
-      orderBy: 'name ASC',
-    );
+    final result = await db.query(_templateTable, orderBy: 'name ASC');
 
-    return result
-        .map((map) => InspectionTemplate.fromMap(map))
-        .toList();
+    return result.map((map) => InspectionTemplate.fromMap(map)).toList();
   }
 
   Future<List<InspectionTemplate>> getActiveTemplates() async {
@@ -66,9 +59,20 @@ class InspectionTemplateRepository {
     return result.map(InspectionTemplate.fromMap).toList();
   }
 
-  Future<InspectionTemplate?> getTemplate(
-    int id,
+  Future<List<InspectionTemplate>> getActiveTemplatesForInspectionType(
+    WorkshopInspectionType inspectionType,
   ) async {
+    final db = await _db;
+    final result = await db.query(
+      _templateTable,
+      where: 'isActive = 1 AND (inspectionType = ? OR inspectionType IS NULL)',
+      whereArgs: [inspectionType.name],
+      orderBy: 'name ASC',
+    );
+    return result.map(InspectionTemplate.fromMap).toList();
+  }
+
+  Future<InspectionTemplate?> getTemplate(int id) async {
     final db = await _db;
 
     final result = await db.query(
@@ -85,9 +89,7 @@ class InspectionTemplateRepository {
     return InspectionTemplate.fromMap(result.first);
   }
 
-  Future<int> updateTemplate(
-    InspectionTemplate template,
-  ) async {
+  Future<int> updateTemplate(InspectionTemplate template) async {
     final db = await _db;
 
     return db.update(
@@ -98,16 +100,10 @@ class InspectionTemplateRepository {
     );
   }
 
-  Future<int> deleteTemplate(
-    int id,
-  ) async {
+  Future<int> deleteTemplate(int id) async {
     final db = await _db;
 
-    return db.delete(
-      _templateTable,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete(_templateTable, where: 'id = ?', whereArgs: [id]);
   }
 
   // ===========================================================================
@@ -140,8 +136,16 @@ class InspectionTemplateRepository {
     final db = await _db;
 
     await db.transaction((txn) async {
-      await txn.delete(_itemTable, where: 'templateId = ?', whereArgs: [templateId]);
-      await txn.delete(_sectionTable, where: 'templateId = ?', whereArgs: [templateId]);
+      await txn.delete(
+        _itemTable,
+        where: 'templateId = ?',
+        whereArgs: [templateId],
+      );
+      await txn.delete(
+        _sectionTable,
+        where: 'templateId = ?',
+        whereArgs: [templateId],
+      );
 
       for (var index = 0; index < sections.length; index++) {
         final section = sections[index];
@@ -150,9 +154,11 @@ class InspectionTemplateRepository {
           section.copyWith(templateId: templateId, displayOrder: index).toMap(),
         );
 
-        for (var itemIndex = 0;
-            itemIndex < sectionItems[index].length;
-            itemIndex++) {
+        for (
+          var itemIndex = 0;
+          itemIndex < sectionItems[index].length;
+          itemIndex++
+        ) {
           final item = sectionItems[index][itemIndex];
           await txn.insert(
             _itemTable,
@@ -173,9 +179,7 @@ class InspectionTemplateRepository {
   // TEMPLATE ITEMS
   // ==========================================================================
 
-  Future<int> addTemplateItem(
-    InspectionTemplateItem item,
-  ) async {
+  Future<int> addTemplateItem(InspectionTemplateItem item) async {
     final db = await _db;
 
     return db.insert(
@@ -185,9 +189,7 @@ class InspectionTemplateRepository {
     );
   }
 
-  Future<void> addTemplateItems(
-    List<InspectionTemplateItem> items,
-  ) async {
+  Future<void> addTemplateItems(List<InspectionTemplateItem> items) async {
     final db = await _db;
 
     final batch = db.batch();
@@ -200,14 +202,10 @@ class InspectionTemplateRepository {
       );
     }
 
-    await batch.commit(
-      noResult: true,
-    );
+    await batch.commit(noResult: true);
   }
 
-  Future<List<InspectionTemplateItem>> getTemplateItems(
-    int templateId,
-  ) async {
+  Future<List<InspectionTemplateItem>> getTemplateItems(int templateId) async {
     final db = await _db;
 
     final result = await db.query(
@@ -217,14 +215,10 @@ class InspectionTemplateRepository {
       orderBy: 'displayOrder ASC',
     );
 
-    return result
-        .map((map) => InspectionTemplateItem.fromMap(map))
-        .toList();
+    return result.map((map) => InspectionTemplateItem.fromMap(map)).toList();
   }
 
-  Future<int> deleteTemplateItems(
-    int templateId,
-  ) async {
+  Future<int> deleteTemplateItems(int templateId) async {
     final db = await _db;
 
     return db.delete(
@@ -238,9 +232,7 @@ class InspectionTemplateRepository {
     final db = await _db;
 
     final result = Sqflite.firstIntValue(
-      await db.rawQuery(
-        'SELECT COUNT(*) FROM $_templateTable',
-      ),
+      await db.rawQuery('SELECT COUNT(*) FROM $_templateTable'),
     );
 
     return result ?? 0;

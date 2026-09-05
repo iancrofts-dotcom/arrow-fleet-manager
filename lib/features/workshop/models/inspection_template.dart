@@ -1,13 +1,12 @@
 import 'dart:convert';
 
+import 'workshop_inspection.dart';
+
 /// ============================================================================
 /// VEHICLE TYPE
 /// ============================================================================
 
-enum WorkshopVehicleType {
-  bus,
-  van,
-}
+enum WorkshopVehicleType { bus, van }
 
 /// ============================================================================
 /// INSPECTION TEMPLATE
@@ -22,6 +21,12 @@ class InspectionTemplate {
 
   final WorkshopVehicleType vehicleType;
 
+  final WorkshopInspectionType? inspectionType;
+
+  final int version;
+
+  final String? sourceReference;
+
   final bool isDefault;
 
   final bool isActive;
@@ -35,6 +40,9 @@ class InspectionTemplate {
     required this.name,
     required this.description,
     required this.vehicleType,
+    this.inspectionType,
+    this.version = 1,
+    this.sourceReference,
     this.isDefault = false,
     this.isActive = true,
     required this.createdAt,
@@ -46,6 +54,9 @@ class InspectionTemplate {
     String? name,
     String? description,
     WorkshopVehicleType? vehicleType,
+    WorkshopInspectionType? inspectionType,
+    int? version,
+    String? sourceReference,
     bool? isDefault,
     bool? isActive,
     DateTime? createdAt,
@@ -56,6 +67,9 @@ class InspectionTemplate {
       name: name ?? this.name,
       description: description ?? this.description,
       vehicleType: vehicleType ?? this.vehicleType,
+      inspectionType: inspectionType ?? this.inspectionType,
+      version: version ?? this.version,
+      sourceReference: sourceReference ?? this.sourceReference,
       isDefault: isDefault ?? this.isDefault,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
@@ -69,6 +83,9 @@ class InspectionTemplate {
       'name': name,
       'description': description,
       'vehicleType': vehicleType.name,
+      'inspectionType': inspectionType?.name,
+      'templateVersion': version,
+      'sourceReference': sourceReference,
       'isDefault': isDefault ? 1 : 0,
       'isActive': isActive ? 1 : 0,
       'createdAt': createdAt.toIso8601String(),
@@ -84,6 +101,13 @@ class InspectionTemplate {
       vehicleType: WorkshopVehicleType.values.firstWhere(
         (e) => e.name == map['vehicleType'],
       ),
+      inspectionType: map['inspectionType'] == null
+          ? null
+          : WorkshopInspectionType.values.firstWhere(
+              (type) => type.name == map['inspectionType'],
+            ),
+      version: map['templateVersion'] as int? ?? 1,
+      sourceReference: map['sourceReference'] as String?,
       isDefault: map['isDefault'] == 1,
       isActive: map['isActive'] == 1,
       createdAt: DateTime.parse(map['createdAt']),

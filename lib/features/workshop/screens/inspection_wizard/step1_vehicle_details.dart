@@ -207,6 +207,25 @@ class _Step1VehicleDetailsState extends State<Step1VehicleDetails> {
     });
   }
 
+  Future<void> _filterTemplatesForInspectionType(
+    WorkshopInspectionType? type,
+  ) async {
+    final templates = type == null
+        ? await _templateRepository.getActiveTemplates()
+        : await _templateRepository.getActiveTemplatesForInspectionType(type);
+    if (!mounted) return;
+    setState(() {
+      _templates = templates;
+      if (_templateForId(widget.data.templateId) == null) {
+        _templateSelection = 'default';
+        widget.data.templateId = null;
+        widget.data.templateName = null;
+        widget.data.checklistItems = [];
+        widget.data.repairJobs = [];
+      }
+    });
+  }
+
   InspectionTemplate? _templateForId(int? templateId) {
     if (templateId == null) return null;
 
@@ -451,7 +470,9 @@ class _Step1VehicleDetailsState extends State<Step1VehicleDetails> {
                   onChanged: (value) {
                     setState(() {
                       _inspectionType = value;
+                      widget.data.inspectionType = value;
                     });
+                    _filterTemplatesForInspectionType(value);
                   },
                   validator: (value) =>
                       value == null ? 'Select an inspection type' : null,
