@@ -579,6 +579,8 @@ String _checkLabel(FleetComplianceCheckType type) => switch (type) {
   FleetComplianceCheckType.cpc => 'CPC',
   FleetComplianceCheckType.medical => 'Medical',
   FleetComplianceCheckType.dbs => 'DBS',
+  FleetComplianceCheckType.taxiLicence => 'Taxi Licence',
+  FleetComplianceCheckType.taxiPlate => 'Taxi Plate',
 };
 
 String _dateLabel(DateTime? date) =>

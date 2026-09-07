@@ -23,7 +23,7 @@ class AppDatabase {
 
     _database = await openDatabase(
       path,
-      version: 25,
+      version: 26,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON;');
       },
@@ -542,6 +542,24 @@ class AppDatabase {
             'ALTER TABLE inspection_templates ADD COLUMN sourceReference TEXT',
           );
         }
+
+        if (oldVersion < 26) {
+          await db.execute(
+            'ALTER TABLE driver_compliance ADD COLUMN taxiLicenceExpiry TEXT',
+          );
+          await db.execute(
+            'ALTER TABLE vehicles ADD COLUMN taxiPlateNumber TEXT',
+          );
+          await db.execute(
+            'ALTER TABLE vehicles ADD COLUMN taxiLicensingAuthority TEXT',
+          );
+          await db.execute(
+            'ALTER TABLE vehicles ADD COLUMN taxiPlateIssueDate TEXT',
+          );
+          await db.execute(
+            'ALTER TABLE vehicles ADD COLUMN taxiPlateExpiry TEXT',
+          );
+        }
       },
     );
 
@@ -805,6 +823,10 @@ class AppDatabase {
         vin TEXT,
         motExpiry TEXT,
         serviceDue TEXT,
+        taxiPlateNumber TEXT,
+        taxiLicensingAuthority TEXT,
+        taxiPlateIssueDate TEXT,
+        taxiPlateExpiry TEXT,
         active INTEGER DEFAULT 1
       )
     ''');
@@ -870,6 +892,7 @@ class AppDatabase {
         cpcExpiry TEXT NOT NULL,
         medicalExpiry TEXT NOT NULL,
         dbsExpiry TEXT,
+        taxiLicenceExpiry TEXT,
         lastUpdated TEXT NOT NULL
       )
     ''');

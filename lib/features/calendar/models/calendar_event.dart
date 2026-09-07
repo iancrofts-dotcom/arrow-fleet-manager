@@ -8,6 +8,7 @@ enum CalendarEventType {
   cpc,
   medical,
   dbs,
+  taxiLicence,
 }
 
 class CalendarEvent {

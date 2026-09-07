@@ -36,15 +36,13 @@ class FleetDocument {
   final String? uploadedByUserId;
   final String? originalFileName;
 
-  bool get isExpired =>
-      expiryDate?.isBefore(DateTime.now()) ?? false;
+  bool get isExpired => expiryDate?.isBefore(DateTime.now()) ?? false;
 
   bool get isDueSoon =>
       !isExpired &&
       (expiryDate?.difference(DateTime.now()).inDays ?? 999999) <= 30;
 
-  int get daysRemaining =>
-      expiryDate?.difference(DateTime.now()).inDays ?? 0;
+  int get daysRemaining => expiryDate?.difference(DateTime.now()).inDays ?? 0;
 
   FleetDocument copyWith({
     int? id,
@@ -70,15 +68,13 @@ class FleetDocument {
       filePath: filePath ?? this.filePath,
       issueDate: issueDate ?? this.issueDate,
       expiryDate: expiryDate ?? this.expiryDate,
-      lastUpdated:
-          lastUpdated ?? this.lastUpdated,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
       notes: notes ?? this.notes,
       driverId: driverId ?? this.driverId,
       vehicleId: vehicleId ?? this.vehicleId,
       isArchived: isArchived ?? this.isArchived,
       archivedAt: archivedAt ?? this.archivedAt,
-      replacedByDocumentId:
-          replacedByDocumentId ?? this.replacedByDocumentId,
+      replacedByDocumentId: replacedByDocumentId ?? this.replacedByDocumentId,
       uploadedByUserId: uploadedByUserId ?? this.uploadedByUserId,
       originalFileName: originalFileName ?? this.originalFileName,
     );
@@ -92,8 +88,7 @@ class FleetDocument {
       'filePath': filePath,
       'issueDate': issueDate.toIso8601String(),
       'expiryDate': expiryDate?.toIso8601String(),
-      'lastUpdated':
-          lastUpdated.toIso8601String(),
+      'lastUpdated': lastUpdated.toIso8601String(),
       'notes': notes,
       'driverId': driverId,
       'vehicleId': vehicleId,
@@ -105,9 +100,7 @@ class FleetDocument {
     };
   }
 
-  factory FleetDocument.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory FleetDocument.fromMap(Map<String, dynamic> map) {
     return FleetDocument(
       id: map['id'] as int?,
       title: map['title'] as String,
@@ -116,15 +109,11 @@ class FleetDocument {
         orElse: () => DocumentCategory.other,
       ),
       filePath: map['filePath'] as String,
-      issueDate: DateTime.parse(
-        map['issueDate'] as String,
-      ),
+      issueDate: DateTime.parse(map['issueDate'] as String),
       expiryDate: map['expiryDate'] == null
           ? null
           : DateTime.parse(map['expiryDate'] as String),
-      lastUpdated: DateTime.parse(
-        map['lastUpdated'] as String,
-      ),
+      lastUpdated: DateTime.parse(map['lastUpdated'] as String),
       notes: map['notes'] as String?,
       driverId: map['driverId'] as int?,
       vehicleId: map['vehicleId'] as int?,
@@ -151,5 +140,7 @@ enum DocumentCategory {
   service,
   inspection,
   policy,
+  taxiLicence,
+  taxiPlate,
   other,
 }

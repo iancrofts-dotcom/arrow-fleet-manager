@@ -16,10 +16,16 @@ import 'package:file_picker/file_picker.dart';
 enum DocumentOwnerType { driver, vehicle }
 
 class EditDocumentScreen extends StatefulWidget {
-  const EditDocumentScreen({super.key, this.document, this.initialVehicleId});
+  const EditDocumentScreen({
+    super.key,
+    this.document,
+    this.initialVehicleId,
+    this.initialCategory,
+  });
 
   final FleetDocument? document;
   final int? initialVehicleId;
+  final DocumentCategory? initialCategory;
 
   @override
   State<EditDocumentScreen> createState() => _EditDocumentScreenState();
@@ -69,7 +75,8 @@ class _EditDocumentScreenState extends State<EditDocumentScreen> {
 
     _notesController = TextEditingController(text: document?.notes ?? '');
 
-    _category = document?.category ?? DocumentCategory.other;
+    _category =
+        document?.category ?? widget.initialCategory ?? DocumentCategory.other;
 
     _issueDate = document?.issueDate ?? DateTime.now();
 

@@ -86,6 +86,53 @@ void main() {
   });
 
   test(
+    'optional taxi licence creates attention without changing the score',
+    () async {
+      final summary = await _summary(
+        drivers: [_driver()],
+        compliance: [
+          _compliance(taxiLicenceExpiry: _now.add(const Duration(days: 7))),
+        ],
+      );
+
+      expect(summary.totalChecks, 4);
+      expect(summary.compliancePercentage, 100);
+      expect(summary.attentionItems, hasLength(1));
+      expect(
+        summary.attentionItems.single.checkType,
+        FleetComplianceCheckType.taxiLicence,
+      );
+      expect(
+        summary.attentionItems.single.status,
+        FleetComplianceStatus.dueSoon,
+      );
+    },
+  );
+
+  test(
+    'expired optional taxi plate creates vehicle attention without changing the score',
+    () async {
+      final summary = await _summary(
+        vehicles: [
+          _vehicle(taxiPlateExpiry: _now.subtract(const Duration(days: 1))),
+        ],
+      );
+
+      expect(summary.totalChecks, 2);
+      expect(summary.compliancePercentage, 100);
+      expect(summary.attentionItems, hasLength(1));
+      expect(
+        summary.attentionItems.single.checkType,
+        FleetComplianceCheckType.taxiPlate,
+      );
+      expect(
+        summary.attentionItems.single.status,
+        FleetComplianceStatus.expired,
+      );
+    },
+  );
+
+  test(
     'a missing DriverCompliance record produces four not-recorded checks',
     () async {
       final summary = await _summary(drivers: [_driver()]);
@@ -284,6 +331,7 @@ Vehicle _vehicle({
   String registration = 'VEH001',
   DateTime? motExpiry,
   DateTime? serviceDue,
+  DateTime? taxiPlateExpiry,
   bool missingMot = false,
   bool missingService = false,
   bool active = true,
@@ -302,6 +350,7 @@ Vehicle _vehicle({
       ? null
       : serviceDue ?? _now.add(const Duration(days: 31)),
   active: active,
+  taxiPlateExpiry: taxiPlateExpiry,
 );
 
 Driver _driver({int id = 1, DateTime? licenceExpiry, bool active = true}) =>
@@ -319,6 +368,7 @@ DriverCompliance _compliance({
   DateTime? cpcExpiry,
   DateTime? medicalExpiry,
   DateTime? dbsExpiry,
+  DateTime? taxiLicenceExpiry,
   bool missingDbs = false,
 }) => DriverCompliance(
   driverId: 1,
@@ -329,4 +379,5 @@ DriverCompliance _compliance({
       ? null
       : dbsExpiry ?? _now.add(const Duration(days: 31)),
   lastUpdated: _now,
+  taxiLicenceExpiry: taxiLicenceExpiry,
 );

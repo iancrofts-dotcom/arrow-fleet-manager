@@ -61,6 +61,19 @@ class ComplianceCalendarMapper {
             source: record,
             driverId: record.driverId,
           ),
+        if (record.taxiLicenceExpiry != null)
+          CalendarEvent(
+            title: 'Taxi Licence Expiry',
+            subtitle: name,
+            date: record.taxiLicenceExpiry!,
+            type: CalendarEventType.taxiLicence,
+            icon: Icons.local_taxi_outlined,
+            color: record.taxiLicenceExpiry!.isBefore(DateTime.now())
+                ? Colors.red
+                : Colors.orange,
+            source: record,
+            driverId: record.driverId,
+          ),
       ]);
     }
 

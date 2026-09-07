@@ -24,6 +24,8 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
   bool _saving = false;
   DateTime? _motExpiry;
   DateTime? _serviceDue;
+  DateTime? _taxiPlateIssueDate;
+  DateTime? _taxiPlateExpiry;
 
   late final TextEditingController fleetController;
   late final TextEditingController registrationController;
@@ -31,6 +33,8 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
   late final TextEditingController modelController;
   late final TextEditingController yearController;
   late final TextEditingController vinController;
+  late final TextEditingController taxiPlateNumberController;
+  late final TextEditingController taxiAuthorityController;
 
   @override
   void initState() {
@@ -53,6 +57,14 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     vinController = TextEditingController(text: widget.vehicle.vin);
     _motExpiry = widget.vehicle.motExpiry;
     _serviceDue = widget.vehicle.serviceDue;
+    _taxiPlateIssueDate = widget.vehicle.taxiPlateIssueDate;
+    _taxiPlateExpiry = widget.vehicle.taxiPlateExpiry;
+    taxiPlateNumberController = TextEditingController(
+      text: widget.vehicle.taxiPlateNumber ?? '',
+    );
+    taxiAuthorityController = TextEditingController(
+      text: widget.vehicle.taxiLicensingAuthority ?? '',
+    );
   }
 
   @override
@@ -63,6 +75,8 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     modelController.dispose();
     yearController.dispose();
     vinController.dispose();
+    taxiPlateNumberController.dispose();
+    taxiAuthorityController.dispose();
     super.dispose();
   }
 
@@ -83,6 +97,14 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
       vin: vinController.text.trim(),
       motExpiry: _motExpiry,
       serviceDue: _serviceDue,
+      taxiPlateNumber: taxiPlateNumberController.text.trim().isEmpty
+          ? null
+          : taxiPlateNumberController.text.trim(),
+      taxiLicensingAuthority: taxiAuthorityController.text.trim().isEmpty
+          ? null
+          : taxiAuthorityController.text.trim(),
+      taxiPlateIssueDate: _taxiPlateIssueDate,
+      taxiPlateExpiry: _taxiPlateExpiry,
       active: widget.vehicle.active,
     );
 
@@ -251,6 +273,38 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                   onChanged: (date) {
                     _serviceDue = date;
                   },
+                ),
+              ],
+            ),
+          ),
+
+          FormSection(
+            title: 'Taxi Plate (optional)',
+            subtitle: 'Only record this for taxi or private-hire vehicles.',
+            child: Column(
+              children: [
+                TextField(
+                  controller: taxiPlateNumberController,
+                  decoration: input('Taxi Plate / Licence Number'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: taxiAuthorityController,
+                  decoration: input('Licensing Authority'),
+                ),
+                const SizedBox(height: 12),
+                _dateControl(
+                  label: 'Taxi Plate Issue Date',
+                  icon: Icons.event,
+                  value: _taxiPlateIssueDate,
+                  onChanged: (date) => _taxiPlateIssueDate = date,
+                ),
+                const SizedBox(height: 12),
+                _dateControl(
+                  label: 'Taxi Plate Expiry',
+                  icon: Icons.event_available,
+                  value: _taxiPlateExpiry,
+                  onChanged: (date) => _taxiPlateExpiry = date,
                 ),
               ],
             ),

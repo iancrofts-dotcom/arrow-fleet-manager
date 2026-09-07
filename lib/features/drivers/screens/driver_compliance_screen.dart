@@ -29,6 +29,7 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
   DateTime? _cpcExpiry;
   DateTime? _medicalExpiry;
   DateTime? _dbsExpiry;
+  DateTime? _taxiLicenceExpiry;
 
   @override
   void initState() {
@@ -46,6 +47,7 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
       _cpcExpiry = record.cpcExpiry;
       _medicalExpiry = record.medicalExpiry;
       _dbsExpiry = record.dbsExpiry;
+      _taxiLicenceExpiry = record.taxiLicenceExpiry;
     }
 
     setState(() {
@@ -123,6 +125,17 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
     setState(() => _dbsExpiry = picked);
   }
 
+  Future<void> _pickTaxiLicenceDate() async {
+    if (!_permissions.canManageDrivers) return;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _taxiLicenceExpiry ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && mounted) setState(() => _taxiLicenceExpiry = picked);
+  }
+
   Future<void> _save() async {
     if (!_permissions.canManageDrivers || _saving) {
       return;
@@ -153,6 +166,7 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
         cpcExpiry: cpcExpiry,
         medicalExpiry: medicalExpiry,
         dbsExpiry: _dbsExpiry,
+        taxiLicenceExpiry: _taxiLicenceExpiry,
         lastUpdated: DateTime.now(),
       );
 
@@ -237,6 +251,14 @@ class _DriverComplianceScreenState extends State<DriverComplianceScreen> {
             date: _dbsExpiry,
             status: _service.status(_dbsExpiry),
             onTap: _pickDbsDate,
+          ),
+
+          const SizedBox(height: 12),
+          _dateTile(
+            title: 'Taxi Licence Expiry (optional)',
+            date: _taxiLicenceExpiry,
+            status: _service.status(_taxiLicenceExpiry),
+            onTap: _pickTaxiLicenceDate,
           ),
 
           const SizedBox(height: 16),

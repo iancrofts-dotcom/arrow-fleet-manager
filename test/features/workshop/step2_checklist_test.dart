@@ -150,6 +150,26 @@ void main() {
 
       expect(find.text('Registration Plate'), findsOneWidget);
     });
+
+    testWidgets('renders the checklist and Continue action at phone width', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await _pumpChecklist(
+        tester,
+        data: _data(1),
+        repository: _FakeTemplateRepository(
+          items: (_) async => [_item(1, title: 'Tyre condition')],
+          sections: (_) async => [_section(1, title: 'Vehicle safety')],
+        ),
+      );
+
+      expect(find.text('Tyre condition'), findsOneWidget);
+      expect(find.text('Continue'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }
 
@@ -173,8 +193,8 @@ Future<void> _pumpChecklist(
   await tester.pumpAndSettle();
 }
 
-InspectionWizardData _data(int templateId) => InspectionWizardData()
-  ..templateId = templateId;
+InspectionWizardData _data(int templateId) =>
+    InspectionWizardData()..templateId = templateId;
 
 InspectionTemplateItem _item(int templateId, {String title = 'Item'}) =>
     InspectionTemplateItem(
@@ -186,13 +206,15 @@ InspectionTemplateItem _item(int templateId, {String title = 'Item'}) =>
       displayOrder: 0,
     );
 
-InspectionTemplateSection _section(int templateId, {String title = 'Section'}) =>
-    InspectionTemplateSection(
-      id: templateId,
-      templateId: templateId,
-      title: title,
-      displayOrder: 0,
-    );
+InspectionTemplateSection _section(
+  int templateId, {
+  String title = 'Section',
+}) => InspectionTemplateSection(
+  id: templateId,
+  templateId: templateId,
+  title: title,
+  displayOrder: 0,
+);
 
 class _FakeTemplateRepository extends InspectionTemplateRepository {
   _FakeTemplateRepository({required this.items, required this.sections});

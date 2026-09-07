@@ -37,7 +37,7 @@ void main() {
       final repository = InspectionTemplateRepository(database: database);
       final migrated = await database.database();
 
-      expect(await migrated.getVersion(), 25);
+      expect(await migrated.getVersion(), 26);
       final template = await repository.getTemplate(1);
       expect(template, isNotNull);
       expect(template!.name, 'Legacy safety check');
@@ -319,6 +319,21 @@ WorkshopInspection _inspection(int templateId) {
 }
 
 Future<void> _createV24TemplateSchema(Database db) async {
+  await db.execute('''
+    CREATE TABLE vehicles(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      registration TEXT NOT NULL, fleetNumber TEXT NOT NULL,
+      make TEXT, model TEXT, year INTEGER, vin TEXT,
+      motExpiry TEXT, serviceDue TEXT, active INTEGER DEFAULT 1
+    )
+  ''');
+  await db.execute('''
+    CREATE TABLE driver_compliance(
+      driverId INTEGER PRIMARY KEY, licenceExpiry TEXT NOT NULL,
+      cpcExpiry TEXT NOT NULL, medicalExpiry TEXT NOT NULL,
+      dbsExpiry TEXT, lastUpdated TEXT NOT NULL
+    )
+  ''');
   await db.execute('''
     CREATE TABLE workshop_inspections(
       id INTEGER PRIMARY KEY AUTOINCREMENT,

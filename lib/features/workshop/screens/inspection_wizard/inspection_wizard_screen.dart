@@ -225,16 +225,8 @@ class _InspectionWizardScreenState extends State<InspectionWizardScreen> {
                   progress: progress,
                 ),
               ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: SectionCard(
-                  padding: EdgeInsets.zero,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: buildStep(),
-                  ),
-                ),
-              ),
+              const SizedBox(height: 12),
+              Expanded(child: buildStep()),
             ],
           ),
         ),

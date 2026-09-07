@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_page_scaffold.dart';
-import '../../../shared/status_badge.dart';
 import '../../auth/services/permission_service.dart';
 import '../models/workshop_inspection.dart';
 import '../repositories/workshop_repository.dart';
+import '../widgets/workshop_inspection_card.dart';
 import 'new_workshop_inspection_screen.dart';
 import 'workshop_inspection_details_screen.dart';
 
@@ -100,81 +100,46 @@ class _WorkshopInspectionScreenState extends State<WorkshopInspectionScreen> {
           return RefreshIndicator(
             onRefresh: _refresh,
             child: ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                MediaQuery.paddingOf(context).bottom +
+                    kFloatingActionButtonMargin +
+                    56,
+              ),
               itemCount: inspections.length,
               separatorBuilder: (context, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final inspection = inspections[index];
-                final driverName = inspection.driverName;
-                final submittedBy =
-                    driverName != null && driverName.trim().isNotEmpty
-                    ? 'Driver: $driverName'
-                    : 'Technician: ${inspection.technicianName}';
+                return WorkshopInspectionCard(
+                  inspection: inspection,
+                  onTap: () async {
+                    final inspectionId = inspection.id;
 
-                return Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
-                    ),
-                    leading: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.assignment_outlined,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                    title: Text(
-                      inspection.inspectionNumber,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      '${inspection.registration} | ${inspection.fleetNumber}\n'
-                      '${inspection.templateName?.trim().isNotEmpty == true ? inspection.templateName : _inspectionTypeLabel(inspection.inspectionType)}\n'
-                      '$submittedBy\n'
-                      'Submitted: ${_dateTimeLabel(inspection.dateStarted)}\n'
-                      'Result: ${inspection.overallResult.name} • Repairs: ${inspection.repairsRequired}',
-                    ),
-                    isThreeLine: false,
-                    trailing: _statusBadge(inspection.status.name),
-                    onTap: () async {
-                      final inspectionId = inspection.id;
-
-                      if (inspectionId == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'This inspection does not have a database ID.',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => WorkshopInspectionDetailsScreen(
-                            inspectionId: inspectionId,
+                    if (inspectionId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'This inspection does not have a database ID.',
                           ),
                         ),
                       );
+                      return;
+                    }
 
-                      if (mounted) {
-                        await _refresh();
-                      }
-                    },
-                  ),
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => WorkshopInspectionDetailsScreen(
+                          inspectionId: inspectionId,
+                        ),
+                      ),
+                    );
+
+                    if (mounted) {
+                      await _refresh();
+                    }
+                  },
                 );
               },
             ),
@@ -182,37 +147,6 @@ class _WorkshopInspectionScreenState extends State<WorkshopInspectionScreen> {
         },
       ),
     );
-  }
-
-  String _inspectionTypeLabel(WorkshopInspectionType type) {
-    return type.label;
-  }
-
-  StatusBadge _statusBadge(String status) {
-    switch (status) {
-      case 'signedOff':
-        return StatusBadge.success('Signed Off');
-      case 'completed':
-        return StatusBadge.success('Completed');
-      case 'cancelled':
-        return StatusBadge.neutral('Cancelled');
-      case 'awaitingRepair':
-        return StatusBadge.warning('Awaiting Repair');
-      case 'draft':
-        return StatusBadge.neutral('Draft');
-      case 'inProgress':
-        return StatusBadge.info('In Progress');
-      default:
-        return StatusBadge.info(status);
-    }
-  }
-
-  String _dateTimeLabel(DateTime value) {
-    return '${value.day.toString().padLeft(2, '0')}/'
-        '${value.month.toString().padLeft(2, '0')}/'
-        '${value.year} '
-        '${value.hour.toString().padLeft(2, '0')}:'
-        '${value.minute.toString().padLeft(2, '0')}';
   }
 }
 

@@ -15,10 +15,7 @@ import '../services/document_service.dart';
 /// Evidence access is re-checked from the authenticated driver ID rather than
 /// trusting the route argument supplied by a caller.
 class DriverComplianceDocumentsScreen extends StatefulWidget {
-  const DriverComplianceDocumentsScreen({
-    super.key,
-    required this.driverId,
-  });
+  const DriverComplianceDocumentsScreen({super.key, required this.driverId});
 
   final int driverId;
 
@@ -41,6 +38,7 @@ class _DriverComplianceDocumentsScreenState
     DocumentCategory.medical,
     DocumentCategory.dbs,
     DocumentCategory.tachographCard,
+    DocumentCategory.taxiLicence,
   ];
 
   @override
@@ -57,9 +55,10 @@ class _DriverComplianceDocumentsScreenState
   }
 
   Future<_EvidenceData> _load() async {
-    final compliance =
-        await _complianceService.getByDriverId(widget.driverId);
-    final documents = await _documents.getCurrentComplianceDocuments(widget.driverId);
+    final compliance = await _complianceService.getByDriverId(widget.driverId);
+    final documents = await _documents.getCurrentComplianceDocuments(
+      widget.driverId,
+    );
     return _EvidenceData(compliance: compliance, documents: documents);
   }
 
@@ -99,9 +98,9 @@ class _DriverComplianceDocumentsScreenState
       );
     } on StateError catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message.toString())));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -128,8 +127,14 @@ class _DriverComplianceDocumentsScreenState
           decoration: const InputDecoration(labelText: 'Document title'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(dialogContext, controller.text), child: const Text('Upload')),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+            child: const Text('Upload'),
+          ),
         ],
       ),
     );
@@ -147,10 +152,14 @@ class _DriverComplianceDocumentsScreenState
       await _refresh();
     } on FileSystemException {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Document file could not be found.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Document file could not be found.')),
+      );
     } on StateError catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message.toString())));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message.toString())));
     }
   }
 
@@ -184,7 +193,9 @@ class _DriverComplianceDocumentsScreenState
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const AppLoadingState(label: 'Loading compliance evidence...');
+            return const AppLoadingState(
+              label: 'Loading compliance evidence...',
+            );
           }
           if (snapshot.hasError) {
             return AppErrorState(
@@ -204,42 +215,67 @@ class _DriverComplianceDocumentsScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_documentCategoryTitle(category), style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          _documentCategoryTitle(category),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 8),
-                        Text('Expiry: ${_documentDate(_expiryFor(category, data.compliance))}'),
-                        Text('Status: ${_complianceService.status(_expiryFor(category, data.compliance))}'),
-                        Text('Evidence: ${document == null ? 'Missing' : 'Uploaded'}'),
+                        Text(
+                          'Expiry: ${_documentDate(_expiryFor(category, data.compliance))}',
+                        ),
+                        Text(
+                          'Status: ${_complianceService.status(_expiryFor(category, data.compliance))}',
+                        ),
+                        Text(
+                          'Evidence: ${document == null ? 'Missing' : 'Uploaded'}',
+                        ),
                         if (document != null) ...[
                           const SizedBox(height: 4),
-                          Text(document.originalFileName ?? document.title,
-                              style: Theme.of(context).textTheme.bodySmall),
+                          Text(
+                            document.originalFileName ?? document.title,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ],
                         const SizedBox(height: 12),
-                        Wrap(spacing: 8, runSpacing: 8, children: [
-                          if (document != null)
-                            OutlinedButton.icon(
-                              onPressed: () => _open(document),
-                              icon: const Icon(Icons.visibility_outlined),
-                              label: const Text('View Document'),
-                            ),
-                          FilledButton.tonalIcon(
-                            onPressed: () => _upload(category, data.compliance),
-                            icon: Icon(document == null ? Icons.upload_file_outlined : Icons.swap_horiz_outlined),
-                            label: Text(document == null ? 'Upload Document' : 'Replace Document'),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => DriverComplianceDocumentHistoryScreen(
-                                  driverId: widget.driverId,
-                                  category: category,
-                                ),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            if (document != null)
+                              OutlinedButton.icon(
+                                onPressed: () => _open(document),
+                                icon: const Icon(Icons.visibility_outlined),
+                                label: const Text('View Document'),
+                              ),
+                            FilledButton.tonalIcon(
+                              onPressed: () =>
+                                  _upload(category, data.compliance),
+                              icon: Icon(
+                                document == null
+                                    ? Icons.upload_file_outlined
+                                    : Icons.swap_horiz_outlined,
+                              ),
+                              label: Text(
+                                document == null
+                                    ? 'Upload Document'
+                                    : 'Replace Document',
                               ),
                             ),
-                            icon: const Icon(Icons.history_outlined),
-                            label: const Text('View History'),
-                          ),
-                        ]),
+                            OutlinedButton.icon(
+                              onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      DriverComplianceDocumentHistoryScreen(
+                                        driverId: widget.driverId,
+                                        category: category,
+                                      ),
+                                ),
+                              ),
+                              icon: const Icon(Icons.history_outlined),
+                              label: const Text('View History'),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -249,20 +285,30 @@ class _DriverComplianceDocumentsScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Other Compliance Documents', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    ...data.documents.where((document) => document.category == DocumentCategory.other).map(
-                      (document) => ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(document.originalFileName ?? document.title),
-                        subtitle: const Text('Current evidence'),
-                        trailing: IconButton(
-                          tooltip: 'View document',
-                          onPressed: () => _open(document),
-                          icon: const Icon(Icons.visibility_outlined),
-                        ),
-                      ),
+                    Text(
+                      'Other Compliance Documents',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
+                    const SizedBox(height: 8),
+                    ...data.documents
+                        .where(
+                          (document) =>
+                              document.category == DocumentCategory.other,
+                        )
+                        .map(
+                          (document) => ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              document.originalFileName ?? document.title,
+                            ),
+                            subtitle: const Text('Current evidence'),
+                            trailing: IconButton(
+                              tooltip: 'View document',
+                              onPressed: () => _open(document),
+                              icon: const Icon(Icons.visibility_outlined),
+                            ),
+                          ),
+                        ),
                     const SizedBox(height: 8),
                     FilledButton.tonalIcon(
                       onPressed: _uploadOther,
@@ -279,14 +325,17 @@ class _DriverComplianceDocumentsScreenState
     );
   }
 
-  static DateTime? _expiryFor(DocumentCategory category, DriverCompliance? value) => switch (category) {
-        DocumentCategory.licence => value?.licenceExpiry,
-        DocumentCategory.cpc => value?.cpcExpiry,
-        DocumentCategory.medical => value?.medicalExpiry,
-        DocumentCategory.dbs => value?.dbsExpiry,
-        _ => null,
-      };
-
+  static DateTime? _expiryFor(
+    DocumentCategory category,
+    DriverCompliance? value,
+  ) => switch (category) {
+    DocumentCategory.licence => value?.licenceExpiry,
+    DocumentCategory.cpc => value?.cpcExpiry,
+    DocumentCategory.medical => value?.medicalExpiry,
+    DocumentCategory.dbs => value?.dbsExpiry,
+    DocumentCategory.taxiLicence => value?.taxiLicenceExpiry,
+    _ => null,
+  };
 }
 
 class DriverComplianceDocumentHistoryScreen extends StatelessWidget {
@@ -308,10 +357,21 @@ class DriverComplianceDocumentHistoryScreen extends StatelessWidget {
       child: FutureBuilder<List<FleetDocument>>(
         future: service.getComplianceDocumentHistory(driverId, category),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const AppLoadingState(label: 'Loading document history...');
-          if (snapshot.hasError) return const AppErrorState(message: 'Unable to load document history.');
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const AppLoadingState(label: 'Loading document history...');
+          }
+          if (snapshot.hasError) {
+            return const AppErrorState(
+              message: 'Unable to load document history.',
+            );
+          }
           final documents = snapshot.data!;
-          if (documents.isEmpty) return const AppEmptyState(title: 'No evidence history', message: 'No evidence has been uploaded for this category.');
+          if (documents.isEmpty) {
+            return const AppEmptyState(
+              title: 'No evidence history',
+              message: 'No evidence has been uploaded for this category.',
+            );
+          }
           return ListView.separated(
             padding: EdgeInsets.zero,
             itemCount: documents.length,
@@ -321,16 +381,26 @@ class DriverComplianceDocumentHistoryScreen extends StatelessWidget {
               return SectionCard(
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(document.isArchived ? Icons.archive_outlined : Icons.check_circle_outline),
+                  leading: Icon(
+                    document.isArchived
+                        ? Icons.archive_outlined
+                        : Icons.check_circle_outline,
+                  ),
                   title: Text(document.originalFileName ?? document.title),
-                  subtitle: Text('${document.isArchived ? 'ARCHIVED' : 'CURRENT'} • Uploaded ${DriverComplianceDocumentsScreen._formatDate(document.lastUpdated)}\nExpiry snapshot: ${DriverComplianceDocumentsScreen._formatDate(document.expiryDate)}${document.archivedAt == null ? '' : '\nArchived ${DriverComplianceDocumentsScreen._formatDate(document.archivedAt)}'}${document.uploadedByUserId == null ? '' : '\nUploaded by ID ${document.uploadedByUserId}'}'),
+                  subtitle: Text(
+                    '${document.isArchived ? 'ARCHIVED' : 'CURRENT'} • Uploaded ${DriverComplianceDocumentsScreen._formatDate(document.lastUpdated)}\nExpiry snapshot: ${DriverComplianceDocumentsScreen._formatDate(document.expiryDate)}${document.archivedAt == null ? '' : '\nArchived ${DriverComplianceDocumentsScreen._formatDate(document.archivedAt)}'}${document.uploadedByUserId == null ? '' : '\nUploaded by ID ${document.uploadedByUserId}'}',
+                  ),
                   trailing: IconButton(
                     tooltip: 'View document',
                     onPressed: () async {
                       final file = File(document.filePath);
                       if (!await file.exists()) {
                         if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Document file could not be found.')));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Document file could not be found.'),
+                          ),
+                        );
                         return;
                       }
                       await OpenFilex.open(file.path);
@@ -360,14 +430,15 @@ class _EvidenceData {
 }
 
 String _documentCategoryTitle(DocumentCategory category) => switch (category) {
-      DocumentCategory.licence => 'Driving Licence',
-      DocumentCategory.cpc => 'CPC',
-      DocumentCategory.medical => 'Medical',
-      DocumentCategory.dbs => 'DBS',
-      DocumentCategory.tachographCard => 'Tachograph Card',
-      DocumentCategory.other => 'Other Compliance',
-      _ => category.name,
-    };
+  DocumentCategory.licence => 'Driving Licence',
+  DocumentCategory.cpc => 'CPC',
+  DocumentCategory.medical => 'Medical',
+  DocumentCategory.dbs => 'DBS',
+  DocumentCategory.tachographCard => 'Tachograph Card',
+  DocumentCategory.taxiLicence => 'Taxi Licence',
+  DocumentCategory.other => 'Other Compliance',
+  _ => category.name,
+};
 
 String _documentDate(DateTime? value) => value == null
     ? 'Not Recorded'

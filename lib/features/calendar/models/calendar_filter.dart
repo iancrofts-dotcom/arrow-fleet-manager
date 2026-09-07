@@ -1,12 +1,6 @@
 import 'calendar_event.dart';
 
-enum CalendarFilter {
-  all,
-  vehicles,
-  maintenance,
-  documents,
-  drivers,
-}
+enum CalendarFilter { all, vehicles, maintenance, documents, drivers }
 
 extension CalendarFilterExtension on CalendarFilter {
   String get label {
@@ -46,7 +40,8 @@ extension CalendarFilterExtension on CalendarFilter {
         return event.type == CalendarEventType.licence ||
             event.type == CalendarEventType.cpc ||
             event.type == CalendarEventType.medical ||
-            event.type == CalendarEventType.dbs;
+            event.type == CalendarEventType.dbs ||
+            event.type == CalendarEventType.taxiLicence;
     }
   }
 }

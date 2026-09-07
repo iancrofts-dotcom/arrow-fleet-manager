@@ -12,34 +12,25 @@ import '../repositories/document_repository.dart';
 class DocumentService {
   DocumentService();
 
-  final DocumentRepository _repository =
-      DocumentRepository();
+  final DocumentRepository _repository = DocumentRepository();
 
   Future<List<FleetDocument>> getAll() {
     return _repository.getAll();
   }
 
-  Future<List<FleetDocument>> getByDriver(
-    int driverId,
-  ) {
+  Future<List<FleetDocument>> getByDriver(int driverId) {
     return _repository.getByDriver(driverId);
   }
 
-  Future<List<FleetDocument>> getByVehicle(
-    int vehicleId,
-  ) {
+  Future<List<FleetDocument>> getByVehicle(int vehicleId) {
     return _repository.getByVehicle(vehicleId);
   }
 
-  Future<void> save(
-    FleetDocument document,
-  ) {
+  Future<void> save(FleetDocument document) {
     return _repository.save(document);
   }
 
-  Future<void> delete(
-    int id,
-  ) {
+  Future<void> delete(int id) {
     return _repository.delete(id);
   }
 
@@ -74,7 +65,10 @@ class DocumentService {
   }) async {
     _assertCanManageDriver(driverId);
     if (!await sourceFile.exists()) {
-      throw FileSystemException('Selected document file could not be found.', sourceFile.path);
+      throw FileSystemException(
+        'Selected document file could not be found.',
+        sourceFile.path,
+      );
     }
     final storedPath = await _storeUniqueFile(
       sourceFile: sourceFile,
@@ -107,7 +101,9 @@ class DocumentService {
         AuthService.instance.currentDriverId == driverId) {
       return;
     }
-    throw StateError('You do not have permission to view these compliance documents.');
+    throw StateError(
+      'You do not have permission to view these compliance documents.',
+    );
   }
 
   void _assertCanManageDriver(int driverId) {
@@ -117,7 +113,9 @@ class DocumentService {
         AuthService.instance.currentDriverId == driverId) {
       return;
     }
-    throw StateError('You do not have permission to manage these compliance documents.');
+    throw StateError(
+      'You do not have permission to manage these compliance documents.',
+    );
   }
 
   Future<String> _storeUniqueFile({
@@ -126,50 +124,46 @@ class DocumentService {
     required DocumentCategory category,
   }) async {
     final directory = await getApplicationDocumentsDirectory();
-    final targetDirectory = Directory(path.join(directory.path, 'fleet_documents'));
+    final targetDirectory = Directory(
+      path.join(directory.path, 'fleet_documents'),
+    );
     await targetDirectory.create(recursive: true);
     final extension = path.extension(sourceFile.path).toLowerCase();
     final token = Random.secure().nextInt(1 << 32).toRadixString(16);
-    final name = '${driverId}_${category.name}_${DateTime.now().microsecondsSinceEpoch}_$token$extension';
+    final name =
+        '${driverId}_${category.name}_${DateTime.now().microsecondsSinceEpoch}_$token$extension';
     final destination = File(path.join(targetDirectory.path, name));
     await sourceFile.copy(destination.path);
     return destination.path;
   }
 
   String _defaultTitle(DocumentCategory category) => switch (category) {
-        DocumentCategory.licence => 'Driving Licence Evidence',
-        DocumentCategory.cpc => 'CPC Evidence',
-        DocumentCategory.medical => 'Medical Evidence',
-        DocumentCategory.dbs => 'DBS Evidence',
-        DocumentCategory.tachographCard => 'Tachograph Card Evidence',
-        _ => 'Compliance Evidence',
-      };
+    DocumentCategory.licence => 'Driving Licence Evidence',
+    DocumentCategory.cpc => 'CPC Evidence',
+    DocumentCategory.medical => 'Medical Evidence',
+    DocumentCategory.dbs => 'DBS Evidence',
+    DocumentCategory.tachographCard => 'Tachograph Card Evidence',
+    DocumentCategory.taxiLicence => 'Taxi Licence Evidence',
+    DocumentCategory.taxiPlate => 'Taxi Plate Evidence',
+    _ => 'Compliance Evidence',
+  };
 
-  String status(
-    DateTime? expiryDate,
-  ) {
+  String status(DateTime? expiryDate) {
     if (expiryDate == null) return 'Not Recorded';
     if (expiryDate.isBefore(DateTime.now())) {
       return 'Expired';
     }
 
-    if (expiryDate
-            .difference(DateTime.now())
-            .inDays <=
-        30) {
+    if (expiryDate.difference(DateTime.now()).inDays <= 30) {
       return 'Due Soon';
     }
 
     return 'Valid';
   }
 
-  int daysRemaining(
-    DateTime? expiryDate,
-  ) {
+  int daysRemaining(DateTime? expiryDate) {
     if (expiryDate == null) return 0;
-    return expiryDate
-        .difference(DateTime.now())
-        .inDays;
+    return expiryDate.difference(DateTime.now()).inDays;
   }
 
   Future<List<FleetDocument>> expiringSoon() async {
@@ -195,5 +189,6 @@ extension ComplianceDocumentCategory on DocumentCategory {
       this == DocumentCategory.cpc ||
       this == DocumentCategory.medical ||
       this == DocumentCategory.dbs ||
-      this == DocumentCategory.tachographCard;
+      this == DocumentCategory.tachographCard ||
+      this == DocumentCategory.taxiLicence;
 }

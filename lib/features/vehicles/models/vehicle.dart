@@ -10,6 +10,10 @@ class Vehicle {
 
   DateTime? motExpiry;
   DateTime? serviceDue;
+  String? taxiPlateNumber;
+  String? taxiLicensingAuthority;
+  DateTime? taxiPlateIssueDate;
+  DateTime? taxiPlateExpiry;
 
   bool active;
 
@@ -23,6 +27,10 @@ class Vehicle {
     required this.vin,
     this.motExpiry,
     this.serviceDue,
+    this.taxiPlateNumber,
+    this.taxiLicensingAuthority,
+    this.taxiPlateIssueDate,
+    this.taxiPlateExpiry,
     this.active = true,
   });
 
@@ -37,6 +45,10 @@ class Vehicle {
       'vin': vin,
       'motExpiry': motExpiry?.toIso8601String(),
       'serviceDue': serviceDue?.toIso8601String(),
+      'taxiPlateNumber': taxiPlateNumber,
+      'taxiLicensingAuthority': taxiLicensingAuthority,
+      'taxiPlateIssueDate': taxiPlateIssueDate?.toIso8601String(),
+      'taxiPlateExpiry': taxiPlateExpiry?.toIso8601String(),
       'active': active ? 1 : 0,
     };
   }
@@ -56,6 +68,14 @@ class Vehicle {
       serviceDue: map['serviceDue'] != null
           ? DateTime.parse(map['serviceDue'])
           : null,
+      taxiPlateNumber: map['taxiPlateNumber'] as String?,
+      taxiLicensingAuthority: map['taxiLicensingAuthority'] as String?,
+      taxiPlateIssueDate: map['taxiPlateIssueDate'] == null
+          ? null
+          : DateTime.parse(map['taxiPlateIssueDate']),
+      taxiPlateExpiry: map['taxiPlateExpiry'] == null
+          ? null
+          : DateTime.parse(map['taxiPlateExpiry']),
       active: (map['active'] ?? 1) == 1,
     );
   }

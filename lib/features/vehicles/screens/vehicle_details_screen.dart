@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
 
 import '../../assignments/repositories/assignment_repository.dart';
 import '../../auth/services/permission_service.dart';
@@ -52,12 +55,15 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
         : _documentService.getByVehicle(vehicleId);
   }
 
-  Future<void> _addDocument() async {
+  Future<void> _addDocument({DocumentCategory? initialCategory}) async {
     final vehicleId = _vehicle.id;
     if (vehicleId == null) return;
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => EditDocumentScreen(initialVehicleId: vehicleId),
+        builder: (_) => EditDocumentScreen(
+          initialVehicleId: vehicleId,
+          initialCategory: initialCategory,
+        ),
       ),
     );
     if (saved == true && mounted) {
@@ -300,7 +306,36 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                     subtitle: Text(
                       '${document.category.name} • ${_documentService.status(document.expiryDate)}',
                     ),
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'View attachment',
+                          icon: const Icon(Icons.visibility_outlined),
+                          onPressed: document.filePath.isEmpty
+                              ? null
+                              : () async {
+                                  final file = File(document.filePath);
+                                  if (!await file.exists()) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Attached file not found.',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return;
+                                  }
+                                  await OpenFilex.open(file.path);
+                                },
+                        ),
+                        const Icon(Icons.chevron_right),
+                      ],
+                    ),
                     onTap: () => _editDocument(document),
                   ),
                 ),
@@ -400,6 +435,45 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
             title: 'Service Due',
             value: _formatDate(_vehicle.serviceDue),
           ),
+
+          if (_vehicle.taxiPlateNumber?.trim().isNotEmpty == true) ...[
+            _detailTile(
+              icon: Icons.local_taxi_outlined,
+              title: 'Taxi Plate / Licence Number',
+              value: _vehicle.taxiPlateNumber!,
+            ),
+            if (_vehicle.taxiLicensingAuthority?.trim().isNotEmpty == true)
+              _detailTile(
+                icon: Icons.account_balance_outlined,
+                title: 'Licensing Authority',
+                value: _vehicle.taxiLicensingAuthority!,
+              ),
+            _detailTile(
+              icon: Icons.event_outlined,
+              title: 'Taxi Plate Issue Date',
+              value: _formatDate(_vehicle.taxiPlateIssueDate),
+            ),
+            _detailTile(
+              icon: Icons.event_available_outlined,
+              title: 'Taxi Plate Expiry',
+              value: _formatDate(_vehicle.taxiPlateExpiry),
+            ),
+            _detailTile(
+              icon: Icons.verified_outlined,
+              title: 'Taxi Plate Status',
+              value: _documentService.status(_vehicle.taxiPlateExpiry),
+            ),
+            if (_permissions.canManageVehicles)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      _addDocument(initialCategory: DocumentCategory.taxiPlate),
+                  icon: const Icon(Icons.upload_file_outlined),
+                  label: const Text('Add Taxi Plate Evidence'),
+                ),
+              ),
+          ],
 
           const SizedBox(height: 24),
 

@@ -56,7 +56,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
 
     return AppPageScaffold(
-      title: 'Fleet Calendar',
+      title: 'Calendar',
       subtitle: 'Upcoming fleet, maintenance and compliance dates.',
       child: FutureBuilder<List<CalendarEvent>>(
         future: _eventsFuture,

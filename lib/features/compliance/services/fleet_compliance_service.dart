@@ -83,6 +83,18 @@ class FleetComplianceService {
         checkType: FleetComplianceCheckType.service,
         date: vehicle.serviceDue,
       );
+      if (vehicle.taxiPlateExpiry != null) {
+        builder.addOptionalAttention(
+          subjectType: FleetComplianceSubjectType.vehicle,
+          subjectId: vehicleId,
+          subjectDisplay: vehicle.registration,
+          secondaryDisplay: vehicle.fleetNumber.isEmpty
+              ? null
+              : vehicle.fleetNumber,
+          checkType: FleetComplianceCheckType.taxiPlate,
+          date: vehicle.taxiPlateExpiry!,
+        );
+      }
     }
 
     for (final driver in drivers.where((driver) => driver.isActive)) {
@@ -103,6 +115,15 @@ class FleetComplianceService {
           subjectDisplay: driver.fullName,
           checkType: check.$1,
           date: check.$2,
+        );
+      }
+      if (compliance?.taxiLicenceExpiry case final taxiLicenceExpiry?) {
+        builder.addOptionalAttention(
+          subjectType: FleetComplianceSubjectType.driver,
+          subjectId: driverId,
+          subjectDisplay: driver.fullName,
+          checkType: FleetComplianceCheckType.taxiLicence,
+          date: taxiLicenceExpiry,
         );
       }
     }
@@ -171,6 +192,33 @@ class _SummaryBuilder {
         ),
       );
     }
+  }
+
+  /// Adds specialist attention without changing the universal score.
+  void addOptionalAttention({
+    required FleetComplianceSubjectType subjectType,
+    required int subjectId,
+    required String subjectDisplay,
+    String? secondaryDisplay,
+    required FleetComplianceCheckType checkType,
+    required DateTime date,
+  }) {
+    final status = _classify(date, now);
+    if (status == FleetComplianceStatus.valid ||
+        status == FleetComplianceStatus.notRecorded) {
+      return;
+    }
+    attentionItems.add(
+      FleetComplianceAttentionItem(
+        subjectType: subjectType,
+        subjectId: subjectId,
+        checkType: checkType,
+        status: status,
+        date: date,
+        subjectDisplay: subjectDisplay,
+        secondaryDisplay: secondaryDisplay,
+      ),
+    );
   }
 
   FleetComplianceSummary build() {

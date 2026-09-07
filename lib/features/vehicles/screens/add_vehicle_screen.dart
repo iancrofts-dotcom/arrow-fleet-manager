@@ -34,9 +34,13 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final yearController = TextEditingController();
 
   final vinController = TextEditingController();
+  final taxiPlateNumberController = TextEditingController();
+  final taxiAuthorityController = TextEditingController();
 
   DateTime? motExpiry;
   DateTime? serviceDue;
+  DateTime? taxiPlateIssueDate;
+  DateTime? taxiPlateExpiry;
 
   @override
   void dispose() {
@@ -46,6 +50,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     modelController.dispose();
     yearController.dispose();
     vinController.dispose();
+    taxiPlateNumberController.dispose();
+    taxiAuthorityController.dispose();
     super.dispose();
   }
 
@@ -88,6 +94,14 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         vin: vinController.text.trim(),
         motExpiry: motExpiry,
         serviceDue: serviceDue,
+        taxiPlateNumber: taxiPlateNumberController.text.trim().isEmpty
+            ? null
+            : taxiPlateNumberController.text.trim(),
+        taxiLicensingAuthority: taxiAuthorityController.text.trim().isEmpty
+            ? null
+            : taxiAuthorityController.text.trim(),
+        taxiPlateIssueDate: taxiPlateIssueDate,
+        taxiPlateExpiry: taxiPlateExpiry,
       );
 
       final savedVehicle = await _vehicleService.addVehicle(vehicle);
@@ -195,6 +209,50 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                     TextFormField(
                       controller: vinController,
                       decoration: decoration('VIN'),
+                    ),
+                  ],
+                ),
+              ),
+
+              FormSection(
+                title: 'Taxi Plate (optional)',
+                subtitle: 'Only record this for taxi or private-hire vehicles.',
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: taxiPlateNumberController,
+                      decoration: decoration('Taxi Plate / Licence Number'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: taxiAuthorityController,
+                      decoration: decoration('Licensing Authority'),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: _saving
+                          ? null
+                          : () => selectDate(
+                              currentDate: taxiPlateIssueDate,
+                              onSelected: (date) => taxiPlateIssueDate = date,
+                            ),
+                      icon: const Icon(Icons.event),
+                      label: Text(
+                        'Taxi Plate Issue Date: ${formatDate(taxiPlateIssueDate)}',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: _saving
+                          ? null
+                          : () => selectDate(
+                              currentDate: taxiPlateExpiry,
+                              onSelected: (date) => taxiPlateExpiry = date,
+                            ),
+                      icon: const Icon(Icons.event_available),
+                      label: Text(
+                        'Taxi Plate Expiry: ${formatDate(taxiPlateExpiry)}',
+                      ),
                     ),
                   ],
                 ),

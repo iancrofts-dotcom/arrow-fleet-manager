@@ -16,13 +16,23 @@ class DocumentCalendarMapper {
     final events = <CalendarEvent>[];
 
     for (final document in documents) {
+      if (document.category == DocumentCategory.mot ||
+          document.category == DocumentCategory.service ||
+          document.category == DocumentCategory.licence ||
+          document.category == DocumentCategory.cpc ||
+          document.category == DocumentCategory.medical ||
+          document.category == DocumentCategory.dbs ||
+          document.category == DocumentCategory.taxiLicence ||
+          document.category == DocumentCategory.taxiPlate) {
+        continue;
+      }
       final expiryDate = document.expiryDate;
       if (expiryDate == null) continue;
       String subtitle = '';
 
       if (document.vehicleId != null) {
-        subtitle = vehicles[document.vehicleId]?.registration ??
-            'Unknown Vehicle';
+        subtitle =
+            vehicles[document.vehicleId]?.registration ?? 'Unknown Vehicle';
       } else if (document.driverId != null) {
         final driver = drivers[document.driverId];
 
@@ -41,10 +51,10 @@ class DocumentCalendarMapper {
           color: document.isExpired
               ? Colors.red
               : document.isDueSoon
-                  ? Colors.orange
-                  : Colors.blue,
+              ? Colors.orange
+              : Colors.blue,
 
-                  source: document,
+          source: document,
         ),
       );
     }
@@ -86,6 +96,12 @@ class DocumentCalendarMapper {
 
       case DocumentCategory.policy:
         return Icons.policy;
+
+      case DocumentCategory.taxiLicence:
+        return Icons.local_taxi_outlined;
+
+      case DocumentCategory.taxiPlate:
+        return Icons.local_taxi_outlined;
 
       case DocumentCategory.other:
         return Icons.insert_drive_file;

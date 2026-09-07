@@ -7,7 +7,16 @@ enum FleetComplianceStatus { valid, dueSoon, expired, notRecorded }
 enum FleetComplianceSubjectType { vehicle, driver }
 
 /// The required checks included in the fleet-wide compliance percentage.
-enum FleetComplianceCheckType { mot, service, licence, cpc, medical, dbs }
+enum FleetComplianceCheckType {
+  mot,
+  service,
+  licence,
+  cpc,
+  medical,
+  dbs,
+  taxiLicence,
+  taxiPlate,
+}
 
 /// A non-compliant or soon-to-be-non-compliant persisted check.
 ///

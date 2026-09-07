@@ -160,5 +160,6 @@ class CalendarEventCard extends StatelessWidget {
     CalendarEventType.cpc => 'CPC',
     CalendarEventType.medical => 'Medical',
     CalendarEventType.dbs => 'DBS',
+    CalendarEventType.taxiLicence => 'Taxi Licence',
   };
 }

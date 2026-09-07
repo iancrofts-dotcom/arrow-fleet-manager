@@ -22,13 +22,13 @@ class EditDriverComplianceScreen extends StatefulWidget {
 
 class _EditDriverComplianceScreenState
     extends State<EditDriverComplianceScreen> {
-  final DriverComplianceService _service =
-      DriverComplianceService();
+  final DriverComplianceService _service = DriverComplianceService();
 
   late DateTime _licenceExpiry;
   late DateTime _cpcExpiry;
   late DateTime _medicalExpiry;
   DateTime? _dbsExpiry;
+  DateTime? _taxiLicenceExpiry;
 
   @override
   void initState() {
@@ -38,29 +38,18 @@ class _EditDriverComplianceScreenState
 
     _licenceExpiry =
         widget.compliance?.licenceExpiry ??
-            widget.driver.licenceExpiry ??
-            DateTime(
-              now.year + 5,
-              now.month,
-              now.day,
-            );
+        widget.driver.licenceExpiry ??
+        DateTime(now.year + 5, now.month, now.day);
 
     _cpcExpiry =
         widget.compliance?.cpcExpiry ??
-            DateTime(
-              now.year + 1,
-              now.month,
-              now.day,
-            );
+        DateTime(now.year + 1, now.month, now.day);
 
     _medicalExpiry =
         widget.compliance?.medicalExpiry ??
-            DateTime(
-              now.year + 1,
-              now.month,
-              now.day,
-            );
+        DateTime(now.year + 1, now.month, now.day);
     _dbsExpiry = widget.compliance?.dbsExpiry;
+    _taxiLicenceExpiry = widget.compliance?.taxiLicenceExpiry;
   }
 
   Future<void> _pickDate(
@@ -83,13 +72,14 @@ class _EditDriverComplianceScreenState
 
   Future<void> _save() async {
     final compliance = DriverCompliance(
-  driverId: widget.driver.id!,
-  licenceExpiry: _licenceExpiry,
-  cpcExpiry: _cpcExpiry,
-  medicalExpiry: _medicalExpiry,
-  dbsExpiry: _dbsExpiry,
-  lastUpdated: DateTime.now(),
-);
+      driverId: widget.driver.id!,
+      licenceExpiry: _licenceExpiry,
+      cpcExpiry: _cpcExpiry,
+      medicalExpiry: _medicalExpiry,
+      dbsExpiry: _dbsExpiry,
+      taxiLicenceExpiry: _taxiLicenceExpiry,
+      lastUpdated: DateTime.now(),
+    );
 
     await _service.save(compliance);
 
@@ -105,11 +95,7 @@ class _EditDriverComplianceScreenState
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Driver Compliance',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Driver Compliance')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -117,9 +103,7 @@ class _EditDriverComplianceScreenState
             child: ListTile(
               leading: const Icon(Icons.person),
               title: Text(widget.driver.fullName),
-              subtitle: Text(
-                widget.driver.licenceNumber,
-              ),
+              subtitle: Text(widget.driver.licenceNumber),
             ),
           ),
 
@@ -128,28 +112,21 @@ class _EditDriverComplianceScreenState
           _dateTile(
             title: 'Licence Expiry',
             value: _licenceExpiry,
-            onTap: () => _pickDate(
-              _licenceExpiry,
-              (date) => _licenceExpiry = date,
-            ),
+            onTap: () =>
+                _pickDate(_licenceExpiry, (date) => _licenceExpiry = date),
           ),
 
           _dateTile(
             title: 'CPC Expiry',
             value: _cpcExpiry,
-            onTap: () => _pickDate(
-              _cpcExpiry,
-              (date) => _cpcExpiry = date,
-            ),
+            onTap: () => _pickDate(_cpcExpiry, (date) => _cpcExpiry = date),
           ),
 
           _dateTile(
             title: 'Medical Expiry',
             value: _medicalExpiry,
-            onTap: () => _pickDate(
-              _medicalExpiry,
-              (date) => _medicalExpiry = date,
-            ),
+            onTap: () =>
+                _pickDate(_medicalExpiry, (date) => _medicalExpiry = date),
           ),
 
           _dateTile(
@@ -161,14 +138,21 @@ class _EditDriverComplianceScreenState
             ),
           ),
 
+          _dateTile(
+            title: 'Taxi Licence Expiry (optional)',
+            value: _taxiLicenceExpiry,
+            onTap: () => _pickDate(
+              _taxiLicenceExpiry ?? DateTime.now(),
+              (date) => _taxiLicenceExpiry = date,
+            ),
+          ),
+
           const SizedBox(height: 32),
 
           FilledButton.icon(
             onPressed: _save,
             icon: const Icon(Icons.save),
-            label: const Text(
-              'Save Compliance',
-            ),
+            label: const Text('Save Compliance'),
           ),
         ],
       ),
