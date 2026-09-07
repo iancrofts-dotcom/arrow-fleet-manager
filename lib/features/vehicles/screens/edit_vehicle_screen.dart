@@ -9,8 +9,13 @@ import '../services/vehicle_service.dart';
 
 class EditVehicleScreen extends StatefulWidget {
   final Vehicle vehicle;
+  final VehicleService? vehicleService;
 
-  const EditVehicleScreen({super.key, required this.vehicle});
+  const EditVehicleScreen({
+    super.key,
+    required this.vehicle,
+    this.vehicleService,
+  });
 
   @override
   State<EditVehicleScreen> createState() => _EditVehicleScreenState();
@@ -19,7 +24,7 @@ class EditVehicleScreen extends StatefulWidget {
 class _EditVehicleScreenState extends State<EditVehicleScreen> {
   final PermissionService _permissions = PermissionService.instance;
 
-  final VehicleService _vehicleService = VehicleService();
+  late final VehicleService _vehicleService;
 
   bool _saving = false;
   DateTime? _motExpiry;
@@ -39,6 +44,9 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
   @override
   void initState() {
     super.initState();
+
+    _vehicleService =
+        widget.vehicleService ?? VehicleService.forConfiguredBackend();
 
     fleetController = TextEditingController(text: widget.vehicle.fleetNumber);
 
@@ -89,6 +97,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
 
     final vehicle = Vehicle(
       id: widget.vehicle.id,
+      identity: widget.vehicle.identity,
       fleetNumber: fleetController.text.trim(),
       registration: registrationController.text.trim().toUpperCase(),
       make: makeController.text.trim(),
@@ -109,16 +118,16 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
     );
 
     try {
-      await _vehicleService.updateVehicle(vehicle);
+      final savedVehicle = await _vehicleService.updateVehicle(vehicle);
 
       if (!mounted) return;
 
-      Navigator.pop(context, vehicle);
-    } catch (error) {
+      Navigator.pop(context, savedVehicle);
+    } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to update vehicle.\n$error')),
+        const SnackBar(content: Text('Unable to update vehicle.')),
       );
       setState(() {
         _saving = false;

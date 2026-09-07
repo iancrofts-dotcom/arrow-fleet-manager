@@ -3,6 +3,7 @@ import 'package:arrow_fleet_manager/backend/auth/local_auth_adapter.dart';
 import 'package:arrow_fleet_manager/backend/auth/supabase_auth_adapter.dart';
 import 'package:arrow_fleet_manager/backend/auth/supabase_auth_gateway.dart';
 import 'package:arrow_fleet_manager/backend/backend_profile.dart';
+import 'package:arrow_fleet_manager/config/backend_mode.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -12,7 +13,7 @@ void main() {
 
   test('selects the local authentication adapter explicitly', () {
     expect(
-      createFleetAuthAdapter(mode: FleetAuthMode.local),
+      createFleetAuthAdapter(mode: BackendMode.local),
       isA<LocalAuthAdapter>(),
     );
   });
@@ -20,7 +21,7 @@ void main() {
   test('selects the Supabase authentication adapter with a gateway', () {
     expect(
       createFleetAuthAdapter(
-        mode: FleetAuthMode.supabase,
+        mode: BackendMode.supabase,
         supabaseGateway: _FakeGateway(),
       ),
       isA<SupabaseAuthAdapter>(),
@@ -29,7 +30,7 @@ void main() {
 
   test('requires an explicit gateway for Supabase authentication', () {
     expect(
-      () => createFleetAuthAdapter(mode: FleetAuthMode.supabase),
+      () => createFleetAuthAdapter(mode: BackendMode.supabase),
       throwsArgumentError,
     );
   });

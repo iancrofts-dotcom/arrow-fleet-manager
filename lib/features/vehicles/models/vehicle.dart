@@ -1,5 +1,10 @@
+import 'vehicle_identity.dart';
+
 class Vehicle {
-  int? id;
+  /// SQLite identity retained for backward compatibility. Central vehicles
+  /// always have a null [id] and carry their UUID in [identity].
+  final int? id;
+  final VehicleIdentity? identity;
 
   String registration;
   String fleetNumber;
@@ -18,7 +23,8 @@ class Vehicle {
   bool active;
 
   Vehicle({
-    this.id,
+    int? id,
+    VehicleIdentity? identity,
     required this.registration,
     required this.fleetNumber,
     required this.make,
@@ -32,9 +38,30 @@ class Vehicle {
     this.taxiPlateIssueDate,
     this.taxiPlateExpiry,
     this.active = true,
-  });
+  }) : id = id,
+       identity = _resolveIdentity(id, identity);
+
+  static VehicleIdentity? _resolveIdentity(int? id, VehicleIdentity? identity) {
+    if (identity?.centralIdOrNull != null && id != null) {
+      throw ArgumentError(
+        'A central vehicle cannot have a local SQLite vehicle ID.',
+      );
+    }
+    if (identity?.localIdOrNull case final identityId?) {
+      if (id != null && id != identityId) {
+        throw ArgumentError('Local vehicle identity does not match id.');
+      }
+      return identity;
+    }
+    return identity ?? (id == null ? null : VehicleIdentity.local(id));
+  }
 
   Map<String, dynamic> toMap() {
+    if (identity?.centralIdOrNull != null) {
+      throw UnsupportedError(
+        'A central vehicle cannot be serialized for SQLite persistence.',
+      );
+    }
     return {
       'id': id,
       'registration': registration,

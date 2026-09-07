@@ -2,15 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../features/auth/widgets/auth_gate.dart';
 import '../features/auth/widgets/protected_screen.dart';
-import '../features/auth/screens/user_management_screen.dart';
-import '../features/calendar/screens/calendar_screen.dart';
-import '../features/compliance/screens/compliance_centre_screen.dart';
-import '../features/dashboard/dashboard_screen.dart';
-import '../features/documents/screens/document_list_screen.dart';
-import '../features/vehicles/screens/vehicle_list_screen.dart';
-import '../features/drivers/screens/driver_list_screen.dart';
-import '../features/reports/screens/reports_screen.dart';
-import '../features/workshop/screens/workshop_dashboard_screen.dart';
+import 'router_feature_screens_native.dart'
+    if (dart.library.js_interop) 'router_feature_screens_web.dart';
 
 class AppRouter {
   AppRouter._();

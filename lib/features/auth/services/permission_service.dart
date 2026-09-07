@@ -2,11 +2,14 @@ import '../models/user_role.dart';
 import 'auth_service.dart';
 
 class PermissionService {
-  PermissionService._();
+  PermissionService({AuthService? authService})
+    : _authService = authService ?? AuthService.instance;
 
-  static final PermissionService instance = PermissionService._();
+  static final PermissionService instance = PermissionService();
 
-  UserRole? get _role => AuthService.instance.currentRole;
+  final AuthService _authService;
+
+  UserRole? get _role => _authService.currentRole;
 
   bool get isAdmin => _role == UserRole.admin;
 

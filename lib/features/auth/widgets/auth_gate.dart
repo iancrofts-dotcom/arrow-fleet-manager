@@ -6,9 +6,13 @@ import '../screens/forced_password_change_screen.dart';
 import '../screens/login_screen.dart';
 import '../services/auth_initializer.dart';
 import '../services/auth_service.dart';
+import '../../../config/backend_mode.dart';
 
 class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
+  const AuthGate({super.key, this.authService, this.requiresSetup});
+
+  final AuthService? authService;
+  final Future<bool> Function()? requiresSetup;
 
   @override
   State<AuthGate> createState() => _AuthGateState();
@@ -16,22 +20,27 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   late Future<_AuthGateStateResult> _stateFuture;
+  late final AuthService _authService;
 
   @override
   void initState() {
     super.initState();
+    _authService = widget.authService ?? AuthService.instance;
     _stateFuture = _loadState();
   }
 
   Future<_AuthGateStateResult> _loadState() async {
-    final requiresSetup = await AuthInitializer.instance
-        .requiresFirstAdministratorSetup();
-    if (requiresSetup) {
-      return const _AuthGateStateResult.requiresFirstAdministratorSetup();
+    if (_authService.backendMode == BackendMode.local) {
+      final requiresSetup =
+          await (widget.requiresSetup ??
+              AuthInitializer.instance.requiresFirstAdministratorSetup)();
+      if (requiresSetup) {
+        return const _AuthGateStateResult.requiresFirstAdministratorSetup();
+      }
     }
 
-    await AuthService.instance.restoreSession();
-    if (AuthService.instance.requiresPasswordChange) {
+    await _authService.restoreSession();
+    if (_authService.requiresPasswordChange) {
       return const _AuthGateStateResult.requiresPasswordChange();
     }
     return const _AuthGateStateResult.normal();
@@ -61,7 +70,7 @@ class _AuthGateState extends State<AuthGate> {
         }
 
         if (state?.requiresPasswordChange == true) {
-          final user = AuthService.instance.currentUser;
+          final user = _authService.currentUser;
           if (user != null) {
             return ForcedPasswordChangeScreen(
               user: user,
@@ -72,11 +81,11 @@ class _AuthGateState extends State<AuthGate> {
 
         // Application restarts require a fresh login, so this is normally the
         // Login screen until the user authenticates in the current process.
-        if (AuthService.instance.isLoggedIn) {
+        if (_authService.isLoggedIn) {
           return const DashboardScreen();
         }
 
-        return const LoginScreen();
+        return LoginScreen(authService: _authService);
       },
     );
   }

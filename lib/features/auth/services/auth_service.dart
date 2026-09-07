@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../backend/auth/fleet_auth_adapter.dart';
+import '../../../config/backend_mode.dart';
 import '../models/user.dart';
 import '../models/user_role.dart';
 import 'session_service.dart';
@@ -30,6 +32,9 @@ class AuthService extends ChangeNotifier {
   final NowProvider _now;
   final bool enableSessionWatchdog;
 
+  BackendMode _backendMode = BackendMode.local;
+  FleetAuthAdapter? _remoteAuthAdapter;
+
   User? _currentUser;
   bool _requiresPasswordChange = false;
   DateTime? _authenticatedAt;
@@ -37,6 +42,10 @@ class AuthService extends ChangeNotifier {
   Timer? _sessionWatchdog;
 
   User? get currentUser => _currentUser;
+
+  BackendMode get backendMode => _backendMode;
+
+  bool get usesEmailLogin => _backendMode == BackendMode.supabase;
 
   bool get isLoggedIn => _currentUser != null;
 
@@ -50,10 +59,25 @@ class AuthService extends ChangeNotifier {
     required String username,
     required String password,
   }) async {
-    final user = await _userService.login(
-      username: username,
-      password: password,
-    );
+    final User? user;
+    if (_backendMode == BackendMode.local) {
+      user = await _userService.login(username: username, password: password);
+    } else {
+      final profile = await _remoteAuthAdapter!.signIn(
+        identifier: username,
+        password: password,
+      );
+      user = profile == null
+          ? null
+          : User(
+              id: profile.id,
+              username: profile.username,
+              passwordHash: '',
+              role: profile.role,
+              driverId: profile.driverLegacyId,
+              isActive: profile.isActive,
+            );
+    }
 
     if (user == null) {
       return false;
@@ -61,13 +85,17 @@ class AuthService extends ChangeNotifier {
 
     final loginTime = _now();
     _currentUser = user;
-    _requiresPasswordChange = _userService.requiresPasswordChange(user);
+    _requiresPasswordChange =
+        _backendMode == BackendMode.local &&
+        _userService.requiresPasswordChange(user);
     _authenticatedAt = loginTime;
     _lastActivityAt = loginTime;
 
     // Kept only as compatibility cleanup for existing installations. It is
     // never used to restore authentication after an application restart.
-    await _sessionService.saveUserId(user.id);
+    if (_backendMode == BackendMode.local) {
+      await _sessionService.saveUserId(user.id);
+    }
     _startSessionWatchdog();
     notifyListeners();
 
@@ -82,6 +110,17 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> logout() => _invalidateSession();
+
+  void configureBackend({
+    required BackendMode mode,
+    FleetAuthAdapter? remoteAuthAdapter,
+  }) {
+    if (mode == BackendMode.supabase && remoteAuthAdapter == null) {
+      throw ArgumentError('Supabase mode requires a remote auth adapter.');
+    }
+    _backendMode = mode;
+    _remoteAuthAdapter = remoteAuthAdapter;
+  }
 
   /// Records user activity for the in-memory session. Activity never extends
   /// the absolute lifetime and cannot revive an expired session.
@@ -161,6 +200,12 @@ class AuthService extends ChangeNotifier {
       return SessionValidationResult.unauthenticated;
     }
 
+    if (_backendMode == BackendMode.supabase) {
+      return _remoteAuthAdapter?.isAuthenticated == true
+          ? SessionValidationResult.authenticated
+          : SessionValidationResult.unauthenticated;
+    }
+
     final userId = _currentUser?.id;
     if (userId == null) {
       return SessionValidationResult.unauthenticated;
@@ -233,7 +278,15 @@ class AuthService extends ChangeNotifier {
     _requiresPasswordChange = false;
     _authenticatedAt = null;
     _lastActivityAt = null;
-    await _sessionService.clearSession();
+    if (_backendMode == BackendMode.supabase) {
+      try {
+        await _remoteAuthAdapter?.signOut();
+      } catch (_) {
+        // Local state remains invalidated; never expose remote auth details.
+      }
+    } else {
+      await _sessionService.clearSession();
+    }
 
     if (notify && hadAuthState) {
       notifyListeners();

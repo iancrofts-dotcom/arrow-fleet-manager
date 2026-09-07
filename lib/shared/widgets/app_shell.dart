@@ -7,6 +7,7 @@ import 'fleetiq_brand.dart';
 import '../../features/auth/services/auth_service.dart';
 import '../../features/auth/services/permission_service.dart';
 import '../../features/auth/models/user_role.dart';
+import '../../platform/platform_capabilities.dart';
 
 class AppShellDestination {
   const AppShellDestination({
@@ -81,6 +82,15 @@ class AppShellDestinations {
       isVisible: _canViewVehicles,
     ),
   ];
+
+  static Iterable<AppShellDestination> visible(PermissionService permissions) {
+    final capabilities = PlatformCapabilities.current();
+    return all.where(
+      (destination) =>
+          capabilities.routeAvailable(destination.route) &&
+          destination.isVisible(permissions),
+    );
+  }
 
   static bool _alwaysVisible(PermissionService _) => true;
   static bool _canViewVehicles(PermissionService p) => p.canViewVehicles;
@@ -168,7 +178,7 @@ class _MobileShell extends StatelessWidget {
       valueListenable: currentRoute,
       builder: (context, route, _) {
         final permissions = PermissionService.instance;
-        final primary = AppShellDestinations.all
+        final primary = AppShellDestinations.visible(permissions)
             .where(
               (destination) =>
                   destination.route == AppRouter.dashboard ||
@@ -176,9 +186,8 @@ class _MobileShell extends StatelessWidget {
                   destination.route == AppRouter.drivers ||
                   destination.route == AppRouter.calendar,
             )
-            .where((destination) => destination.isVisible(permissions))
             .toList();
-        final secondary = AppShellDestinations.all
+        final secondary = AppShellDestinations.visible(permissions)
             .where(
               (destination) =>
                   destination.route != AppRouter.dashboard &&
@@ -186,7 +195,6 @@ class _MobileShell extends StatelessWidget {
                   destination.route != AppRouter.drivers &&
                   destination.route != AppRouter.calendar,
             )
-            .where((destination) => destination.isVisible(permissions))
             .toList();
         final selectedPrimaryIndex = primary.indexWhere(
           (destination) => destination.route == route,
@@ -388,9 +396,7 @@ class _DesktopSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = AuthService.instance.currentUser;
     final permissions = PermissionService.instance;
-    final destinations = AppShellDestinations.all.where(
-      (d) => d.isVisible(permissions),
-    );
+    final destinations = AppShellDestinations.visible(permissions);
     return SizedBox(
       width: 264,
       child: Material(

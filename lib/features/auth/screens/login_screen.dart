@@ -6,7 +6,9 @@ import '../services/auth_service.dart';
 import 'forced_password_change_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.authService});
+
+  final AuthService? authService;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -20,6 +22,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  AuthService get _authService => widget.authService ?? AuthService.instance;
 
   @override
   void dispose() {
@@ -37,10 +41,15 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    final success = await AuthService.instance.login(
-      username: _usernameController.text.trim(),
-      password: _passwordController.text,
-    );
+    var success = false;
+    try {
+      success = await _authService.login(
+        username: _usernameController.text.trim(),
+        password: _passwordController.text,
+      );
+    } catch (_) {
+      success = false;
+    }
 
     if (!mounted) return;
 
@@ -50,14 +59,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid username or password')),
+        SnackBar(
+          content: Text(
+            _authService.usesEmailLogin
+                ? 'Unable to sign in. Check your email, password, and account status.'
+                : 'Invalid username or password',
+          ),
+        ),
       );
       return;
     }
 
-    final user = AuthService.instance.currentUser!;
+    final user = _authService.currentUser!;
 
-    if (AuthService.instance.requiresPasswordChange) {
+    if (_authService.requiresPasswordChange) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ForcedPasswordChangeScreen(user: user),
@@ -108,13 +123,21 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 32),
                         TextFormField(
                           controller: _usernameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Username',
-                            prefixIcon: Icon(Icons.person),
+                          decoration: InputDecoration(
+                            labelText: _authService.usesEmailLogin
+                                ? 'Email'
+                                : 'Username',
+                            prefixIcon: Icon(
+                              _authService.usesEmailLogin
+                                  ? Icons.email_outlined
+                                  : Icons.person,
+                            ),
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Enter your username';
+                              return _authService.usesEmailLogin
+                                  ? 'Enter your email'
+                                  : 'Enter your username';
                             }
                             return null;
                           },

@@ -8,7 +8,9 @@ import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
 
 class AddVehicleScreen extends StatefulWidget {
-  const AddVehicleScreen({super.key});
+  const AddVehicleScreen({super.key, this.vehicleService});
+
+  final VehicleService? vehicleService;
 
   @override
   State<AddVehicleScreen> createState() => _AddVehicleScreenState();
@@ -19,7 +21,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
   final PermissionService _permissions = PermissionService.instance;
 
-  final VehicleService _vehicleService = VehicleService();
+  late final VehicleService _vehicleService;
 
   bool _saving = false;
 
@@ -41,6 +43,13 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   DateTime? serviceDue;
   DateTime? taxiPlateIssueDate;
   DateTime? taxiPlateExpiry;
+
+  @override
+  void initState() {
+    super.initState();
+    _vehicleService =
+        widget.vehicleService ?? VehicleService.forConfiguredBackend();
+  }
 
   @override
   void dispose() {
@@ -109,12 +118,12 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       if (!mounted) return;
 
       Navigator.pop(context, savedVehicle);
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Unable to save vehicle.\n$e')));
+      ).showSnackBar(const SnackBar(content: Text('Unable to save vehicle.')));
 
       setState(() {
         _saving = false;

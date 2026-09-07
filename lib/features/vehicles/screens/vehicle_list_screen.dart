@@ -14,19 +14,21 @@ import '../widgets/fleet_search_bar.dart';
 import '../widgets/fleet_sort_button.dart';
 import '../widgets/vehicle_card.dart';
 import 'add_vehicle_screen.dart';
-import 'vehicle_details_screen.dart';
+import 'vehicle_details_screen.dart'
+    if (dart.library.js_interop) 'vehicle_details_web_screen.dart';
 
 class VehicleListScreen extends StatefulWidget {
   final VehicleFilter? initialFilter;
+  final VehicleService? vehicleService;
 
-  const VehicleListScreen({super.key, this.initialFilter});
+  const VehicleListScreen({super.key, this.initialFilter, this.vehicleService});
 
   @override
   State<VehicleListScreen> createState() => _VehicleListScreenState();
 }
 
 class _VehicleListScreenState extends State<VehicleListScreen> {
-  final VehicleService _vehicleService = VehicleService();
+  late final VehicleService _vehicleService;
 
   final PermissionService _permissions = PermissionService.instance;
 
@@ -49,6 +51,9 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   @override
   void initState() {
     super.initState();
+
+    _vehicleService =
+        widget.vehicleService ?? VehicleService.forConfiguredBackend();
 
     _selectedFilter = widget.initialFilter ?? VehicleFilter.all;
 
@@ -74,7 +79,9 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   Future<void> addVehicle() async {
     final vehicle = await Navigator.push<Vehicle>(
       context,
-      MaterialPageRoute(builder: (_) => AddVehicleScreen()),
+      MaterialPageRoute(
+        builder: (_) => AddVehicleScreen(vehicleService: _vehicleService),
+      ),
     );
 
     if (vehicle == null) return;
@@ -232,8 +239,10 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        VehicleDetailsScreen(vehicle: vehicle),
+                                    builder: (_) => VehicleDetailsScreen(
+                                      vehicle: vehicle,
+                                      vehicleService: _vehicleService,
+                                    ),
                                   ),
                                 );
 

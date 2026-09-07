@@ -20,9 +20,14 @@ import '../services/vehicle_service.dart';
 import 'edit_vehicle_screen.dart';
 
 class VehicleDetailsScreen extends StatefulWidget {
-  const VehicleDetailsScreen({super.key, required this.vehicle});
+  const VehicleDetailsScreen({
+    super.key,
+    required this.vehicle,
+    this.vehicleService,
+  });
 
   final Vehicle vehicle;
+  final VehicleService? vehicleService;
 
   @override
   State<VehicleDetailsScreen> createState() => _VehicleDetailsScreenState();
@@ -32,7 +37,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   late Vehicle _vehicle;
 
   final AssignmentRepository _repository = AssignmentRepository.instance;
-  final VehicleService _vehicleService = VehicleService();
+  late final VehicleService _vehicleService;
   final DocumentService _documentService = DocumentService();
 
   final PermissionService _permissions = PermissionService.instance;
@@ -43,10 +48,18 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    _vehicleService =
+        widget.vehicleService ?? VehicleService.forConfiguredBackend();
     _vehicle = widget.vehicle;
-    _loadAssignedDriver();
-    _loadDocuments();
+    if (_isLocalVehicle) {
+      _loadAssignedDriver();
+      _loadDocuments();
+    } else {
+      _documentsFuture = Future.value(const <FleetDocument>[]);
+    }
   }
+
+  bool get _isLocalVehicle => _vehicle.identity?.localIdOrNull != null;
 
   void _loadDocuments() {
     final vehicleId = _vehicle.id;
@@ -131,12 +144,12 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   }
 
   Future<void> _refreshVehicle() async {
-    final id = _vehicle.id;
-    if (id == null) {
+    final identity = _vehicle.identity;
+    if (identity == null) {
       return;
     }
 
-    final vehicle = await _vehicleService.getVehicleById(id);
+    final vehicle = await _vehicleService.getVehicle(identity);
     if (vehicle == null) {
       throw StateError('Vehicle could not be reloaded.');
     }
@@ -148,12 +161,14 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
     setState(() {
       _vehicle = vehicle;
     });
-    await _loadAssignedDriver();
+    if (_isLocalVehicle) {
+      await _loadAssignedDriver();
+    }
   }
 
   Future<void> _deactivateVehicle() async {
-    final id = _vehicle.id;
-    if (id == null) {
+    final identity = _vehicle.identity;
+    if (identity == null) {
       return;
     }
 
@@ -182,7 +197,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
     }
 
     try {
-      await _vehicleService.deactivateVehicle(id);
+      await _vehicleService.deactivateVehicleByIdentity(identity);
       await _refreshVehicle();
       if (!mounted) {
         return;
@@ -201,13 +216,13 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   }
 
   Future<void> _reactivateVehicle() async {
-    final id = _vehicle.id;
-    if (id == null) {
+    final identity = _vehicle.identity;
+    if (identity == null) {
       return;
     }
 
     try {
-      await _vehicleService.reactivateVehicle(id);
+      await _vehicleService.reactivateVehicleByIdentity(identity);
       await _refreshVehicle();
       if (!mounted) {
         return;
@@ -463,7 +478,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
               title: 'Taxi Plate Status',
               value: _documentService.status(_vehicle.taxiPlateExpiry),
             ),
-            if (_permissions.canManageVehicles)
+            if (_isLocalVehicle && _permissions.canManageVehicles)
               Align(
                 alignment: Alignment.centerLeft,
                 child: OutlinedButton.icon(
@@ -477,80 +492,90 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
 
           const SizedBox(height: 24),
 
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: Theme.of(context).colorScheme.outlineVariant,
+          if (_isLocalVehicle)
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
               ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Driver Assignment',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const CircleAvatar(child: Icon(Icons.person)),
-                    title: Text(
-                      _assignedDriver?.fullName ?? 'No Driver Assigned',
-                    ),
-                    subtitle: Text(
-                      _assignedDriver == null
-                          ? 'Select a driver'
-                          : 'Currently assigned',
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      if (_permissions.canManageVehicles && _vehicle.active)
-                        FilledButton.icon(
-                          onPressed: _assignDriver,
-                          icon: const Icon(Icons.person_add),
-                          label: Text(
-                            _assignedDriver == null
-                                ? 'Assign Driver'
-                                : 'Change Driver',
-                          ),
-                        ),
-
-                      if (_permissions.canManageVehicles &&
-                          _assignedDriver != null) ...[
-                        OutlinedButton.icon(
-                          onPressed: _endAssignment,
-                          icon: const Icon(Icons.link_off),
-                          label: const Text('End Assignment'),
-                        ),
-                      ],
-                    ],
-                  ),
-                  if (!_vehicle.active) ...[
-                    const SizedBox(height: 12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      'Inactive vehicles cannot receive new driver assignments.',
-                      style: Theme.of(context).textTheme.bodySmall,
+                      'Driver Assignment',
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
+
+                    const SizedBox(height: 16),
+
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(child: Icon(Icons.person)),
+                      title: Text(
+                        _assignedDriver?.fullName ?? 'No Driver Assigned',
+                      ),
+                      subtitle: Text(
+                        _assignedDriver == null
+                            ? 'Select a driver'
+                            : 'Currently assigned',
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        if (_permissions.canManageVehicles && _vehicle.active)
+                          FilledButton.icon(
+                            onPressed: _assignDriver,
+                            icon: const Icon(Icons.person_add),
+                            label: Text(
+                              _assignedDriver == null
+                                  ? 'Assign Driver'
+                                  : 'Change Driver',
+                            ),
+                          ),
+
+                        if (_permissions.canManageVehicles &&
+                            _assignedDriver != null) ...[
+                          OutlinedButton.icon(
+                            onPressed: _endAssignment,
+                            icon: const Icon(Icons.link_off),
+                            label: const Text('End Assignment'),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (!_vehicle.active) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Inactive vehicles cannot receive new driver assignments.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
 
           const SizedBox(height: 20),
 
-          _documentsSection(context),
+          if (_isLocalVehicle) _documentsSection(context),
+
+          if (!_isLocalVehicle)
+            const SectionCard(
+              title: 'Related records',
+              child: Text(
+                'Assignments, documents, maintenance and workshop history '
+                'will be available after their central migration.',
+              ),
+            ),
 
           const SizedBox(height: 20),
 
@@ -560,7 +585,10 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                 final updatedVehicle = await Navigator.push<Vehicle>(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => EditVehicleScreen(vehicle: _vehicle),
+                    builder: (_) => EditVehicleScreen(
+                      vehicle: _vehicle,
+                      vehicleService: _vehicleService,
+                    ),
                   ),
                 );
 
@@ -572,7 +600,9 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                   _vehicle = updatedVehicle;
                 });
 
-                await _loadAssignedDriver();
+                if (_isLocalVehicle) {
+                  await _loadAssignedDriver();
+                }
               },
               icon: const Icon(Icons.edit),
               label: const Text('Edit Vehicle'),
@@ -597,25 +627,26 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
 
           if (_permissions.canManageVehicles) const SizedBox(height: 12),
 
-          OutlinedButton.icon(
-            onPressed: () async {
-              if (_vehicle.id == null) {
-                return;
-              }
+          if (_isLocalVehicle)
+            OutlinedButton.icon(
+              onPressed: () async {
+                if (_vehicle.id == null) {
+                  return;
+                }
 
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      AssignmentHistoryScreen(vehicleId: _vehicle.id!),
-                ),
-              );
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        AssignmentHistoryScreen(vehicleId: _vehicle.id!),
+                  ),
+                );
 
-              await _loadAssignedDriver();
-            },
-            icon: const Icon(Icons.history),
-            label: const Text('Assignment History'),
-          ),
+                await _loadAssignedDriver();
+              },
+              icon: const Icon(Icons.history),
+              label: const Text('Assignment History'),
+            ),
         ],
       ),
     );

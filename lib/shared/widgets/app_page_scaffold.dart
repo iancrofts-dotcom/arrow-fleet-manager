@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/constants.dart';
+import 'fleetiq_brand.dart';
 
 enum SectionCardVariant {
   standard,
@@ -136,13 +137,7 @@ class PageHeader extends StatelessWidget {
                       : null,
                   icon: const Icon(Icons.arrow_back),
                 ),
-              if (!compact)
-                Image.asset(
-                  'assets/images/arrow_logo.png',
-                  width: logoSize,
-                  height: logoSize,
-                  fit: BoxFit.contain,
-                ),
+              if (!compact) FleetIqBrand.compact(height: logoSize),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 720),
                 child: Column(

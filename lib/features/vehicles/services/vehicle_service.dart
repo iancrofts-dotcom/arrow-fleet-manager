@@ -1,22 +1,50 @@
 import '../../../database/database_service.dart';
 import '../../../database/vehicle_repository.dart';
+import '../../../backend/vehicles/backend_vehicle_repository.dart';
+import '../../../backend/vehicles/supabase_vehicle_gateway.dart';
+import '../../../config/backend_mode.dart';
 import '../../drivers/repositories/driver_assignment_repository.dart';
 import '../models/vehicle.dart';
+import '../models/vehicle_identity.dart';
+import 'local_vehicle_data_source.dart';
+import 'supabase_vehicle_data_source.dart';
+import 'vehicle_data_source.dart';
 
 class VehicleService {
   VehicleService({
     VehicleRepository? repository,
     DriverAssignmentRepository? assignmentRepository,
-  }) : _repository =
-           repository ?? VehicleRepository(databaseService: DatabaseService()),
+    VehicleDataSource? dataSource,
+  }) : _dataSource =
+           dataSource ??
+           LocalVehicleDataSource(
+             repository ??
+                 VehicleRepository(databaseService: DatabaseService()),
+           ),
        _assignmentRepository =
            assignmentRepository ?? DriverAssignmentRepository();
 
-  final VehicleRepository _repository;
+  factory VehicleService.forConfiguredBackend() =>
+      VehicleService.forMode(BackendModeConfig.current);
+
+  factory VehicleService.forMode(
+    BackendMode mode, {
+    VehicleRepository? localRepository,
+    BackendVehicleRepository? backendRepository,
+  }) => switch (mode) {
+    BackendMode.local => VehicleService(repository: localRepository),
+    BackendMode.supabase => VehicleService(
+      dataSource: SupabaseVehicleDataSource(
+        backendRepository ?? BackendVehicleRepository(SupabaseVehicleGateway()),
+      ),
+    ),
+  };
+
+  final VehicleDataSource _dataSource;
   final DriverAssignmentRepository _assignmentRepository;
 
   Future<List<Vehicle>> getVehicles() async {
-    return _repository.getVehicles();
+    return _dataSource.listVehicles();
   }
 
   Future<Map<int, Vehicle>> getVehicleMap() async {
@@ -29,56 +57,65 @@ class VehicleService {
   }
 
   Future<int> getVehicleCount() async {
-    return _repository.getVehicleCount();
+    return _dataSource.getVehicleCount();
   }
 
   Future<Vehicle?> getVehicleById(int id) async {
-    return _repository.getVehicleById(id);
+    return _dataSource.getVehicle(VehicleIdentity.local(id));
+  }
+
+  Future<Vehicle?> getVehicle(VehicleIdentity identity) {
+    return _dataSource.getVehicle(identity);
   }
 
   /// Adds a vehicle and returns the saved record,
   /// including the generated database ID.
   Future<Vehicle> addVehicle(Vehicle vehicle) async {
-    final insertedId = await _repository.addVehicle(vehicle);
-    final savedVehicle = await _repository.getVehicleById(insertedId);
-    if (savedVehicle == null) {
-      throw StateError('Inserted vehicle $insertedId could not be retrieved.');
-    }
-    return savedVehicle;
+    return _dataSource.addVehicle(vehicle);
   }
 
-  Future<void> updateVehicle(Vehicle vehicle) async {
-    await _repository.updateVehicle(vehicle);
+  Future<Vehicle> updateVehicle(Vehicle vehicle) {
+    return _dataSource.updateVehicle(vehicle);
   }
 
   /// Deactivates a vehicle while retaining its operational history.
   Future<void> deactivateVehicle(int id) async {
-    final vehicle = await _repository.getVehicleById(id);
+    await deactivateVehicleByIdentity(VehicleIdentity.local(id));
+  }
+
+  Future<Vehicle> deactivateVehicleByIdentity(VehicleIdentity identity) async {
+    final vehicle = await _dataSource.getVehicle(identity);
     if (vehicle == null) {
-      throw StateError('Vehicle $id could not be found.');
+      throw StateError('Vehicle could not be found.');
     }
 
-    final activeAssignment = await _assignmentRepository
-        .getCurrentAssignmentForVehicle(id);
-    if (activeAssignment != null) {
-      await _assignmentRepository.updateAssignment(
-        activeAssignment.copyWith(assignedTo: DateTime.now(), active: false),
-      );
+    if (identity.localIdOrNull case final localId?) {
+      final activeAssignment = await _assignmentRepository
+          .getCurrentAssignmentForVehicle(localId);
+      if (activeAssignment != null) {
+        await _assignmentRepository.updateAssignment(
+          activeAssignment.copyWith(assignedTo: DateTime.now(), active: false),
+        );
+      }
     }
 
     vehicle.active = false;
-    await _repository.updateVehicle(vehicle);
+    return _dataSource.updateVehicle(vehicle);
   }
 
   /// Restores a retained vehicle to the active fleet without recreating any
   /// prior Driver assignment.
   Future<void> reactivateVehicle(int id) async {
-    final vehicle = await _repository.getVehicleById(id);
+    await reactivateVehicleByIdentity(VehicleIdentity.local(id));
+  }
+
+  Future<Vehicle> reactivateVehicleByIdentity(VehicleIdentity identity) async {
+    final vehicle = await _dataSource.getVehicle(identity);
     if (vehicle == null) {
-      throw StateError('Vehicle $id could not be found.');
+      throw StateError('Vehicle could not be found.');
     }
 
     vehicle.active = true;
-    await _repository.updateVehicle(vehicle);
+    return _dataSource.updateVehicle(vehicle);
   }
 }
