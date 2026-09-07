@@ -6,15 +6,20 @@ class SupabaseAuthAdapter implements FleetAuthAdapter {
   SupabaseAuthAdapter(this._gateway);
   final SupabaseAuthGateway _gateway;
   BackendProfile? _profile;
-  @override bool get isAuthenticated => _profile != null;
-  @override BackendProfile? get currentProfile => _profile;
+  @override
+  bool get isAuthenticated => _profile != null;
+  @override
+  BackendProfile? get currentProfile => _profile;
   @override
   Future<BackendProfile?> signIn({
     required String identifier,
     required String password,
   }) async {
     _profile = null;
-    final userId = await _gateway.signInWithEmail(email: identifier, password: password);
+    final userId = await _gateway.signInWithEmail(
+      email: identifier,
+      password: password,
+    );
     if (userId == null) {
       return null;
     }
@@ -28,9 +33,13 @@ class SupabaseAuthAdapter implements FleetAuthAdapter {
         throw StateError('FleetIQ account is inactive.');
       }
       return _profile = profile;
-    } catch (_) {
-      await _gateway.signOut();
-      rethrow;
+    } catch (error, stackTrace) {
+      try {
+        await _gateway.signOut();
+      } catch (_) {
+        // Preserve the original profile rejection diagnostic.
+      }
+      Error.throwWithStackTrace(error, stackTrace);
     }
   }
 

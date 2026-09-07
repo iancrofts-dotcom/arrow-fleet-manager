@@ -51,6 +51,23 @@ void main() {
     },
   );
 
+  test('cleanup failure does not replace the profile rejection', () async {
+    final gateway = _FakeGateway(profile: _profile(isActive: false))
+      ..signOutError = StateError('Remote sign-out failed.');
+    final adapter = SupabaseAuthAdapter(gateway);
+
+    await expectLater(
+      adapter.signIn(identifier: 'user@fleet.test', password: 'password'),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          'FleetIQ account is inactive.',
+        ),
+      ),
+    );
+  });
+
   test('remote sign-in failures do not retain a prior profile', () async {
     final gateway = _FakeGateway(profile: _profile());
     final adapter = SupabaseAuthAdapter(gateway);
@@ -107,7 +124,7 @@ void main() {
 
   test('backend profile maps every supported role and optional driver ID', () {
     for (final entry in <String, UserRole>{
-      'admin': UserRole.admin,
+      'administrator': UserRole.admin,
       'manager': UserRole.manager,
       'workshop': UserRole.workshop,
       'technician': UserRole.technician,
@@ -153,6 +170,7 @@ class _FakeGateway implements SupabaseAuthGateway {
   BackendProfile? profile;
   BackendProfile? Function(String userId)? profileLoader;
   Object? signInError;
+  Object? signOutError;
   int signOutCalls = 0;
 
   @override
@@ -176,5 +194,10 @@ class _FakeGateway implements SupabaseAuthGateway {
   }
 
   @override
-  Future<void> signOut() async => signOutCalls++;
+  Future<void> signOut() async {
+    signOutCalls++;
+    if (signOutError case final error?) {
+      throw error;
+    }
+  }
 }

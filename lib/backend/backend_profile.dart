@@ -17,7 +17,7 @@ class BackendProfile {
 
   factory BackendProfile.fromJson(Map<String, dynamic> json) {
     final role = switch (json['role']) {
-      'admin' => UserRole.admin,
+      'administrator' => UserRole.admin,
       'manager' => UserRole.manager,
       'workshop' => UserRole.workshop,
       'technician' => UserRole.technician,
