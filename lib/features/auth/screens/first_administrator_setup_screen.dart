@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/fleetiq_brand.dart';
 
 import '../models/user.dart';
 import '../models/user_role.dart';
@@ -136,17 +137,7 @@ class _FirstAdministratorSetupScreenState
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Icon(
-                          Icons.admin_panel_settings,
-                          size: 64,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Set up FleetIQ',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
+                        const FleetIqBrand.wide(),
                         const SizedBox(height: 8),
                         Text(
                           'Create the first Administrator account.',

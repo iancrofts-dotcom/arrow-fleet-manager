@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/fleetiq_brand.dart';
 
 import '../../dashboard/dashboard_screen.dart';
 import '../services/auth_service.dart';
@@ -98,16 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.local_shipping,
-                          size: 64,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'FleetIQ',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
+                        const FleetIqBrand.wide(),
                         const SizedBox(height: 8),
                         Text(
                           'Sign in to continue',

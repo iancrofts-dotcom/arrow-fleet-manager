@@ -49,5 +49,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/branding/fleetiq_logo_wide.png
+    - assets/branding/fleetiq_icon_master.png
     - assets/images/arrow_logo.png
     - assets/images/arrow_logo_high.png

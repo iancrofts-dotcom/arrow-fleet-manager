@@ -1,5 +1,6 @@
 import 'package:arrow_fleet_manager/app/router.dart';
 import 'package:arrow_fleet_manager/shared/widgets/app_shell.dart';
+import 'package:arrow_fleet_manager/shared/widgets/fleetiq_brand.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -26,6 +27,7 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('compact-bottom-navigation')), findsOneWidget);
+    expect(find.byType(FleetIqBrand), findsOneWidget);
     expect(find.text('Dashboard'), findsWidgets);
     expect(find.text('More'), findsOneWidget);
     expect(find.text('Feature content'), findsOneWidget);
@@ -87,7 +89,7 @@ void main() {
           findsOneWidget,
         );
       } else {
-        expect(find.byKey(const Key('sidebar-official-logo')), findsOneWidget);
+        expect(find.byType(FleetIqBrand), findsOneWidget);
         expect(
           find.byKey(const Key('compact-bottom-navigation')),
           findsNothing,
@@ -118,8 +120,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byKey(const Key('sidebar-official-logo')), findsOneWidget);
-    expect(find.text('Fleet Manager'), findsOneWidget);
+    expect(find.byType(FleetIqBrand), findsOneWidget);
+    expect(find.text('FleetIQ'), findsOneWidget);
     expect(find.text('Dashboard'), findsOneWidget);
     expect(find.text('Feature content'), findsOneWidget);
     expect(

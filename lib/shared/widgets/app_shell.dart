@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/constants.dart';
 import '../../app/router.dart';
+import 'fleetiq_brand.dart';
 import '../../features/auth/services/auth_service.dart';
 import '../../features/auth/services/permission_service.dart';
 import '../../features/auth/models/user_role.dart';
@@ -199,11 +200,7 @@ class _MobileShell extends StatelessWidget {
             leadingWidth: 52,
             leading: Padding(
               padding: const EdgeInsets.all(10),
-              child: Image.asset(
-                'assets/images/arrow_logo_high.png',
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.high,
-              ),
+              child: const FleetIqBrand.compact(height: 32),
             ),
             title: Text(_titleFor(route)),
           ),
@@ -414,24 +411,11 @@ class _DesktopSidebar extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: AppConstants.borderColor),
                         ),
-                        child: SizedBox(
-                          width: 160,
-                          height: 132,
-                          child: Padding(
-                            padding: const EdgeInsets.all(AppConstants.spaceXs),
-                            child: Image.asset(
-                              'assets/images/arrow_logo_high.png',
-                              key: const Key('sidebar-official-logo'),
-                              fit: BoxFit.contain,
-                              alignment: Alignment.center,
-                              filterQuality: FilterQuality.high,
-                            ),
-                          ),
-                        ),
+                        child: const FleetIqBrand.compact(height: 88),
                       ),
                       const SizedBox(height: AppConstants.spaceXs),
                       const Text(
-                        'Fleet Manager',
+                        'FleetIQ',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
