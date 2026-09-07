@@ -4,7 +4,9 @@ class AppConstants {
   // Company
 
   static const String companyName = "Arrow Specialised Transport";
-  static const String appName = "Arrow Fleet Manager";
+  static const String appName = 'FleetIQ';
+  static const String tagline = 'SMARTER FLEET MANAGEMENT';
+  static const String brandLine = 'VEHICLES | PEOPLE | COMPLIANCE | RESULTS';
   static const String version = "0.3.1";
 
   // Corporate Colours

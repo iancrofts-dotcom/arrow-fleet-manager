@@ -11,7 +11,7 @@ class PdfShareService {
         XFile(file.path),
       ],
       text: 'Fleet Report',
-      subject: 'Arrow Fleet Manager Report',
+      subject: 'FleetIQ Report',
     );
   }
 }

@@ -143,7 +143,7 @@ class _FirstAdministratorSetupScreenState
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Set up Arrow Fleet Manager',
+                          'Set up FleetIQ',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),

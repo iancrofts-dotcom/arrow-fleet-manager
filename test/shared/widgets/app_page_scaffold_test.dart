@@ -21,7 +21,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Arrow Fleet Manager'), findsOneWidget);
+    expect(find.text('FleetIQ'), findsOneWidget);
     expect(find.text('Fleet Vehicles'), findsOneWidget);
     expect(find.text('Page body'), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
@@ -50,7 +50,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Arrow Fleet Manager'), findsNothing);
+    expect(find.text('FleetIQ'), findsNothing);
     expect(find.text('Fleet Calendar'), findsOneWidget);
     expect(
       find.text('Upcoming fleet, maintenance and compliance dates.'),
@@ -80,7 +80,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Arrow Fleet Manager'), findsOneWidget);
+    expect(find.text('FleetIQ'), findsOneWidget);
     expect(
       tester.widget<Container>(find.byKey(const Key('page-header'))).padding,
       const EdgeInsets.all(28),
@@ -106,7 +106,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Arrow Fleet Manager'), findsNothing);
+    expect(find.text('FleetIQ'), findsNothing);
     expect(find.text('Dashboard'), findsNothing);
     expect(find.text('Refresh'), findsOneWidget);
     expect(tester.takeException(), isNull);

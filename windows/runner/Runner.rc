@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "arrow_fleet_manager" "\0"
+            VALUE "FileDescription", "FleetIQ" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "arrow_fleet_manager" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
             VALUE "OriginalFilename", "arrow_fleet_manager.exe" "\0"
-            VALUE "ProductName", "arrow_fleet_manager" "\0"
+            VALUE "ProductName", "FleetIQ" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

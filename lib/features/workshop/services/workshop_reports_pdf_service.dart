@@ -27,13 +27,13 @@ class WorkshopReportsPdfService {
         footer: (context) => pw.Align(
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
-            'Arrow Fleet Manager | page ${context.pageNumber}',
+            'FleetIQ | page ${context.pageNumber}',
             style: const pw.TextStyle(fontSize: 9),
           ),
         ),
         build: (context) => [
           pw.Text(
-            'Arrow Fleet Manager',
+            'FleetIQ',
             style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
           ),
           pw.Text(
@@ -120,7 +120,7 @@ class WorkshopReportsPdfService {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    'Arrow Fleet Manager',
+                    'FleetIQ',
                     style: pw.TextStyle(
                       fontSize: 16,
                       fontWeight: pw.FontWeight.bold,
@@ -145,7 +145,7 @@ class WorkshopReportsPdfService {
         footer: (context) => pw.Align(
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
-            'Arrow Fleet Manager | page ${context.pageNumber}',
+            'FleetIQ | page ${context.pageNumber}',
             style: const pw.TextStyle(fontSize: 9),
           ),
         ),
@@ -295,7 +295,7 @@ class WorkshopReportsPdfService {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    'Arrow Fleet Manager',
+            'FleetIQ',
                     style: pw.TextStyle(
                       fontSize: 16,
                       fontWeight: pw.FontWeight.bold,
@@ -320,7 +320,7 @@ class WorkshopReportsPdfService {
         footer: (context) => pw.Align(
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
-            'Arrow Fleet Manager | page ${context.pageNumber}',
+            'FleetIQ | page ${context.pageNumber}',
             style: const pw.TextStyle(fontSize: 9),
           ),
         ),
@@ -430,7 +430,7 @@ class WorkshopReportsPdfService {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    'Arrow Fleet Manager',
+                    'FleetIQ',
                     style: pw.TextStyle(
                       fontSize: 16,
                       fontWeight: pw.FontWeight.bold,
@@ -455,7 +455,7 @@ class WorkshopReportsPdfService {
         footer: (context) => pw.Align(
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
-            'Arrow Fleet Manager | page ${context.pageNumber}',
+            'FleetIQ | page ${context.pageNumber}',
             style: const pw.TextStyle(fontSize: 9),
           ),
         ),
@@ -594,7 +594,7 @@ class WorkshopReportsPdfService {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    'Arrow Fleet Manager',
+                    'FleetIQ',
                     style: pw.TextStyle(
                       fontSize: 16,
                       fontWeight: pw.FontWeight.bold,
@@ -619,7 +619,7 @@ class WorkshopReportsPdfService {
         footer: (context) => pw.Align(
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
-            'Arrow Fleet Manager | page ${context.pageNumber}',
+            'FleetIQ | page ${context.pageNumber}',
             style: const pw.TextStyle(fontSize: 9),
           ),
         ),
@@ -722,7 +722,7 @@ class WorkshopReportsPdfService {
         footer: (context) => pw.Align(
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
-            'Arrow Fleet Manager | page ${context.pageNumber}',
+            'FleetIQ | page ${context.pageNumber}',
             style: const pw.TextStyle(fontSize: 9),
           ),
         ),
@@ -737,7 +737,7 @@ class WorkshopReportsPdfService {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
-                      'Arrow Fleet Manager',
+                    'FleetIQ',
                       style: pw.TextStyle(
                         fontSize: 17,
                         fontWeight: pw.FontWeight.bold,

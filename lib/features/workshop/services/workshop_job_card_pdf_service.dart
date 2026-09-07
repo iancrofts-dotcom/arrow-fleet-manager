@@ -164,7 +164,7 @@ class WorkshopJobCardPdfService {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(
-              'Arrow Fleet Manager',
+              'FleetIQ',
               style: pw.TextStyle(fontSize: 17, fontWeight: pw.FontWeight.bold),
             ),
             pw.Text(

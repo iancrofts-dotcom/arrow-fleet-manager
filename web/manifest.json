@@ -1,6 +1,6 @@
 {
-    "name": "arrow_fleet_manager",
-    "short_name": "arrow_fleet_manager",
+    "name": "FleetIQ",
+    "short_name": "FleetIQ",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -54,7 +54,7 @@ class DashboardHeroHeader extends StatelessWidget {
             const SizedBox(width: 16),
             Flexible(
               child: Text(
-                'Arrow Fleet Manager',
+                'FleetIQ',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: scheme.onPrimaryContainer,
                   fontWeight: FontWeight.w800,

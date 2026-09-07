@@ -90,7 +90,7 @@ class PageHeader extends StatelessWidget {
     this.icon,
     this.actions,
     this.showBackButton = false,
-    this.brandLabel = 'Arrow Fleet Manager',
+    this.brandLabel = 'FleetIQ',
   });
 
   final String title;

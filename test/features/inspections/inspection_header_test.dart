@@ -27,7 +27,7 @@ void main() {
     expect(find.text('Inspection Time'), findsOneWidget);
     expect(find.text('Status'), findsOneWidget);
     expect(find.text('Daily Walkaround Inspection'), findsOneWidget);
-    expect(find.text('Arrow Fleet Manager'), findsNothing);
+    expect(find.text('FleetIQ'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
