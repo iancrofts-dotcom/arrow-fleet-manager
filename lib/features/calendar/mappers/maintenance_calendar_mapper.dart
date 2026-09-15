@@ -26,14 +26,10 @@ class MaintenanceCalendarMapper {
           subtitle: vehicle?.registration ?? 'Unknown Vehicle',
           date: record.dueDate,
           type: CalendarEventType.maintenance,
-          icon: record.isOverdue
-              ? Icons.warning
-              : Icons.build_circle,
-          color: record.isOverdue
-              ? Colors.red
-              : Colors.orange,
+          icon: record.isOverdue ? Icons.warning : Icons.build_circle,
+          color: record.isOverdue ? Colors.red : Colors.orange,
 
-              source: record,
+          source: record,
         ),
       );
     }

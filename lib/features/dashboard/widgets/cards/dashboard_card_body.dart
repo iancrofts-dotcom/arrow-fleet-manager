@@ -19,8 +19,7 @@ class DashboardCardBody extends StatelessWidget {
       children: [
         for (int i = 0; i < children.length; i++) ...[
           children[i],
-          if (i != children.length - 1)
-            SizedBox(height: spacing),
+          if (i != children.length - 1) SizedBox(height: spacing),
         ],
       ],
     );

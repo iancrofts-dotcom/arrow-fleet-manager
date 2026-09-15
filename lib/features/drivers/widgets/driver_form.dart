@@ -11,12 +11,16 @@ class DriverForm extends StatefulWidget {
   final Driver? driver;
   final Future<void> Function(Driver driver, String password) onSubmit;
   final String submitLabel;
+  final bool requireEmail;
+  final bool invitationMode;
 
   const DriverForm({
     super.key,
     this.driver,
     required this.onSubmit,
     this.submitLabel = 'Save Driver',
+    this.requireEmail = false,
+    this.invitationMode = false,
   });
 
   @override
@@ -149,19 +153,23 @@ class _DriverFormState extends State<DriverForm> {
             lastNameController: _lastName,
             phoneController: _phone,
             emailController: _email,
+            requireEmail: widget.requireEmail,
           ),
           LicenceDetailsSection(
             licenceNumberController: _licenceNumber,
             licenceExpiry: _licenceExpiry,
             onSelectExpiry: _selectLicenceExpiry,
           ),
-          LoginDetailsSection(
-            usernameController: _username,
-            passwordController: _password,
-            confirmPasswordController: _confirmPassword,
-            showPasswordFields: widget.driver == null,
-            usernameReadOnly: widget.driver == null,
-          ),
+          if (!widget.invitationMode)
+            LoginDetailsSection(
+              usernameController: _username,
+              passwordController: _password,
+              confirmPasswordController: _confirmPassword,
+              showPasswordFields: widget.driver == null,
+              usernameReadOnly: widget.driver == null,
+            )
+          else
+            const _InvitationAccountSection(),
           DriverStatusSection(
             isActive: _isActive,
             onChanged: (value) {
@@ -173,7 +181,9 @@ class _DriverFormState extends State<DriverForm> {
           const SizedBox(height: 4),
           FilledButton.icon(
             onPressed: _submit,
-            icon: const Icon(Icons.save),
+            icon: Icon(
+              widget.invitationMode ? Icons.send_outlined : Icons.save,
+            ),
             label: Text(widget.submitLabel),
           ),
           const SizedBox(height: 24),
@@ -181,4 +191,81 @@ class _DriverFormState extends State<DriverForm> {
       ),
     );
   }
+}
+
+class _InvitationAccountSection extends StatelessWidget {
+  const _InvitationAccountSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(top: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.mark_email_read_outlined),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Secure Driver invitation',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'FleetIQ will send the Driver a secure email link so they can choose their own password. Administrators do not create or view Driver passwords.',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const _InviteStep(number: '1', text: 'Create the Driver profile.'),
+            const _InviteStep(
+              number: '2',
+              text: 'Send the secure invitation email.',
+            ),
+            const _InviteStep(
+              number: '3',
+              text: 'Driver chooses their own password.',
+            ),
+            const _InviteStep(
+              number: '4',
+              text: 'Driver signs in using their email address.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InviteStep extends StatelessWidget {
+  const _InviteStep({required this.number, required this.text});
+
+  final String number;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      children: [
+        CircleAvatar(
+          radius: 13,
+          child: Text(number, style: const TextStyle(fontSize: 12)),
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: Text(text)),
+      ],
+    ),
+  );
 }

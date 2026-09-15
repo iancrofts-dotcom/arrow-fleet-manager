@@ -5,7 +5,8 @@ import '../../../database/schema.dart';
 import '../models/driver_entity.dart';
 
 class DriverRepository {
-  DriverRepository({AppDatabase? database}) : _database = database ?? AppDatabase();
+  DriverRepository({AppDatabase? database})
+    : _database = database ?? AppDatabase();
 
   final AppDatabase _database;
 
@@ -63,10 +64,6 @@ class DriverRepository {
   Future<int> deleteDriver(int id) async {
     final db = await _db;
 
-    return db.delete(
-      DbSchema.drivers,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete(DbSchema.drivers, where: 'id = ?', whereArgs: [id]);
   }
 }

@@ -7,8 +7,7 @@ import 'package:arrow_fleet_manager/features/workshop/models/workshop_inspection
 class InspectionWizardService {
   final DatabaseService _databaseService = DatabaseService();
 
-  late final VehicleRepository _vehicleRepository =
-      VehicleRepository(
+  late final VehicleRepository _vehicleRepository = VehicleRepository(
     databaseService: _databaseService,
   );
 
@@ -19,17 +18,13 @@ class InspectionWizardService {
 
   /// Returns all active vehicles ordered by fleet number.
   Future<List<Vehicle>> getVehicles() async {
-    final vehicles =
-        await _vehicleRepository.getVehicles();
+    final vehicles = await _vehicleRepository.getVehicles();
 
     return vehicles.where((v) => v.active).toList();
   }
 
   /// Copies vehicle information into the wizard.
-  void applyVehicle(
-    InspectionWizardData data,
-    Vehicle vehicle,
-  ) {
+  void applyVehicle(InspectionWizardData data, Vehicle vehicle) {
     data.vehicleId = vehicle.id;
     data.registration = vehicle.registration;
     data.fleetNumber = vehicle.fleetNumber;

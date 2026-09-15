@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../documents/screens/central_document_list_screen.dart';
+
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
+import '../widgets/central_vehicle_assignments_section.dart';
+import 'central_vehicle_history_screen.dart';
 import 'edit_vehicle_screen.dart';
 
 class VehicleDetailsScreen extends StatefulWidget {
@@ -54,7 +58,11 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
       children: [
         ListTile(
           title: const Text('Fleet number'),
-          subtitle: Text(_vehicle.fleetNumber),
+          subtitle: Text(
+            _vehicle.fleetNumber.trim().isEmpty
+                ? 'Not recorded'
+                : _vehicle.fleetNumber,
+          ),
         ),
         ListTile(title: const Text('Make'), subtitle: Text(_vehicle.make)),
         ListTile(title: const Text('Model'), subtitle: Text(_vehicle.model)),
@@ -64,12 +72,55 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
           value: _vehicle.active,
           onChanged: _setActive,
         ),
-        const Padding(
-          padding: EdgeInsets.only(top: 24),
-          child: Text(
-            'Assignments, documents and history are still being migrated to the central backend.',
+        if (_vehicle.identity?.centralIdOrNull case final centralId?) ...[
+          const SizedBox(height: 24),
+          CentralVehicleAssignmentsSection(
+            vehicleIdentity: _vehicle.identity!,
+            key: ValueKey('central-vehicle-assignments-$centralId'),
           ),
-        ),
+          const SizedBox(height: 12),
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.folder_shared_outlined),
+                  title: const Text('Vehicle Documents'),
+                  subtitle: const Text(
+                    'View and manage central documents linked to this Vehicle.',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) => CentralDocumentListScreen(
+                        initialFilter: 'Vehicle',
+                        entityType: 'vehicle',
+                        entityId: centralId,
+                        ownerLabel: _vehicle.registration,
+                      ),
+                    ),
+                  ),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.history_outlined),
+                  title: const Text('Maintenance & Workshop History'),
+                  subtitle: const Text(
+                    'View central inspections, scheduled-service activity and repair jobs.',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) => CentralVehicleHistoryScreen(
+                        vehicleId: centralId,
+                        registration: _vehicle.registration,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     ),
   );

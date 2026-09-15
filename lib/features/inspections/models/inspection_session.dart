@@ -15,48 +15,27 @@ class InspectionSession {
     this.vehicle,
   });
 
-  int get completedChecks =>
-      items
-          .where(
-            (item) => item.status != InspectionStatus.notApplicable,
-          )
-          .length;
+  int get completedChecks => items
+      .where((item) => item.status != InspectionStatus.notApplicable)
+      .length;
 
   int get failedChecks =>
-      items
-          .where(
-            (item) => item.status == InspectionStatus.fail,
-          )
-          .length;
+      items.where((item) => item.status == InspectionStatus.fail).length;
 
   bool get hasFailures => failedChecks > 0;
 
   List<InspectionItem> get failedItems =>
-      items
-          .where(
-            (item) => item.status == InspectionStatus.fail,
-          )
-          .toList();
+      items.where((item) => item.status == InspectionStatus.fail).toList();
 
   List<InspectionItem> itemsByCategory(String category) {
-    return items
-        .where(
-          (item) => item.category == category,
-        )
-        .toList();
+    return items.where((item) => item.category == category).toList();
   }
 
-  void updateStatus(
-    InspectionItem item,
-    InspectionStatus status,
-  ) {
+  void updateStatus(InspectionItem item, InspectionStatus status) {
     item.status = status;
   }
 
-  void updateNotes(
-    InspectionItem item,
-    String notes,
-  ) {
+  void updateNotes(InspectionItem item, String notes) {
     item.notes = notes;
   }
 

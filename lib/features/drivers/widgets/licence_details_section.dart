@@ -23,9 +23,7 @@ class LicenceDetailsSection extends StatelessWidget {
         children: [
           TextFormField(
             controller: licenceNumberController,
-            decoration: const InputDecoration(
-              labelText: 'Licence Number',
-            ),
+            decoration: const InputDecoration(labelText: 'Licence Number'),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Enter a licence number';
@@ -40,14 +38,13 @@ class LicenceDetailsSection extends StatelessWidget {
             onTap: onSelectExpiry,
             borderRadius: BorderRadius.circular(12),
             child: InputDecorator(
-              decoration: const InputDecoration(
-                labelText: 'Licence Expiry',
-              ),
+              decoration: const InputDecoration(labelText: 'Licence Expiry'),
               child: Text(
                 licenceExpiry == null
                     ? 'Select expiry date'
-                    : MaterialLocalizations.of(context)
-                        .formatMediumDate(licenceExpiry!),
+                    : MaterialLocalizations.of(
+                        context,
+                      ).formatMediumDate(licenceExpiry!),
               ),
             ),
           ),

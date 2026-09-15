@@ -26,7 +26,6 @@ class AppDatabase {
         await _createTables(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-
         if (oldVersion < 2) {
           await db.execute('''
             CREATE TABLE IF NOT EXISTS vehicles(
@@ -145,9 +144,7 @@ class AppDatabase {
         }
 
         if (oldVersion < 11) {
-          await db.execute(
-            'ALTER TABLE drivers ADD COLUMN username TEXT',
-          );
+          await db.execute('ALTER TABLE drivers ADD COLUMN username TEXT');
         }
 
         if (oldVersion < 12) {
@@ -211,11 +208,11 @@ class AppDatabase {
         }
 
         // ============================================================================
-// Version 16 - Workshop Inspections
-// ============================================================================
+        // Version 16 - Workshop Inspections
+        // ============================================================================
 
-if (oldVersion < 16) {
-  await db.execute('''
+        if (oldVersion < 16) {
+          await db.execute('''
     CREATE TABLE IF NOT EXISTS workshop_inspections(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -257,9 +254,9 @@ if (oldVersion < 16) {
       updatedAt TEXT NOT NULL
     )
   ''');
-}
+        }
 
-await db.execute('''
+        await db.execute('''
 CREATE TABLE IF NOT EXISTS workshop_inspection_items(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   inspectionId INTEGER NOT NULL,
@@ -277,7 +274,7 @@ CREATE TABLE IF NOT EXISTS workshop_inspection_items(
 )
 ''');
 
-await db.execute('''
+        await db.execute('''
 CREATE TABLE IF NOT EXISTS workshop_repair_jobs(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   inspectionId INTEGER NOT NULL,
@@ -298,7 +295,7 @@ CREATE TABLE IF NOT EXISTS workshop_repair_jobs(
 )
 ''');
 
-await db.execute('''
+        await db.execute('''
 CREATE TABLE IF NOT EXISTS inspection_templates(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
@@ -311,7 +308,7 @@ CREATE TABLE IF NOT EXISTS inspection_templates(
 )
 ''');
 
-await db.execute('''
+        await db.execute('''
 CREATE TABLE IF NOT EXISTS inspection_template_items(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   templateId INTEGER NOT NULL,
@@ -431,7 +428,6 @@ CREATE TABLE IF NOT EXISTS inspection_template_items(
             await txn.execute('DROP TABLE workshop_repair_jobs_v16');
           });
         }
-
       },
     );
 
@@ -439,7 +435,7 @@ CREATE TABLE IF NOT EXISTS inspection_template_items(
   }
 
   Future<void> _createTables(Database db) async {
-        await db.execute('''
+    await db.execute('''
       CREATE TABLE inspections(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         inspectionNumber TEXT,
@@ -581,7 +577,7 @@ CREATE TABLE IF NOT EXISTS inspection_template_items(
       )
     ''');
 
-  await db.execute('''
+    await db.execute('''
   CREATE TABLE workshop_inspections(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -624,7 +620,7 @@ CREATE TABLE IF NOT EXISTS inspection_template_items(
   )
 ''');
 
-await db.execute('''
+    await db.execute('''
 CREATE TABLE workshop_inspection_items(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   inspectionId INTEGER NOT NULL,
@@ -642,7 +638,7 @@ CREATE TABLE workshop_inspection_items(
 )
 ''');
 
-await db.execute('''
+    await db.execute('''
 CREATE TABLE workshop_repair_jobs(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   jobNumber TEXT NOT NULL,
@@ -671,7 +667,7 @@ CREATE TABLE workshop_repair_jobs(
 )
 ''');
 
-await db.execute('''
+    await db.execute('''
 CREATE TABLE inspection_templates(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
@@ -684,7 +680,7 @@ CREATE TABLE inspection_templates(
 )
 ''');
 
-await db.execute('''
+    await db.execute('''
 CREATE TABLE inspection_template_items(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   templateId INTEGER NOT NULL,
@@ -704,6 +700,5 @@ CREATE TABLE inspection_template_items(
     ON DELETE CASCADE
 )
 ''');
-
   }
 }

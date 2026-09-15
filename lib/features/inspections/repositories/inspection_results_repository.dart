@@ -6,12 +6,9 @@ import '../models/inspection_item.dart';
 class InspectionResultsRepository {
   final AppDatabase appDatabase;
 
-  InspectionResultsRepository({
-    required this.appDatabase,
-  });
+  InspectionResultsRepository({required this.appDatabase});
 
-  Future<Database> get _db async =>
-      await appDatabase.database();
+  Future<Database> get _db async => await appDatabase.database();
 
   Future<void> saveItems({
     required String inspectionNumber,
@@ -23,30 +20,21 @@ class InspectionResultsRepository {
     final batch = db.batch();
 
     for (final item in items) {
-      batch.insert(
-        'inspection_results',
-        {
-          'inspectionNumber': inspectionNumber,
-          'itemId': item.id,
-          'title': item.title,
-          'category': item.category,
-          'status': item.status.name,
-          'notes': item.notes,
-          'photoPath': item.photoPath,
-        },
-        conflictAlgorithm:
-            ConflictAlgorithm.replace,
-      );
+      batch.insert('inspection_results', {
+        'inspectionNumber': inspectionNumber,
+        'itemId': item.id,
+        'title': item.title,
+        'category': item.category,
+        'status': item.status.name,
+        'notes': item.notes,
+        'photoPath': item.photoPath,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
 
-    await batch.commit(
-      noResult: true,
-    );
+    await batch.commit(noResult: true);
   }
 
-  Future<List<InspectionItem>> getItems(
-    String inspectionNumber,
-  ) async {
+  Future<List<InspectionItem>> getItems(String inspectionNumber) async {
     final db = await _db;
 
     final results = await db.query(
@@ -68,18 +56,15 @@ class InspectionResultsRepository {
         photoPath: row['photoPath'] as String?,
       );
     }).toList();
-  }  Future<List<InspectionItem>> getFailedItems(
-    String inspectionNumber,
-  ) async {
+  }
+
+  Future<List<InspectionItem>> getFailedItems(String inspectionNumber) async {
     final db = await _db;
 
     final results = await db.query(
       'inspection_results',
       where: 'inspectionNumber = ? AND status = ?',
-      whereArgs: [
-        inspectionNumber,
-        InspectionStatus.fail.name,
-      ],
+      whereArgs: [inspectionNumber, InspectionStatus.fail.name],
       orderBy: 'category,title',
     );
 
@@ -97,9 +82,7 @@ class InspectionResultsRepository {
     }).toList();
   }
 
-  Future<void> deleteInspectionResults(
-    String inspectionNumber,
-  ) async {
+  Future<void> deleteInspectionResults(String inspectionNumber) async {
     final db = await _db;
 
     await db.delete(

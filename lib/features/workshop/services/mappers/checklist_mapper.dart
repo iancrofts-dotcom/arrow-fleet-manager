@@ -11,13 +11,7 @@ class ChecklistMapper {
     return items
         .asMap()
         .entries
-        .map(
-          (entry) => map(
-            inspectionId,
-            entry.key,
-            entry.value,
-          ),
-        )
+        .map((entry) => map(inspectionId, entry.key, entry.value))
         .toList();
   }
 
@@ -55,9 +49,7 @@ class ChecklistMapper {
     );
   }
 
-  InspectionItemStatus _status(
-    ChecklistStatus status,
-  ) {
+  InspectionItemStatus _status(ChecklistStatus status) {
     switch (status) {
       case ChecklistStatus.pending:
         return InspectionItemStatus.notApplicable;
@@ -76,9 +68,7 @@ class ChecklistMapper {
     }
   }
 
-  InspectionCategory _category(
-    String category,
-  ) {
+  InspectionCategory _category(String category) {
     switch (category.toLowerCase()) {
       case 'vehicle information':
         return InspectionCategory.vehicleInformation;

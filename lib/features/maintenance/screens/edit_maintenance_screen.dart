@@ -4,24 +4,18 @@ import '../models/maintenance_record.dart';
 import '../services/maintenance_service.dart';
 
 class EditMaintenanceScreen extends StatefulWidget {
-  const EditMaintenanceScreen({
-    super.key,
-    required this.record,
-  });
+  const EditMaintenanceScreen({super.key, required this.record});
 
   final MaintenanceRecord record;
 
   @override
-  State<EditMaintenanceScreen> createState() =>
-      _EditMaintenanceScreenState();
+  State<EditMaintenanceScreen> createState() => _EditMaintenanceScreenState();
 }
 
-class _EditMaintenanceScreenState
-    extends State<EditMaintenanceScreen> {
+class _EditMaintenanceScreenState extends State<EditMaintenanceScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final MaintenanceService _service =
-      MaintenanceService();
+  final MaintenanceService _service = MaintenanceService();
 
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
@@ -36,26 +30,18 @@ class _EditMaintenanceScreenState
   void initState() {
     super.initState();
 
-    _titleController = TextEditingController(
-      text: widget.record.title,
-    );
+    _titleController = TextEditingController(text: widget.record.title);
 
-    _descriptionController =
-        TextEditingController(
+    _descriptionController = TextEditingController(
       text: widget.record.description,
     );
 
-    _estimatedCostController =
-        TextEditingController(
-      text: widget.record.estimatedCost
-          .toStringAsFixed(2),
+    _estimatedCostController = TextEditingController(
+      text: widget.record.estimatedCost.toStringAsFixed(2),
     );
 
-    _actualCostController =
-        TextEditingController(
-      text: widget.record.actualCost
-              ?.toStringAsFixed(2) ??
-          '',
+    _actualCostController = TextEditingController(
+      text: widget.record.actualCost?.toStringAsFixed(2) ?? '',
     );
 
     _dueDate = widget.record.dueDate;
@@ -94,21 +80,14 @@ class _EditMaintenanceScreenState
 
     final updated = widget.record.copyWith(
       title: _titleController.text.trim(),
-      description:
-          _descriptionController.text.trim(),
+      description: _descriptionController.text.trim(),
       dueDate: _dueDate,
-      estimatedCost: double.parse(
-        _estimatedCostController.text,
-      ),
-      actualCost:
-          _actualCostController.text.trim().isEmpty
-              ? null
-              : double.parse(
-                  _actualCostController.text,
-                ),
+      estimatedCost: double.parse(_estimatedCostController.text),
+      actualCost: _actualCostController.text.trim().isEmpty
+          ? null
+          : double.parse(_actualCostController.text),
       completed: _completed,
-      completedDate:
-          _completed ? (_completedDate ?? DateTime.now()) : null,
+      completedDate: _completed ? (_completedDate ?? DateTime.now()) : null,
     );
 
     await _service.save(updated);
@@ -125,18 +104,14 @@ class _EditMaintenanceScreenState
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Delete Maintenance'),
-        content: const Text(
-          'Delete this maintenance record?',
-        ),
+        content: const Text('Delete this maintenance record?'),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(context, true),
             child: const Text('Delete'),
           ),
         ],
@@ -156,87 +131,63 @@ class _EditMaintenanceScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text('Edit Maintenance'),
+        title: const Text('Edit Maintenance'),
         actions: [
-          IconButton(
-            onPressed: _delete,
-            icon: const Icon(Icons.delete),
-          ),
+          IconButton(onPressed: _delete, icon: const Icon(Icons.delete)),
         ],
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding:
-              const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           children: [
             TextFormField(
               controller: _titleController,
-              decoration:
-                  const InputDecoration(
-                labelText:
-                    'Maintenance Title',
-                border:
-                    OutlineInputBorder(),
+              decoration: const InputDecoration(
+                labelText: 'Maintenance Title',
+                border: OutlineInputBorder(),
               ),
-              validator: (value) =>
-                  value == null ||
-                          value.trim().isEmpty
-                      ? 'Enter a title'
-                      : null,
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? 'Enter a title'
+                  : null,
             ),
 
             const SizedBox(height: 16),
 
             TextFormField(
-              controller:
-                  _descriptionController,
+              controller: _descriptionController,
               maxLines: 4,
-              decoration:
-                  const InputDecoration(
-                labelText:
-                    'Description',
-                border:
-                    OutlineInputBorder(),
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                border: OutlineInputBorder(),
               ),
             ),
 
             const SizedBox(height: 16),
 
             TextFormField(
-              controller:
-                  _estimatedCostController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(
+              controller: _estimatedCostController,
+              keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration:
-                  const InputDecoration(
-                labelText:
-                    'Estimated Cost',
+              decoration: const InputDecoration(
+                labelText: 'Estimated Cost',
                 prefixText: '£ ',
-                border:
-                    OutlineInputBorder(),
+                border: OutlineInputBorder(),
               ),
             ),
 
             const SizedBox(height: 16),
 
             TextFormField(
-              controller:
-                  _actualCostController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(
+              controller: _actualCostController,
+              keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration:
-                  const InputDecoration(
-                labelText:
-                    'Actual Cost',
+              decoration: const InputDecoration(
+                labelText: 'Actual Cost',
                 prefixText: '£ ',
-                border:
-                    OutlineInputBorder(),
+                border: OutlineInputBorder(),
               ),
             ),
 
@@ -244,30 +195,22 @@ class _EditMaintenanceScreenState
 
             Card(
               child: ListTile(
-                leading:
-                    const Icon(Icons.event),
-                title:
-                    const Text('Due Date'),
-                subtitle:
-                    Text(_formatDate(_dueDate)),
-                trailing: const Icon(
-                  Icons.calendar_month,
-                ),
+                leading: const Icon(Icons.event),
+                title: const Text('Due Date'),
+                subtitle: Text(_formatDate(_dueDate)),
+                trailing: const Icon(Icons.calendar_month),
                 onTap: _pickDueDate,
               ),
             ),
 
             SwitchListTile(
               value: _completed,
-              title: const Text(
-                'Maintenance Completed',
-              ),
+              title: const Text('Maintenance Completed'),
               onChanged: (value) {
                 setState(() {
                   _completed = value;
                   if (value) {
-                    _completedDate =
-                        DateTime.now();
+                    _completedDate = DateTime.now();
                   } else {
                     _completedDate = null;
                   }
@@ -279,10 +222,8 @@ class _EditMaintenanceScreenState
 
             FilledButton.icon(
               onPressed: _save,
-              icon:
-                  const Icon(Icons.save),
-              label:
-                  const Text('Save Changes'),
+              icon: const Icon(Icons.save),
+              label: const Text('Save Changes'),
             ),
           ],
         ),

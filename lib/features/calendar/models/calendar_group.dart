@@ -1,21 +1,12 @@
 import 'calendar_event.dart';
 
-enum CalendarGroup {
-  overdue,
-  thisWeek,
-  next30Days,
-  future,
-}
+enum CalendarGroup { overdue, thisWeek, next30Days, future }
 
 extension CalendarGrouping on List<CalendarEvent> {
   Map<CalendarGroup, List<CalendarEvent>> grouped() {
     final now = DateTime.now();
 
-    final today = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
+    final today = DateTime(now.year, now.month, now.day);
 
     final groups = <CalendarGroup, List<CalendarEvent>>{
       CalendarGroup.overdue: [],
@@ -25,11 +16,7 @@ extension CalendarGrouping on List<CalendarEvent> {
     };
 
     for (final event in this) {
-      final date = DateTime(
-        event.date.year,
-        event.date.month,
-        event.date.day,
-      );
+      final date = DateTime(event.date.year, event.date.month, event.date.day);
 
       final days = date.difference(today).inDays;
 

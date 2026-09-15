@@ -13,7 +13,7 @@ class VehicleCalendarMapper {
       if (vehicle.motExpiry != null) {
         events.add(
           CalendarEvent(
-            title: 'MOT Due',
+            title: vehicle.motType == 'psv' ? 'PSV MOT Due' : 'MOT Due',
             subtitle: vehicle.registration,
             date: vehicle.motExpiry!,
             type: CalendarEventType.vehicle,
@@ -28,11 +28,42 @@ class VehicleCalendarMapper {
       if (vehicle.taxiPlateExpiry != null) {
         events.add(
           CalendarEvent(
-            title: 'Taxi Plate Expiry',
+            title: 'Vehicle Licence (Taxi) Expiry',
             subtitle: vehicle.registration,
             date: vehicle.taxiPlateExpiry!,
             type: CalendarEventType.vehicle,
             icon: Icons.local_taxi_outlined,
+            color: Colors.orange,
+            source: vehicle,
+            vehicleId: vehicle.id,
+          ),
+        );
+      }
+
+      if (vehicle.psvGarageCheckEnabled && vehicle.psvGarageCheckDue != null) {
+        events.add(
+          CalendarEvent(
+            title: 'PSV Garage Check Due',
+            subtitle: vehicle.registration,
+            date: vehicle.psvGarageCheckDue!,
+            type: CalendarEventType.maintenance,
+            icon: Icons.fact_check_outlined,
+            color: Colors.orange,
+            source: vehicle,
+            vehicleId: vehicle.id,
+          ),
+        );
+      }
+
+      if (vehicle.taxiSafetyCheckEnabled &&
+          vehicle.taxiSafetyCheckDue != null) {
+        events.add(
+          CalendarEvent(
+            title: 'Taxi Safety Check Due',
+            subtitle: vehicle.registration,
+            date: vehicle.taxiSafetyCheckDue!,
+            type: CalendarEventType.maintenance,
+            icon: Icons.health_and_safety_outlined,
             color: Colors.orange,
             source: vehicle,
             vehicleId: vehicle.id,

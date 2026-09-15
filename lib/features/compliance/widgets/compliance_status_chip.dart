@@ -5,10 +5,7 @@ import '../models/vehicle_compliance.dart';
 class ComplianceStatusChip extends StatelessWidget {
   final ComplianceStatus status;
 
-  const ComplianceStatusChip({
-    super.key,
-    required this.status,
-  });
+  const ComplianceStatusChip({super.key, required this.status});
 
   Color _backgroundColor(BuildContext context) {
     switch (status) {
@@ -77,11 +74,7 @@ class ComplianceStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Chip(
-      avatar: Icon(
-        _icon(),
-        size: 18,
-        color: _foregroundColor(context),
-      ),
+      avatar: Icon(_icon(), size: 18, color: _foregroundColor(context)),
       label: Text(_text()),
       backgroundColor: _backgroundColor(context),
       labelStyle: TextStyle(

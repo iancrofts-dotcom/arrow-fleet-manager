@@ -4,20 +4,15 @@ import '../models/maintenance_record.dart';
 import '../services/maintenance_service.dart';
 
 class AddMaintenanceScreen extends StatefulWidget {
-  const AddMaintenanceScreen({
-    super.key,
-    required this.vehicleId,
-  });
+  const AddMaintenanceScreen({super.key, required this.vehicleId});
 
   final int vehicleId;
 
   @override
-  State<AddMaintenanceScreen> createState() =>
-      _AddMaintenanceScreenState();
+  State<AddMaintenanceScreen> createState() => _AddMaintenanceScreenState();
 }
 
-class _AddMaintenanceScreenState
-    extends State<AddMaintenanceScreen> {
+class _AddMaintenanceScreenState extends State<AddMaintenanceScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _titleController = TextEditingController();
@@ -26,8 +21,7 @@ class _AddMaintenanceScreenState
 
   final MaintenanceService _service = MaintenanceService();
 
-  DateTime _dueDate =
-      DateTime.now().add(const Duration(days: 30));
+  DateTime _dueDate = DateTime.now().add(const Duration(days: 30));
 
   @override
   void dispose() {
@@ -62,9 +56,7 @@ class _AddMaintenanceScreenState
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       dueDate: _dueDate,
-      estimatedCost: double.parse(
-        _estimatedCostController.text,
-      ),
+      estimatedCost: double.parse(_estimatedCostController.text),
     );
 
     await _service.save(record);
@@ -77,9 +69,7 @@ class _AddMaintenanceScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Schedule Maintenance'),
-      ),
+      appBar: AppBar(title: const Text('Schedule Maintenance')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -92,8 +82,7 @@ class _AddMaintenanceScreenState
                 border: OutlineInputBorder(),
               ),
               validator: (value) {
-                if (value == null ||
-                    value.trim().isEmpty) {
+                if (value == null || value.trim().isEmpty) {
                   return 'Enter a title';
                 }
                 return null;
@@ -115,8 +104,7 @@ class _AddMaintenanceScreenState
 
             TextFormField(
               controller: _estimatedCostController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(
+              keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
               decoration: const InputDecoration(
@@ -125,8 +113,7 @@ class _AddMaintenanceScreenState
                 border: OutlineInputBorder(),
               ),
               validator: (value) {
-                if (value == null ||
-                    value.trim().isEmpty) {
+                if (value == null || value.trim().isEmpty) {
                   return 'Enter an estimated cost';
                 }
 
@@ -145,8 +132,7 @@ class _AddMaintenanceScreenState
                 leading: const Icon(Icons.event),
                 title: const Text('Due Date'),
                 subtitle: Text(_formatDate(_dueDate)),
-                trailing:
-                    const Icon(Icons.calendar_month),
+                trailing: const Icon(Icons.calendar_month),
                 onTap: _pickDueDate,
               ),
             ),

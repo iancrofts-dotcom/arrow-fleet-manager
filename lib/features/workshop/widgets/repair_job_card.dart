@@ -6,19 +6,13 @@ class RepairJobCard extends StatefulWidget {
   final RepairJob repairJob;
   final ValueChanged<RepairJob>? onChanged;
 
-  const RepairJobCard({
-    super.key,
-    required this.repairJob,
-    this.onChanged,
-  });
+  const RepairJobCard({super.key, required this.repairJob, this.onChanged});
 
   @override
-  State<RepairJobCard> createState() =>
-      _RepairJobCardState();
+  State<RepairJobCard> createState() => _RepairJobCardState();
 }
 
-class _RepairJobCardState
-    extends State<RepairJobCard> {
+class _RepairJobCardState extends State<RepairJobCard> {
   late final TextEditingController _hoursController;
   late final TextEditingController _costController;
   late final TextEditingController _notesController;
@@ -85,10 +79,10 @@ class _RepairJobCardState
       widget.repairJob.copyWith(
         estimatedHours:
             double.tryParse(_hoursController.text) ??
-                widget.repairJob.estimatedHours,
+            widget.repairJob.estimatedHours,
         estimatedCost:
             double.tryParse(_costController.text) ??
-                widget.repairJob.estimatedCost,
+            widget.repairJob.estimatedCost,
         description: _notesController.text,
       ),
     );
@@ -101,39 +95,28 @@ class _RepairJobCardState
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(
-                  _priorityIcon(),
-                  color: _priorityColor(),
-                ),
+                Icon(_priorityIcon(), color: _priorityColor()),
 
                 const SizedBox(width: 12),
 
                 Expanded(
                   child: Text(
                     widget.repairJob.title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
 
                 Chip(
-                  backgroundColor:
-                      _priorityColor().withValues(
-                    alpha: 0.15,
-                  ),
+                  backgroundColor: _priorityColor().withValues(alpha: 0.15),
                   label: Text(
-                    widget.repairJob.priority.name
-                        .toUpperCase(),
+                    widget.repairJob.priority.name.toUpperCase(),
                     style: TextStyle(
                       color: _priorityColor(),
-                      fontWeight:
-                          FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
@@ -144,17 +127,14 @@ class _RepairJobCardState
 
             Text(
               widget.repairJob.vehicleRegistration,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
 
             const SizedBox(height: 20),
 
             TextFormField(
               controller: _hoursController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(
+              keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
               decoration: const InputDecoration(
@@ -168,8 +148,7 @@ class _RepairJobCardState
 
             TextFormField(
               controller: _costController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(
+              keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
               decoration: const InputDecoration(
@@ -196,10 +175,7 @@ class _RepairJobCardState
 
             Row(
               children: [
-                const Icon(
-                  Icons.build,
-                  size: 18,
-                ),
+                const Icon(Icons.build, size: 18),
 
                 const SizedBox(width: 8),
 
@@ -211,12 +187,7 @@ class _RepairJobCardState
 
                 const Spacer(),
 
-                Chip(
-                  label: Text(
-                    widget.repairJob.status.name
-                        .toUpperCase(),
-                  ),
-                ),
+                Chip(label: Text(widget.repairJob.status.name.toUpperCase())),
               ],
             ),
 
@@ -227,18 +198,12 @@ class _RepairJobCardState
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.red.shade50,
-                  border: Border.all(
-                    color: Colors.red,
-                  ),
-                  borderRadius:
-                      BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
                   children: [
-                    Icon(
-                      Icons.dangerous,
-                      color: Colors.red,
-                    ),
+                    Icon(Icons.dangerous, color: Colors.red),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(

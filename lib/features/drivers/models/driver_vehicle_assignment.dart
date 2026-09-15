@@ -44,9 +44,7 @@ class DriverVehicleAssignment {
     };
   }
 
-  factory DriverVehicleAssignment.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory DriverVehicleAssignment.fromMap(Map<String, dynamic> map) {
     return DriverVehicleAssignment(
       id: map['id'] as int?,
       driverId: map['driver_id'] as int,
@@ -56,13 +54,10 @@ class DriverVehicleAssignment {
       ),
       assignedTo: map['assigned_to'] == null
           ? null
-          : DateTime.fromMillisecondsSinceEpoch(
-              map['assigned_to'] as int,
-            ),
+          : DateTime.fromMillisecondsSinceEpoch(map['assigned_to'] as int),
       active: (map['active'] as int) == 1,
     );
   }
 
-  bool get isCurrent =>
-      active && assignedTo == null;
+  bool get isCurrent => active && assignedTo == null;
 }

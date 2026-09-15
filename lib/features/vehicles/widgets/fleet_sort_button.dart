@@ -21,10 +21,7 @@ class FleetSortButton extends StatelessWidget {
       onSelected: onChanged,
       itemBuilder: (context) {
         return VehicleSort.values.map((sort) {
-          return PopupMenuItem(
-            value: sort,
-            child: Text(_label(sort)),
-          );
+          return PopupMenuItem(value: sort, child: Text(_label(sort)));
         }).toList();
       },
     );

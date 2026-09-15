@@ -1,19 +1,8 @@
 import 'inspection_item.dart';
 
-enum ChecklistStatus {
-  pending,
-  pass,
-  advisory,
-  fail,
-  notApplicable,
-}
+enum ChecklistStatus { pending, pass, advisory, fail, notApplicable }
 
-enum ChecklistPriority {
-  low,
-  medium,
-  high,
-  critical,
-}
+enum ChecklistPriority { low, medium, high, critical }
 
 class InspectionChecklistItem {
   final String id;
@@ -44,9 +33,9 @@ class InspectionChecklistItem {
   List<String> photos;
 
   InspectionChecklistItem({
-  required this.id,
-  required this.category,
-  required this.title,
+    required this.id,
+    required this.category,
+    required this.title,
     this.description,
     this.status = ChecklistStatus.pending,
     this.priority = ChecklistPriority.medium,
@@ -65,11 +54,9 @@ class InspectionChecklistItem {
 
   bool get failed => status == ChecklistStatus.fail;
 
-  bool get advisoryOnly =>
-      status == ChecklistStatus.advisory;
+  bool get advisoryOnly => status == ChecklistStatus.advisory;
 
-  bool get completed =>
-      status != ChecklistStatus.pending;
+  bool get completed => status != ChecklistStatus.pending;
 
   void reset() {
     status = ChecklistStatus.pending;

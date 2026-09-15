@@ -6,7 +6,6 @@ import 'checklist_tile.dart';
 class ChecklistSection extends StatelessWidget {
   final String title;
   final List<InspectionItem> items;
-
   final void Function(InspectionItem, InspectionStatus) onStatusChanged;
   final void Function(InspectionItem, String) onNotesChanged;
 
@@ -20,37 +19,36 @@ class ChecklistSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 3,
-      margin: const EdgeInsets.only(bottom: 20),
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         initiallyExpanded: true,
-        leading: const Icon(Icons.fact_check),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        leading: const Icon(Icons.fact_check_outlined),
         title: Text(
           title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
         ),
-        subtitle: Text("${items.length} checks"),
+        subtitle: Text('${items.length} checks'),
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: items
-                  .map(
-                    (item) => ChecklistTile(
-                      item: item,
-                      onStatusChanged: (status) =>
-                          onStatusChanged(item, status),
-                      onNotesChanged: (notes) =>
-                          onNotesChanged(item, notes),
-                    ),
-                  )
-                  .toList(),
+          for (var index = 0; index < items.length; index++) ...[
+            ChecklistTile(
+              item: items[index],
+              onStatusChanged: (status) =>
+                  onStatusChanged(items[index], status),
+              onNotesChanged: (notes) => onNotesChanged(items[index], notes),
             ),
-          ),
+            if (index != items.length - 1)
+              Divider(height: 1, color: scheme.outlineVariant),
+          ],
         ],
       ),
     );

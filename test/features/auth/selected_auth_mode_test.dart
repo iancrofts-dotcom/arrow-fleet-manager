@@ -1,5 +1,6 @@
 import 'package:arrow_fleet_manager/backend/auth/fleet_auth_adapter.dart';
 import 'package:arrow_fleet_manager/backend/backend_profile.dart';
+import 'package:arrow_fleet_manager/app/router.dart';
 import 'package:arrow_fleet_manager/config/backend_mode.dart';
 import 'package:arrow_fleet_manager/features/auth/models/user_role.dart';
 import 'package:arrow_fleet_manager/features/auth/screens/login_screen.dart';
@@ -37,10 +38,7 @@ void main() {
       );
       expect(auth.currentRole, entry.key);
       final permissions = PermissionService(authService: auth);
-      expect(
-        permissions.canManageVehicles,
-        entry.value,
-      );
+      expect(permissions.canManageVehicles, entry.value);
       expect(permissions.canViewVehicles, entry.key != UserRole.driver);
     });
   }
@@ -105,6 +103,32 @@ void main() {
 
     expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, 'Username'), findsNothing);
+  });
+
+  testWidgets('successful login uses the configured dashboard route', (
+    tester,
+  ) async {
+    final auth = AuthService(enableSessionWatchdog: false)
+      ..configureBackend(
+        mode: BackendMode.supabase,
+        remoteAuthAdapter: _FakeRemoteAuthAdapter(_profile(UserRole.admin)),
+      );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LoginScreen(authService: auth),
+        routes: {
+          AppRouter.dashboard: (_) => const Text('Configured dashboard'),
+        },
+      ),
+    );
+    await tester.enterText(find.byType(TextFormField).at(0), 'user@fleet.test');
+    await tester.enterText(find.byType(TextFormField).at(1), 'remote-only');
+    await tester.tap(find.text('Sign In'));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Configured dashboard'), findsOneWidget);
   });
 }
 

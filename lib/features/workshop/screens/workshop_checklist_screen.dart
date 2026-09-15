@@ -5,22 +5,17 @@ import '../repositories/workshop_repository.dart';
 import '../models/workshop_inspection.dart';
 import 'workshop_summary_screen.dart';
 
-
 class WorkshopChecklistScreen extends StatefulWidget {
   final int inspectionId;
 
-  const WorkshopChecklistScreen({
-    super.key,
-    required this.inspectionId,
-  });
+  const WorkshopChecklistScreen({super.key, required this.inspectionId});
 
   @override
   State<WorkshopChecklistScreen> createState() =>
       _WorkshopChecklistScreenState();
 }
 
-class _WorkshopChecklistScreenState
-    extends State<WorkshopChecklistScreen> {
+class _WorkshopChecklistScreenState extends State<WorkshopChecklistScreen> {
   final WorkshopRepository _repository = WorkshopRepository();
 
   bool _loading = true;
@@ -34,9 +29,7 @@ class _WorkshopChecklistScreenState
   }
 
   Future<void> _loadItems() async {
-    final items = await _repository.getInspectionItems(
-      widget.inspectionId,
-    );
+    final items = await _repository.getInspectionItems(widget.inspectionId);
 
     if (!mounted) return;
 
@@ -45,8 +38,6 @@ class _WorkshopChecklistScreenState
       _loading = false;
     });
   }
-
-
 
   Future<void> _updateItem(
     InspectionItem item,
@@ -62,112 +53,91 @@ class _WorkshopChecklistScreenState
     await _loadItems();
   }
 
-  int get _completed =>
-      _items.where(
-        (e) => e.status != InspectionItemStatus.notApplicable,
-      ).length;
+  int get _completed => _items
+      .where((e) => e.status != InspectionItemStatus.notApplicable)
+      .length;
 
-int get _passed =>
-    _items.where(
-      (e) => e.status == InspectionItemStatus.pass,
-    ).length;
+  int get _passed =>
+      _items.where((e) => e.status == InspectionItemStatus.pass).length;
 
-int get _advisories =>
-    _items.where(
-      (e) => e.status == InspectionItemStatus.advisory,
-    ).length;
+  int get _advisories =>
+      _items.where((e) => e.status == InspectionItemStatus.advisory).length;
 
-int get _failed =>
-    _items.where(
-      (e) => e.status == InspectionItemStatus.fail,
-    ).length;
+  int get _failed =>
+      _items.where((e) => e.status == InspectionItemStatus.fail).length;
 
-double get _score =>
-    _items.isEmpty
-        ? 0
-        : (_passed / _items.length) * 100;
+  double get _score => _items.isEmpty ? 0 : (_passed / _items.length) * 100;
 
-Future<void> _completeInspection() async {
-  final inspection =
-      await _repository.getInspection(widget.inspectionId);
+  Future<void> _completeInspection() async {
+    final inspection = await _repository.getInspection(widget.inspectionId);
 
-  if (inspection == null) return;
+    if (inspection == null) return;
 
-  final result = _failed > 0
-      ? InspectionResult.fail
-      : _advisories > 0
-          ? InspectionResult.advisory
-          : InspectionResult.pass;
+    final result = _failed > 0
+        ? InspectionResult.fail
+        : _advisories > 0
+        ? InspectionResult.advisory
+        : InspectionResult.pass;
 
-  final updated = inspection.copyWith(
-    status: WorkshopInspectionStatus.completed,
-    overallResult: result,
-    inspectionScore: _score.round(),
-    criticalFailures: _failed,
-    advisories: _advisories,
-    repairsRequired: _failed,
-    updatedAt: DateTime.now(),
-  );
+    final updated = inspection.copyWith(
+      status: WorkshopInspectionStatus.completed,
+      overallResult: result,
+      inspectionScore: _score.round(),
+      criticalFailures: _failed,
+      advisories: _advisories,
+      repairsRequired: _failed,
+      updatedAt: DateTime.now(),
+    );
 
-  await _repository.updateInspection(updated);
+    await _repository.updateInspection(updated);
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  Navigator.pushReplacement(
-  context,
-  MaterialPageRoute(
-    builder: (_) => WorkshopSummaryScreen(
-      inspectionId: widget.inspectionId,
-    ),
-  ),
-);
-}
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            WorkshopSummaryScreen(inspectionId: widget.inspectionId),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Workshop Checklist'),
-      ),
+      appBar: AppBar(title: const Text('Workshop Checklist')),
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
                 Card(
                   margin: const EdgeInsets.all(16),
                   child: ListTile(
                     leading: const Icon(Icons.fact_check),
-                    title: Text(
-  'Progress $_completed / ${_items.length}',
-),
+                    title: Text('Progress $_completed / ${_items.length}'),
 
-subtitle: Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    const SizedBox(height: 8),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 8),
 
-    LinearProgressIndicator(
-      value: _items.isEmpty
-          ? 0
-          : _completed / _items.length,
-    ),
+                        LinearProgressIndicator(
+                          value: _items.isEmpty
+                              ? 0
+                              : _completed / _items.length,
+                        ),
 
-    const SizedBox(height: 12),
+                        const SizedBox(height: 12),
 
-    Text(
-      'Pass: $_passed   '
-      'Advisory: $_advisories   '
-      'Fail: $_failed',
-    ),
+                        Text(
+                          'Pass: $_passed   '
+                          'Advisory: $_advisories   '
+                          'Fail: $_failed',
+                        ),
 
-    Text(
-      'Score: ${_score.toStringAsFixed(0)}%',
-    ),
-  ],
-),
-                  
+                        Text('Score: ${_score.toStringAsFixed(0)}%'),
+                      ],
+                    ),
                   ),
                 ),
 
@@ -183,17 +153,14 @@ subtitle: Column(
                           vertical: 6,
                         ),
                         child: Padding(
-                          padding:
-                              const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(12),
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 item.title,
                                 style: const TextStyle(
-                                  fontWeight:
-                                      FontWeight.bold,
+                                  fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
                               ),
@@ -204,53 +171,36 @@ subtitle: Column(
                                 spacing: 8,
                                 children: [
                                   ChoiceChip(
-                                    label: const Text(
-                                      'Pass',
-                                    ),
+                                    label: const Text('Pass'),
                                     selected:
                                         item.status ==
-                                            InspectionItemStatus
-                                                .pass,
-                                    onSelected: (_) =>
-                                        _updateItem(
+                                        InspectionItemStatus.pass,
+                                    onSelected: (_) => _updateItem(
                                       item,
-                                      InspectionItemStatus
-                                          .pass,
+                                      InspectionItemStatus.pass,
                                     ),
                                   ),
                                   ChoiceChip(
-                                    label: const Text(
-                                      'Advisory',
-                                    ),
+                                    label: const Text('Advisory'),
                                     selected:
                                         item.status ==
-                                            InspectionItemStatus
-                                                .advisory,
-                                    onSelected: (_) =>
-                                        _updateItem(
+                                        InspectionItemStatus.advisory,
+                                    onSelected: (_) => _updateItem(
                                       item,
-                                      InspectionItemStatus
-                                          .advisory,
+                                      InspectionItemStatus.advisory,
                                     ),
                                   ),
                                   ChoiceChip(
-                                    label: const Text(
-                                      'Fail',
-                                    ),
+                                    label: const Text('Fail'),
                                     selected:
                                         item.status ==
-                                            InspectionItemStatus
-                                                .fail,
-                                    onSelected: (_) =>
-                                        _updateItem(
+                                        InspectionItemStatus.fail,
+                                    onSelected: (_) => _updateItem(
                                       item,
-                                      InspectionItemStatus
-                                          .fail,
+                                      InspectionItemStatus.fail,
                                     ),
                                   ),
                                 ],
-
-                          
                               ),
                             ],
                           ),
@@ -258,22 +208,18 @@ subtitle: Column(
                       );
                     },
                   ),
-                              
-              
-                
                 ),
-Padding(
-  padding: const EdgeInsets.all(16),
-  child: SizedBox(
-    width: double.infinity,
-    child: FilledButton.icon(
-      onPressed: _completeInspection,
-      icon: const Icon(Icons.check_circle),
-      label: const Text('Complete Inspection'),
-    ),
-  ),
-),
-
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _completeInspection,
+                      icon: const Icon(Icons.check_circle),
+                      label: const Text('Complete Inspection'),
+                    ),
+                  ),
+                ),
               ],
             ),
     );

@@ -4,17 +4,9 @@ class CalendarDateFormatter {
   static String format(DateTime date) {
     final now = DateTime.now();
 
-    final today = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
+    final today = DateTime(now.year, now.month, now.day);
 
-    final target = DateTime(
-      date.year,
-      date.month,
-      date.day,
-    );
+    final target = DateTime(date.year, date.month, date.day);
 
     final days = target.difference(today).inDays;
 

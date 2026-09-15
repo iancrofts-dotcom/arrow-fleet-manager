@@ -43,6 +43,17 @@ class SupabaseAuthAdapter implements FleetAuthAdapter {
     }
   }
 
+  Future<BackendProfile?> refreshProfile() async {
+    final current = _profile;
+    if (current == null) return null;
+    final refreshed = await _gateway.fetchProfile(current.id);
+    if (refreshed == null || !refreshed.isActive) {
+      _profile = null;
+      return null;
+    }
+    return _profile = refreshed;
+  }
+
   @override
   Future<void> signOut() async {
     await _gateway.signOut();

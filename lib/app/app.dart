@@ -4,6 +4,7 @@ import 'constants.dart';
 import 'router.dart';
 import 'theme.dart';
 import '../features/auth/services/auth_service.dart';
+import '../features/auth/invitation/invitation_route.dart';
 import '../features/auth/widgets/session_activity_boundary.dart';
 import '../shared/widgets/app_shell.dart';
 
@@ -16,7 +17,7 @@ class ArrowFleetManagerApp extends StatefulWidget {
 
 class _ArrowFleetManagerAppState extends State<ArrowFleetManagerApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
-  final _currentRoute = ValueNotifier<String>(AppRouter.dashboard);
+  final _currentRoute = ValueNotifier<String>(InvitationRoute.initialRoute());
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class _ArrowFleetManagerAppState extends State<ArrowFleetManagerApp> {
       title: AppConstants.appName,
       theme: AppTheme.lightTheme,
 
-      initialRoute: AppRouter.root,
+      initialRoute: InvitationRoute.initialRoute(),
 
       routes: AppRouter.routes,
       navigatorObservers: [_AppRouteObserver(_currentRoute)],

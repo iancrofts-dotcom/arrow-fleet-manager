@@ -4,20 +4,15 @@ import '../models/driver.dart';
 import 'driver_assignment_picker.dart';
 
 class DriverAssignmentDialog extends StatefulWidget {
-  const DriverAssignmentDialog({
-    super.key,
-    this.initialDriver,
-  });
+  const DriverAssignmentDialog({super.key, this.initialDriver});
 
   final Driver? initialDriver;
 
   @override
-  State<DriverAssignmentDialog> createState() =>
-      _DriverAssignmentDialogState();
+  State<DriverAssignmentDialog> createState() => _DriverAssignmentDialogState();
 }
 
-class _DriverAssignmentDialogState
-    extends State<DriverAssignmentDialog> {
+class _DriverAssignmentDialogState extends State<DriverAssignmentDialog> {
   Driver? _selectedDriver;
 
   @override
@@ -50,16 +45,9 @@ class _DriverAssignmentDialogState
         ),
         FilledButton(
           onPressed: () {
-            Navigator.pop(
-              context,
-              _selectedDriver,
-            );
+            Navigator.pop(context, _selectedDriver);
           },
-          child: Text(
-            _selectedDriver == null
-                ? 'Assign Later'
-                : 'Assign',
-          ),
+          child: Text(_selectedDriver == null ? 'Assign Later' : 'Assign'),
         ),
       ],
     );

@@ -28,27 +28,18 @@ class DefectSummary extends StatelessWidget {
                 SizedBox(width: 10),
                 Text(
                   "Inspection Summary",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
 
             const SizedBox(height: 20),
 
-            _buildRow(
-              "Checks Completed",
-              "$completedChecks / $totalChecks",
-            ),
+            _buildRow("Checks Completed", "$completedChecks / $totalChecks"),
 
             const SizedBox(height: 12),
 
-            _buildRow(
-              "Outstanding Defects",
-              "$defectCount",
-            ),
+            _buildRow("Outstanding Defects", "$defectCount"),
 
             const Divider(height: 30),
 
@@ -56,18 +47,14 @@ class DefectSummary extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  ready
-                      ? Icons.check_circle
-                      : Icons.pending_actions,
+                  ready ? Icons.check_circle : Icons.pending_actions,
                   color: ready ? Colors.green : Colors.orange,
                 ),
 
                 const SizedBox(width: 10),
 
                 Text(
-                  ready
-                      ? "Inspection Ready"
-                      : "Inspection In Progress",
+                  ready ? "Inspection Ready" : "Inspection In Progress",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: ready ? Colors.green : Colors.orange,
@@ -86,12 +73,7 @@ class DefectSummary extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(title),
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
     );
   }

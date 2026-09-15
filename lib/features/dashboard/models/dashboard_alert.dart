@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum DashboardAlertSeverity {
-  info,
-  warning,
-  critical,
-}
+enum DashboardAlertSeverity { info, warning, critical }
 
 class DashboardAlert {
   const DashboardAlert({

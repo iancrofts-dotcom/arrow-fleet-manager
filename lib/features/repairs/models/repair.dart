@@ -57,24 +57,19 @@ class Repair {
     return Repair(
       id: id ?? this.id,
       repairNumber: repairNumber ?? this.repairNumber,
-      inspectionNumber:
-          inspectionNumber ?? this.inspectionNumber,
-      registration:
-          registration ?? this.registration,
+      inspectionNumber: inspectionNumber ?? this.inspectionNumber,
+      registration: registration ?? this.registration,
       driver: driver ?? this.driver,
       defect: defect ?? this.defect,
-      defectNotes:
-          defectNotes ?? this.defectNotes,
+      defectNotes: defectNotes ?? this.defectNotes,
       photoPath: photoPath ?? this.photoPath,
       mechanic: mechanic ?? this.mechanic,
       priority: priority ?? this.priority,
       status: status ?? this.status,
       dateRaised: dateRaised ?? this.dateRaised,
       dueDate: dueDate ?? this.dueDate,
-      completedDate:
-          completedDate ?? this.completedDate,
-      repairNotes:
-          repairNotes ?? this.repairNotes,
+      completedDate: completedDate ?? this.completedDate,
+      repairNotes: repairNotes ?? this.repairNotes,
     );
   }
 
@@ -91,56 +86,34 @@ class Repair {
       'mechanic': mechanic,
       'priority': priority,
       'status': status,
-      'dateRaised':
-          dateRaised.toIso8601String(),
-      'dueDate':
-          dueDate?.toIso8601String(),
-      'completedDate':
-          completedDate?.toIso8601String(),
+      'dateRaised': dateRaised.toIso8601String(),
+      'dueDate': dueDate?.toIso8601String(),
+      'completedDate': completedDate?.toIso8601String(),
       'repairNotes': repairNotes,
     };
   }
 
-  factory Repair.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory Repair.fromMap(Map<String, dynamic> map) {
     return Repair(
       id: map['id'] as int?,
-      repairNumber:
-          map['repairNumber'] as String,
-      inspectionNumber:
-          map['inspectionNumber'] as String,
-      registration:
-          map['registration'] as String,
+      repairNumber: map['repairNumber'] as String,
+      inspectionNumber: map['inspectionNumber'] as String,
+      registration: map['registration'] as String,
       driver: map['driver'] as String,
       defect: map['defect'] as String,
-      defectNotes:
-          map['defectNotes'] as String,
-      photoPath:
-          map['photoPath'] as String?,
-      mechanic:
-          map['mechanic'] as String,
-      priority:
-          map['priority'] as String,
-      status:
-          map['status'] as String,
-      dateRaised: DateTime.parse(
-        map['dateRaised'] as String,
-      ),
+      defectNotes: map['defectNotes'] as String,
+      photoPath: map['photoPath'] as String?,
+      mechanic: map['mechanic'] as String,
+      priority: map['priority'] as String,
+      status: map['status'] as String,
+      dateRaised: DateTime.parse(map['dateRaised'] as String),
       dueDate: map['dueDate'] == null
           ? null
-          : DateTime.parse(
-              map['dueDate'] as String,
-            ),
-      completedDate:
-          map['completedDate'] == null
-              ? null
-              : DateTime.parse(
-                  map['completedDate']
-                      as String,
-                ),
-      repairNotes:
-          map['repairNotes'] as String,
+          : DateTime.parse(map['dueDate'] as String),
+      completedDate: map['completedDate'] == null
+          ? null
+          : DateTime.parse(map['completedDate'] as String),
+      repairNotes: map['repairNotes'] as String,
     );
   }
 }

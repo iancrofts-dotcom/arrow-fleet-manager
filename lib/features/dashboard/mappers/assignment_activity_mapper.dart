@@ -13,8 +13,7 @@ class AssignmentActivityMapper {
   }) {
     return DashboardActivity(
       title: 'Driver Assigned',
-      subtitle:
-          '${driver.fullName} assigned to ${vehicle.registration}',
+      subtitle: '${driver.fullName} assigned to ${vehicle.registration}',
       date: assignment.assignedFrom,
       type: DashboardActivityType.assignment,
     );

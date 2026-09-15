@@ -9,12 +9,12 @@ import '../repositories/inspection_results_repository.dart';
 
 class InspectionService {
   InspectionService({AppDatabase? database})
-      : _repository = InspectionRepository(
-          databaseService: DatabaseService(database: database),
-        ),
-        _resultsRepository = InspectionResultsRepository(
-          appDatabase: database ?? DatabaseService().database,
-        );
+    : _repository = InspectionRepository(
+        databaseService: DatabaseService(database: database),
+      ),
+      _resultsRepository = InspectionResultsRepository(
+        appDatabase: database ?? DatabaseService().database,
+      );
 
   final InspectionRepository _repository;
   final InspectionResultsRepository _resultsRepository;
@@ -33,7 +33,8 @@ class InspectionService {
 
   String generateInspectionNumber() {
     final now = DateTime.now();
-    final number = 'AST-${now.year}-${now.microsecondsSinceEpoch}-'
+    final number =
+        'AST-${now.year}-${now.microsecondsSinceEpoch}-'
         '${_inspectionSequence.toString().padLeft(6, '0')}';
 
     _inspectionSequence++;
@@ -41,9 +42,7 @@ class InspectionService {
     return number;
   }
 
-  bool validateInspection(
-    Inspection inspection,
-  ) {
+  bool validateInspection(Inspection inspection) {
     return inspection.driver.trim().isNotEmpty &&
         inspection.vehicleId != null &&
         inspection.mileage > 0;
@@ -55,10 +54,7 @@ class InspectionService {
     Inspection inspection, {
     DatabaseExecutor? executor,
   }) async {
-    await _repository.saveInspection(
-      inspection,
-      executor: executor,
-    );
+    await _repository.saveInspection(inspection, executor: executor);
   }
 
   /// Saves the inspection header and all checklist items.
@@ -68,10 +64,7 @@ class InspectionService {
     List<InspectionItem> items, {
     DatabaseExecutor? executor,
   }) async {
-    await _repository.saveInspection(
-      inspection,
-      executor: executor,
-    );
+    await _repository.saveInspection(inspection, executor: executor);
 
     await _resultsRepository.saveItems(
       inspectionNumber: inspection.inspectionNumber,
@@ -84,32 +77,21 @@ class InspectionService {
     return _repository.getInspections();
   }
 
-  Future<Inspection?> getInspectionById(
-    int id,
-  ) async {
-    final inspections =
-        await _repository.getInspections();
+  Future<Inspection?> getInspectionById(int id) async {
+    final inspections = await _repository.getInspections();
 
     try {
-      return inspections.firstWhere(
-        (inspection) => inspection.id == id,
-      );
+      return inspections.firstWhere((inspection) => inspection.id == id);
     } catch (_) {
       return null;
     }
   }
 
-  Future<List<Inspection>> getVehicleInspections(
-    int vehicleId,
-  ) async {
-    final inspections =
-        await _repository.getInspections();
+  Future<List<Inspection>> getVehicleInspections(int vehicleId) async {
+    final inspections = await _repository.getInspections();
 
     return inspections
-        .where(
-          (inspection) =>
-              inspection.vehicleId == vehicleId,
-        )
+        .where((inspection) => inspection.vehicleId == vehicleId)
         .toList();
   }
 
@@ -123,30 +105,18 @@ class InspectionService {
     );
   }
 
-  Future<List<InspectionItem>>
-      getInspectionResults(
-    String inspectionNumber,
-  ) {
-    return _resultsRepository.getItems(
-      inspectionNumber,
-    );
+  Future<List<InspectionItem>> getInspectionResults(String inspectionNumber) {
+    return _resultsRepository.getItems(inspectionNumber);
   }
 
-  Future<List<InspectionItem>>
-      getFailedInspectionResults(
+  Future<List<InspectionItem>> getFailedInspectionResults(
     String inspectionNumber,
   ) {
-    return _resultsRepository.getFailedItems(
-      inspectionNumber,
-    );
+    return _resultsRepository.getFailedItems(inspectionNumber);
   }
 
-  Future<void> deleteInspectionResults(
-    String inspectionNumber,
-  ) {
-    return _resultsRepository.deleteInspectionResults(
-      inspectionNumber,
-    );
+  Future<void> deleteInspectionResults(String inspectionNumber) {
+    return _resultsRepository.deleteInspectionResults(inspectionNumber);
   }
 
   Future<int> getInspectionCount() {

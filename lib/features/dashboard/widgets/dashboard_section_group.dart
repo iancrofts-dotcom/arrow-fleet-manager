@@ -22,8 +22,7 @@ class DashboardSectionGroup extends StatelessWidget {
             children: [
               for (int i = 0; i < children.length; i++) ...[
                 children[i],
-                if (i != children.length - 1)
-                  SizedBox(height: spacing),
+                if (i != children.length - 1) SizedBox(height: spacing),
               ],
             ],
           );
@@ -45,8 +44,7 @@ class DashboardSectionGroup extends StatelessWidget {
                   ),
                 ],
               ),
-              if (i + 2 < children.length)
-                SizedBox(height: spacing),
+              if (i + 2 < children.length) SizedBox(height: spacing),
             ],
           ],
         );

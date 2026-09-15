@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../shared/widgets/fleetiq_brand.dart';
 
-import '../../dashboard/dashboard_screen.dart';
+import '../../../app/router.dart';
 import '../services/auth_service.dart';
+import '../services/central_password_service.dart';
 import 'forced_password_change_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -92,9 +93,79 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!mounted) return;
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const DashboardScreen()),
+    Navigator.of(context).pushReplacementNamed(AppRouter.dashboard);
+  }
+
+  Future<void> _forgotPassword() async {
+    final emailController = TextEditingController(
+      text: _usernameController.text.trim(),
     );
+    final formKey = GlobalKey<FormState>();
+    final email = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset password'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Enter the email address used for FleetIQ. We will send a secure password-reset link.',
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                decoration: const InputDecoration(labelText: 'Email'),
+                validator: (value) {
+                  final text = value?.trim() ?? '';
+                  if (text.isEmpty || !text.contains('@')) {
+                    return 'Enter a valid email address.';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!(formKey.currentState?.validate() ?? false)) return;
+              Navigator.pop(context, emailController.text.trim());
+            },
+            child: const Text('Send reset link'),
+          ),
+        ],
+      ),
+    );
+    emailController.dispose();
+    if (email == null || !mounted) return;
+
+    try {
+      await const CentralPasswordService().sendPasswordReset(email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'If that email belongs to an active FleetIQ account, a password-reset link has been sent.',
+          ),
+          duration: Duration(seconds: 6),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to send password reset: $error')),
+      );
+    }
   }
 
   @override
@@ -169,7 +240,17 @@ class _LoginScreenState extends State<LoginScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 32),
+                        if (_authService.usesEmailLogin) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: _isLoading ? null : _forgotPassword,
+                              child: const Text('Forgot password?'),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton.icon(

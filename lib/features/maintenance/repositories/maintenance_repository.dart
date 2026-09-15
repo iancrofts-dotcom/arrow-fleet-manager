@@ -11,19 +11,12 @@ class MaintenanceRepository {
   Future<List<MaintenanceRecord>> getAll() async {
     final db = await _database.database();
 
-    final result = await db.query(
-      tableName,
-      orderBy: 'due_date ASC',
-    );
+    final result = await db.query(tableName, orderBy: 'due_date ASC');
 
-    return result
-        .map(MaintenanceRecord.fromMap)
-        .toList();
+    return result.map(MaintenanceRecord.fromMap).toList();
   }
 
-  Future<List<MaintenanceRecord>> getForVehicle(
-    int vehicleId,
-  ) async {
+  Future<List<MaintenanceRecord>> getForVehicle(int vehicleId) async {
     final db = await _database.database();
 
     final result = await db.query(
@@ -33,14 +26,10 @@ class MaintenanceRepository {
       orderBy: 'due_date ASC',
     );
 
-    return result
-        .map(MaintenanceRecord.fromMap)
-        .toList();
+    return result.map(MaintenanceRecord.fromMap).toList();
   }
 
-  Future<MaintenanceRecord?> getById(
-    int id,
-  ) async {
+  Future<MaintenanceRecord?> getById(int id) async {
     final db = await _database.database();
 
     final result = await db.query(
@@ -54,25 +43,16 @@ class MaintenanceRepository {
       return null;
     }
 
-    return MaintenanceRecord.fromMap(
-      result.first,
-    );
+    return MaintenanceRecord.fromMap(result.first);
   }
 
-  Future<int> insert(
-    MaintenanceRecord record,
-  ) async {
+  Future<int> insert(MaintenanceRecord record) async {
     final db = await _database.database();
 
-    return db.insert(
-      tableName,
-      record.toMap(),
-    );
+    return db.insert(tableName, record.toMap());
   }
 
-  Future<int> update(
-    MaintenanceRecord record,
-  ) async {
+  Future<int> update(MaintenanceRecord record) async {
     final db = await _database.database();
 
     return db.update(
@@ -83,9 +63,7 @@ class MaintenanceRepository {
     );
   }
 
-  Future<void> save(
-    MaintenanceRecord record,
-  ) async {
+  Future<void> save(MaintenanceRecord record) async {
     if (record.id == null) {
       await insert(record);
     } else {
@@ -93,15 +71,9 @@ class MaintenanceRepository {
     }
   }
 
-  Future<int> delete(
-    int id,
-  ) async {
+  Future<int> delete(int id) async {
     final db = await _database.database();
 
-    return db.delete(
-      tableName,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete(tableName, where: 'id = ?', whereArgs: [id]);
   }
 }

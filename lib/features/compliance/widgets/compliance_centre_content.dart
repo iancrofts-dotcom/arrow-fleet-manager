@@ -31,6 +31,11 @@ class ComplianceCentreContent extends StatelessWidget {
         onAttentionTap: onAttentionTap,
       ),
       const SizedBox(height: 24),
+      _ComplianceRegisterSection(
+        items: summary.allItems,
+        onItemTap: onAttentionTap,
+      ),
+      const SizedBox(height: 24),
       _BreakdownSection(summary: summary),
     ],
   );
@@ -336,7 +341,13 @@ class _AttentionSectionState extends State<_AttentionSection> {
                   _FilteredAttentionEmptyState(onClearFilters: _clearFilters)
                 else
                   for (final item in items) ...[
-                    _AttentionRow(item: item, onTap: widget.onAttentionTap),
+                    _AttentionRow(
+                      key: Key(
+                        'compliance-attention-${item.subjectType.name}-${item.subjectId}-${item.checkType.name}',
+                      ),
+                      item: item,
+                      onTap: widget.onAttentionTap,
+                    ),
                     if (item != items.last) const Divider(height: 24),
                   ],
               ],
@@ -428,7 +439,7 @@ class _FilteredAttentionEmptyState extends StatelessWidget {
 }
 
 class _AttentionRow extends StatelessWidget {
-  const _AttentionRow({required this.item, this.onTap});
+  const _AttentionRow({super.key, required this.item, this.onTap});
 
   final FleetComplianceAttentionItem item;
   final ValueChanged<FleetComplianceAttentionItem>? onTap;
@@ -497,6 +508,180 @@ class _AttentionRow extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _ComplianceRegisterSection extends StatefulWidget {
+  const _ComplianceRegisterSection({required this.items, this.onItemTap});
+
+  final List<FleetComplianceAttentionItem> items;
+  final ValueChanged<FleetComplianceAttentionItem>? onItemTap;
+
+  @override
+  State<_ComplianceRegisterSection> createState() =>
+      _ComplianceRegisterSectionState();
+}
+
+class _ComplianceRegisterSectionState
+    extends State<_ComplianceRegisterSection> {
+  final _searchController = TextEditingController();
+  FleetComplianceStatus? _status;
+  FleetComplianceSubjectType? _subjectType;
+  FleetComplianceCheckType? _checkType;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<FleetComplianceAttentionItem> get _visibleItems {
+    final query = _searchController.text.trim().toLowerCase();
+    return widget.items
+        .where((item) {
+          if (_status != null && item.status != _status) {
+            return false;
+          }
+          if (_subjectType != null && item.subjectType != _subjectType) {
+            return false;
+          }
+          if (_checkType != null && item.checkType != _checkType) {
+            return false;
+          }
+          if (query.isEmpty) {
+            return true;
+          }
+          return [
+            item.subjectDisplay,
+            item.secondaryDisplay,
+            _checkLabel(item.checkType),
+            _dateLabel(item.date),
+          ].whereType<String>().any(
+            (value) => value.toLowerCase().contains(query),
+          );
+        })
+        .toList(growable: false);
+  }
+
+  void _clear() {
+    setState(() {
+      _searchController.clear();
+      _status = null;
+      _subjectType = null;
+      _checkType = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _visibleItems;
+    final hasFilters =
+        _searchController.text.trim().isNotEmpty ||
+        _status != null ||
+        _subjectType != null ||
+        _checkType != null;
+    return SectionCard(
+      title: 'All Compliance Records',
+      subtitle:
+          'Complete Driver and Vehicle register, including valid, due, expired and missing records.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            key: const Key('compliance-register-search'),
+            controller: _searchController,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              labelText: 'Search compliance register',
+              prefixIcon: Icon(Icons.search),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _FilterGroup<FleetComplianceStatus>(
+            label: 'Status',
+            selected: _status,
+            options: const [
+              (null, 'All'),
+              (FleetComplianceStatus.valid, 'Valid'),
+              (FleetComplianceStatus.dueSoon, 'Due Soon'),
+              (FleetComplianceStatus.expired, 'Expired'),
+              (FleetComplianceStatus.notRecorded, 'Not Recorded'),
+            ],
+            onSelected: (value) => setState(() => _status = value),
+          ),
+          const SizedBox(height: 12),
+          _FilterGroup<FleetComplianceSubjectType>(
+            label: 'Subject',
+            selected: _subjectType,
+            options: const [
+              (null, 'All subjects'),
+              (FleetComplianceSubjectType.vehicle, 'Vehicles'),
+              (FleetComplianceSubjectType.driver, 'Drivers'),
+            ],
+            onSelected: (value) => setState(() => _subjectType = value),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: _checkType?.name ?? 'all',
+            decoration: const InputDecoration(
+              labelText: 'Compliance type',
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<String>(
+                value: 'all',
+                child: Text('All compliance types'),
+              ),
+              for (final type in FleetComplianceCheckType.values)
+                DropdownMenuItem<String>(
+                  value: type.name,
+                  child: Text(_checkLabel(type)),
+                ),
+            ],
+            onChanged: (value) => setState(() {
+              _checkType = value == null || value == 'all'
+                  ? null
+                  : FleetComplianceCheckType.values.firstWhere(
+                      (type) => type.name == value,
+                    );
+            }),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Showing ${items.length} of ${widget.items.length} records',
+                  key: const Key('compliance-register-result-count'),
+                ),
+              ),
+              if (hasFilters)
+                TextButton(
+                  onPressed: _clear,
+                  child: const Text('Clear filters'),
+                ),
+            ],
+          ),
+          const Divider(height: 24),
+          if (items.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text('No compliance records match the current filters.'),
+            )
+          else
+            for (final item in items) ...[
+              _AttentionRow(
+                key: Key(
+                  'compliance-register-${item.subjectType.name}-${item.subjectId}-${item.checkType.name}',
+                ),
+                item: item,
+                onTap: widget.onItemTap,
+              ),
+              if (item != items.last) const Divider(height: 24),
+            ],
+        ],
+      ),
+    );
+  }
 }
 
 class _BreakdownSection extends StatelessWidget {
@@ -574,13 +759,16 @@ Color _toneColor(StatusBadgeTone tone) => switch (tone) {
 
 String _checkLabel(FleetComplianceCheckType type) => switch (type) {
   FleetComplianceCheckType.mot => 'MOT',
+  FleetComplianceCheckType.psvMot => 'PSV MOT',
   FleetComplianceCheckType.service => 'Service',
-  FleetComplianceCheckType.licence => 'Licence',
+  FleetComplianceCheckType.psvGarageCheck => 'PSV Garage Check',
+  FleetComplianceCheckType.taxiSafetyCheck => 'Taxi Safety Check',
+  FleetComplianceCheckType.licence => 'Driving Licence',
   FleetComplianceCheckType.cpc => 'CPC',
   FleetComplianceCheckType.medical => 'Medical',
   FleetComplianceCheckType.dbs => 'DBS',
-  FleetComplianceCheckType.taxiLicence => 'Taxi Licence',
-  FleetComplianceCheckType.taxiPlate => 'Taxi Plate',
+  FleetComplianceCheckType.taxiLicence => 'Taxi / Private Hire Licence',
+  FleetComplianceCheckType.taxiPlate => 'Vehicle Licence (Taxi)',
 };
 
 String _dateLabel(DateTime? date) =>

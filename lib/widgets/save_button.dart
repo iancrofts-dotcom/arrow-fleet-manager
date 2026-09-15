@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class SaveButton extends StatelessWidget {
   final VoidCallback onSave;
 
-  const SaveButton({
-    super.key,
-    required this.onSave,
-  });
+  const SaveButton({super.key, required this.onSave});
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +15,7 @@ class SaveButton extends StatelessWidget {
         icon: const Icon(Icons.save),
         label: const Text(
           "Save Inspection",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
     );

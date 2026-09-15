@@ -18,10 +18,7 @@ class WorkshopDashboardService {
     final repairJobs = dashboardSources[1] as List<RepairJob>;
     final recentActivity = await WorkshopActivityService(
       _repository,
-    ).getRecentActivity(
-      inspections: inspections,
-      repairJobs: repairJobs,
-    );
+    ).getRecentActivity(inspections: inspections, repairJobs: repairJobs);
 
     // Open means the inspection still requires workshop operational work.
     // Completed inspections awaiting manager sign-off are tracked separately.
@@ -41,11 +38,7 @@ class WorkshopDashboardService {
     // Once an inspection has a completion timestamp, it remains part of
     // today's productivity figure even if it has subsequently been signed off.
     final now = DateTime.now();
-    final dayStart = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
+    final dayStart = DateTime(now.year, now.month, now.day);
     final dayEnd = dayStart.add(const Duration(days: 1));
 
     final completedToday = inspections.where((inspection) {
@@ -54,23 +47,24 @@ class WorkshopDashboardService {
         return false;
       }
 
-      return !completedAt.isBefore(dayStart) &&
-          completedAt.isBefore(dayEnd);
+      return !completedAt.isBefore(dayStart) && completedAt.isBefore(dayEnd);
     }).length;
 
-    final unresolvedRepairJobs = repairJobs.where((job) {
-      switch (job.status) {
-        case RepairJobStatus.open:
-        case RepairJobStatus.assigned:
-        case RepairJobStatus.inProgress:
-        case RepairJobStatus.awaitingParts:
-        case RepairJobStatus.awaitingInspection:
-          return true;
-        case RepairJobStatus.completed:
-        case RepairJobStatus.cancelled:
-          return false;
-      }
-    }).toList(growable: false);
+    final unresolvedRepairJobs = repairJobs
+        .where((job) {
+          switch (job.status) {
+            case RepairJobStatus.open:
+            case RepairJobStatus.assigned:
+            case RepairJobStatus.inProgress:
+            case RepairJobStatus.awaitingParts:
+            case RepairJobStatus.awaitingInspection:
+              return true;
+            case RepairJobStatus.completed:
+            case RepairJobStatus.cancelled:
+              return false;
+          }
+        })
+        .toList(growable: false);
 
     // One inspection with several jobs is one current repair requirement.
     final repairsRequired = unresolvedRepairJobs
@@ -92,14 +86,16 @@ class WorkshopDashboardService {
     // Repair jobs do not retain an item-level criticality flag. The reliable
     // current operational definition is critical failures on inspections that
     // are still being worked: draft, in progress, or awaiting repair.
-    final criticalFailures = inspections.where((inspection) {
-      return inspection.status == WorkshopInspectionStatus.draft ||
-          inspection.status == WorkshopInspectionStatus.inProgress ||
-          inspection.status == WorkshopInspectionStatus.awaitingRepair;
-    }).fold<int>(
-      0,
-      (total, inspection) => total + inspection.criticalFailures,
-    );
+    final criticalFailures = inspections
+        .where((inspection) {
+          return inspection.status == WorkshopInspectionStatus.draft ||
+              inspection.status == WorkshopInspectionStatus.inProgress ||
+              inspection.status == WorkshopInspectionStatus.awaitingRepair;
+        })
+        .fold<int>(
+          0,
+          (total, inspection) => total + inspection.criticalFailures,
+        );
 
     return WorkshopDashboardData(
       openInspections: openInspections,

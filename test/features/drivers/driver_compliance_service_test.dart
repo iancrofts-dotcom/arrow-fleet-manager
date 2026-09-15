@@ -15,12 +15,18 @@ void main() {
     expect(service.status(today.add(const Duration(days: 31))), 'Valid');
   });
 
-  test('due-soon DBS remains compliant while missing and expired DBS do not', () {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+  test(
+    'due-soon DBS remains compliant while missing and expired DBS do not',
+    () {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
 
-    expect(service.isCompliant(today.add(const Duration(days: 1))), isTrue);
-    expect(service.isCompliant(null), isFalse);
-    expect(service.isCompliant(today.subtract(const Duration(days: 1))), isFalse);
-  });
+      expect(service.isCompliant(today.add(const Duration(days: 1))), isTrue);
+      expect(service.isCompliant(null), isFalse);
+      expect(
+        service.isCompliant(today.subtract(const Duration(days: 1))),
+        isFalse,
+      );
+    },
+  );
 }

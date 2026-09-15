@@ -11,8 +11,7 @@ class ComplianceActivityMapper {
   }) {
     return DashboardActivity(
       title: 'Driver Compliance',
-      subtitle:
-          'Compliance updated for ${driver.fullName}',
+      subtitle: 'Compliance updated for ${driver.fullName}',
       date: compliance.lastUpdated,
       type: DashboardActivityType.compliance,
     );

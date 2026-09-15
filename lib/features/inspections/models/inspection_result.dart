@@ -23,9 +23,7 @@ class InspectionResult {
     };
   }
 
-  factory InspectionResult.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory InspectionResult.fromMap(Map<String, dynamic> map) {
     return InspectionResult(
       id: map['id'] as int?,
       inspectionNumber: map['inspectionNumber'] as String,

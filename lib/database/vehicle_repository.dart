@@ -4,16 +4,12 @@ import 'database_service.dart';
 class VehicleRepository {
   final DatabaseService databaseService;
 
-  VehicleRepository({
-    required this.databaseService,
-  });
+  VehicleRepository({required this.databaseService});
 
   Future<int> getVehicleCount() async {
     final db = await databaseService.database.database();
 
-    final result = await db.rawQuery(
-      'SELECT COUNT(*) AS total FROM vehicles',
-    );
+    final result = await db.rawQuery('SELECT COUNT(*) AS total FROM vehicles');
 
     return (result.first['total'] as int?) ?? 0;
   }
@@ -21,23 +17,15 @@ class VehicleRepository {
   Future<int> addVehicle(Vehicle vehicle) async {
     final db = await databaseService.database.database();
 
-    return db.insert(
-      'vehicles',
-      vehicle.toMap(),
-    );
+    return db.insert('vehicles', vehicle.toMap());
   }
 
   Future<List<Vehicle>> getVehicles() async {
     final db = await databaseService.database.database();
 
-    final maps = await db.query(
-      'vehicles',
-      orderBy: 'fleetNumber',
-    );
+    final maps = await db.query('vehicles', orderBy: 'fleetNumber');
 
-    return maps
-        .map((e) => Vehicle.fromMap(e))
-        .toList();
+    return maps.map((e) => Vehicle.fromMap(e)).toList();
   }
 
   Future<Vehicle?> getVehicleById(int id) async {
@@ -60,11 +48,7 @@ class VehicleRepository {
   Future<void> deleteVehicle(int id) async {
     final db = await databaseService.database.database();
 
-    await db.delete(
-      'vehicles',
-      where: 'id=?',
-      whereArgs: [id],
-    );
+    await db.delete('vehicles', where: 'id=?', whereArgs: [id]);
   }
 
   Future<void> updateVehicle(Vehicle vehicle) async {

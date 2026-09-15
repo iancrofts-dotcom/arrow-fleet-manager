@@ -1,9 +1,4 @@
-enum SystemServiceStatus {
-  healthy,
-  warning,
-  error,
-  offline,
-}
+enum SystemServiceStatus { healthy, warning, error, offline }
 
 class SystemStatus {
   const SystemStatus({

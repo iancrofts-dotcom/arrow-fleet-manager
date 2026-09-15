@@ -31,11 +31,8 @@ class VehicleSelector extends StatelessWidget {
           .map(
             (vehicle) => DropdownMenuEntry<Vehicle>(
               value: vehicle,
-              label:
-                  '${vehicle.fleetNumber} - ${vehicle.registration}',
-              leadingIcon: const Icon(
-                Icons.directions_bus,
-              ),
+              label: '${vehicle.fleetNumber} - ${vehicle.registration}',
+              leadingIcon: const Icon(Icons.directions_bus),
             ),
           )
           .toList(),

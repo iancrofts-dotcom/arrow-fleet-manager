@@ -4,12 +4,14 @@ import '../vehicles/models/vehicle.dart';
 
 import '../auth/services/auth_service.dart';
 import '../auth/services/permission_service.dart';
+import '../../config/backend_mode.dart';
 
 import 'data/inspection_template.dart';
 import 'models/inspection.dart';
 import 'models/inspection_item.dart';
 import 'services/inspection_service.dart';
 import 'services/driver_daily_workshop_save_service.dart';
+import 'services/central_driver_daily_inspection_service.dart';
 
 import 'widgets/checklist_section.dart';
 import 'widgets/defect_summary.dart';
@@ -29,31 +31,25 @@ class InspectionScreen extends StatefulWidget {
   final String? assignedDriverName;
 
   @override
-  State<InspectionScreen> createState() =>
-      _InspectionScreenState();
+  State<InspectionScreen> createState() => _InspectionScreenState();
 }
 
-class _InspectionScreenState
-    extends State<InspectionScreen> {
+class _InspectionScreenState extends State<InspectionScreen> {
+  final TextEditingController driverController = TextEditingController();
 
-  final TextEditingController driverController =
-      TextEditingController();
+  final TextEditingController mileageController = TextEditingController();
 
-  final TextEditingController mileageController =
-      TextEditingController();
+  final TextEditingController commentsController = TextEditingController();
 
-  final TextEditingController commentsController =
-      TextEditingController();
-
-  final InspectionService _inspectionService =
-      InspectionService();
+  final InspectionService _inspectionService = InspectionService();
   final DriverDailyWorkshopSaveService _workshopSaveService =
       DriverDailyWorkshopSaveService();
+  final CentralDriverDailyInspectionService _centralDailyInspectionService =
+      const CentralDriverDailyInspectionService();
 
   late final Inspection inspection;
 
-  final List<InspectionItem> inspectionItems =
-      defaultInspectionTemplate;
+  final List<InspectionItem> inspectionItems = defaultInspectionTemplate;
 
   Vehicle? _selectedVehicle;
 
@@ -64,11 +60,34 @@ class _InspectionScreenState
   void initState() {
     super.initState();
 
-    inspection =
-        _inspectionService.createInspection();
+    inspection = _inspectionService.createInspection();
 
     _selectedVehicle = widget.assignedVehicle;
     driverController.text = widget.assignedDriverName ?? '';
+    if (BackendModeConfig.current == BackendMode.supabase &&
+        PermissionService.instance.isDriver &&
+        _selectedVehicle != null) {
+      _prefillCentralMileage();
+    }
+  }
+
+  Future<void> _prefillCentralMileage() async {
+    final vehicle = _selectedVehicle;
+    if (vehicle == null) return;
+    try {
+      final mileage = await _centralDailyInspectionService.latestMileage(
+        vehicle,
+      );
+      if (!mounted ||
+          mileage == null ||
+          mileage <= 0 ||
+          mileageController.text.trim().isNotEmpty) {
+        return;
+      }
+      setState(() => mileageController.text = mileage.toString());
+    } catch (_) {
+      // A missing historic reading must not block today's walk-round.
+    }
   }
 
   @override
@@ -80,45 +99,25 @@ class _InspectionScreenState
     super.dispose();
   }
 
-  int get completedChecks =>
-      inspectionItems
-          .where(
-            (item) =>
-                item.status !=
-                InspectionStatus.notApplicable,
-          )
-          .length;
+  int get completedChecks => inspectionItems
+      .where((item) => item.status != InspectionStatus.notApplicable)
+      .length;
 
-  int get defectCount =>
-      inspectionItems
-          .where(
-            (item) =>
-                item.status ==
-                InspectionStatus.fail,
-          )
-          .length;
+  int get defectCount => inspectionItems
+      .where((item) => item.status == InspectionStatus.fail)
+      .length;
 
-  List<InspectionItem> byCategory(
-    String category,
-  ) {
-    return inspectionItems.where(
-      (item) => item.category == category,
-    ).toList();
+  List<InspectionItem> byCategory(String category) {
+    return inspectionItems.where((item) => item.category == category).toList();
   }
 
-  void updateStatus(
-    InspectionItem item,
-    InspectionStatus status,
-  ) {
+  void updateStatus(InspectionItem item, InspectionStatus status) {
     setState(() {
       item.status = status;
     });
   }
 
-  void updateNotes(
-    InspectionItem item,
-    String notes,
-  ) {
+  void updateNotes(InspectionItem item, String notes) {
     item.notes = notes;
   }
 
@@ -126,14 +125,20 @@ class _InspectionScreenState
     if (_isSaving) return;
 
     final isDriverDailyInspection = PermissionService.instance.isDriver;
+    final isCentral = BackendModeConfig.current == BackendMode.supabase;
     final driverId = AuthService.instance.currentDriverId;
+    final centralDriverId = AuthService.instance.currentBackendDriverId;
     final vehicle = _selectedVehicle;
-    final driverName = AuthService.instance.currentUser?.username ??
+    final driverName =
+        AuthService.instance.currentUser?.username ??
         widget.assignedDriverName ??
         '';
+    final hasDriverIdentity = isCentral
+        ? centralDriverId != null
+        : driverId != null;
 
     if (isDriverDailyInspection &&
-        (driverId == null || vehicle == null || driverName.trim().isEmpty)) {
+        (!hasDriverIdentity || vehicle == null || driverName.trim().isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -144,49 +149,45 @@ class _InspectionScreenState
       return;
     }
 
+    inspection.vehicleId = _selectedVehicle?.id;
 
-    inspection.vehicleId =
-        _selectedVehicle?.id;
+    inspection.registration = _selectedVehicle?.registration ?? '';
 
-    inspection.registration =
-        _selectedVehicle?.registration ?? '';
+    inspection.driver = isDriverDailyInspection
+        ? driverName.trim()
+        : driverController.text.trim();
 
-    inspection.driver =
-        driverController.text.trim();
-
-    inspection.mileage =
-        int.tryParse(
-              mileageController.text.trim(),
-            ) ??
-            0;
+    inspection.mileage = int.tryParse(mileageController.text.trim()) ?? 0;
 
     inspection.fuelLevel = _fuelLevel;
 
-    inspection.comments =
-        commentsController.text.trim();
+    inspection.comments = commentsController.text.trim();
 
     inspection.status = 'Completed';
 
-    inspection.overallResult =
-        defectCount == 0
-            ? 'Pass'
-            : 'Fail';
+    inspection.overallResult = defectCount == 0 ? 'Pass' : 'Fail';
 
-    if (!_inspectionService
-        .validateInspection(
-      inspection,
-    )) {
+    if (inspection.mileage <= 0) {
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Please complete Driver, Vehicle and Odometer.',
-          ),
+          content: Text('Please enter the current odometer reading.'),
         ),
       );
+      return;
+    }
 
+    // Central Driver inspections use UUID vehicle identity and are validated by
+    // the authenticated RPC. The legacy validator requires a SQLite vehicleId,
+    // which is intentionally null for central vehicles.
+    if (!(isDriverDailyInspection && isCentral) &&
+        !_inspectionService.validateInspection(inspection)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please complete Driver, Vehicle and Odometer.'),
+        ),
+      );
       return;
     }
 
@@ -195,19 +196,33 @@ class _InspectionScreenState
     });
 
     try {
-      int? workshopInspectionId;
+      Object? workshopInspectionId;
       if (isDriverDailyInspection) {
-        if (driverId == null || vehicle == null) {
+        if (vehicle == null) {
           throw StateError('Assigned Driver and vehicle are required.');
         }
 
-        workshopInspectionId = await _workshopSaveService.save(
-          inspection: inspection,
-          items: inspectionItems,
-          driverId: driverId,
-          driverName: driverName,
-          vehicle: vehicle,
-        );
+        if (isCentral) {
+          if (centralDriverId == null) {
+            throw StateError('A linked central Driver account is required.');
+          }
+          workshopInspectionId = await _centralDailyInspectionService.save(
+            inspection: inspection,
+            items: inspectionItems,
+            vehicle: vehicle,
+          );
+        } else {
+          if (driverId == null) {
+            throw StateError('Assigned Driver and vehicle are required.');
+          }
+          workshopInspectionId = await _workshopSaveService.save(
+            inspection: inspection,
+            items: inspectionItems,
+            driverId: driverId,
+            driverName: driverName,
+            vehicle: vehicle,
+          );
+        }
       } else {
         await _inspectionService.saveInspectionWithResults(
           inspection,
@@ -217,8 +232,7 @@ class _InspectionScreenState
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             isDriverDailyInspection
@@ -233,12 +247,16 @@ class _InspectionScreenState
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      final driverMessage = e is CentralDriverDailyInspectionSaveException
+          ? 'Daily inspection save error: ${e.diagnosticMessage}'
+          : 'Daily inspection save error: $e';
+
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
+          duration: const Duration(seconds: 15),
+          content: SelectableText(
             isDriverDailyInspection
-                ? 'Unable to save the daily inspection. Please try again.'
+                ? driverMessage
                 : 'Failed to save inspection\n$e',
           ),
         ),
@@ -251,14 +269,19 @@ class _InspectionScreenState
       }
     }
   }
-    @override
+
+  @override
   Widget build(BuildContext context) {
     final permissions = PermissionService.instance;
     final driverNeedsLockedInspection = permissions.isDriver;
 
+    final hasDriverIdentity = BackendModeConfig.current == BackendMode.supabase
+        ? AuthService.instance.currentBackendDriverId != null
+        : AuthService.instance.currentDriverId != null;
+
     if (driverNeedsLockedInspection &&
         (!permissions.canPerformDailyInspection ||
-            AuthService.instance.currentDriverId == null ||
+            !hasDriverIdentity ||
             widget.assignedVehicle == null ||
             widget.assignedDriverName == null)) {
       return Scaffold(
@@ -283,7 +306,6 @@ class _InspectionScreenState
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-
           /// Header
           InspectionHeader(
             inspectionNumber: inspection.inspectionNumber,
@@ -360,8 +382,7 @@ class _InspectionScreenState
             maxLines: 5,
             decoration: const InputDecoration(
               labelText: 'General Comments',
-              hintText:
-                  'Enter any additional observations...',
+              hintText: 'Enter any additional observations...',
               border: OutlineInputBorder(),
               alignLabelWithHint: true,
             ),
@@ -379,10 +400,7 @@ class _InspectionScreenState
           const SizedBox(height: 30),
 
           /// Save Inspection
-          SaveButton(
-            onSave: saveInspection,
-            isSaving: _isSaving,
-          ),
+          SaveButton(onSave: saveInspection, isSaving: _isSaving),
 
           const SizedBox(height: 40),
         ],

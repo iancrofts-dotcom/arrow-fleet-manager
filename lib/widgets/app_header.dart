@@ -6,32 +6,21 @@ class AppHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
 
-  const AppHeader({
-    super.key,
-    required this.title,
-    this.subtitle,
-  });
+  const AppHeader({super.key, required this.title, this.subtitle});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(
-          AppConstants.borderRadius,
-        ),
+        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
       ),
       child: Container(
         padding: const EdgeInsets.all(AppConstants.padding),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(
-            AppConstants.borderRadius,
-          ),
+          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
           gradient: const LinearGradient(
-            colors: [
-              AppConstants.primaryColor,
-              Color(0xFF005A9C),
-            ],
+            colors: [AppConstants.primaryColor, Color(0xFF005A9C)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -79,10 +68,7 @@ class AppHeader extends StatelessWidget {
             ),
 
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: AppConstants.secondaryColor,
                 borderRadius: BorderRadius.circular(20),

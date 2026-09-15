@@ -1,15 +1,15 @@
 import 'dart:collection';
 
-/// The condition of a single required fleet-compliance check.
 enum FleetComplianceStatus { valid, dueSoon, expired, notRecorded }
 
-/// The persisted entity that owns a compliance check.
 enum FleetComplianceSubjectType { vehicle, driver }
 
-/// The required checks included in the fleet-wide compliance percentage.
 enum FleetComplianceCheckType {
   mot,
+  psvMot,
   service,
+  psvGarageCheck,
+  taxiSafetyCheck,
   licence,
   cpc,
   medical,
@@ -18,10 +18,6 @@ enum FleetComplianceCheckType {
   taxiPlate,
 }
 
-/// A non-compliant or soon-to-be-non-compliant persisted check.
-///
-/// [subjectId] is the persisted Vehicle or Driver ID used for future routing;
-/// presentation text is intentionally not used as an identifier.
 class FleetComplianceAttentionItem {
   const FleetComplianceAttentionItem({
     required this.subjectType,
@@ -31,6 +27,7 @@ class FleetComplianceAttentionItem {
     required this.date,
     required this.subjectDisplay,
     this.secondaryDisplay,
+    this.centralSubjectId,
   });
 
   final FleetComplianceSubjectType subjectType;
@@ -40,13 +37,9 @@ class FleetComplianceAttentionItem {
   final DateTime? date;
   final String subjectDisplay;
   final String? secondaryDisplay;
+  final String? centralSubjectId;
 }
 
-/// Immutable, Dashboard-compatible fleet compliance data for presentation.
-///
-/// [compliantChecks] counts valid and due-soon required checks. The status
-/// counts partition [totalChecks], while vehicle and driver check counts
-/// partition the same total.
 class FleetComplianceSummary {
   FleetComplianceSummary({
     required this.compliancePercentage,
@@ -59,7 +52,9 @@ class FleetComplianceSummary {
     required this.vehicleCheckCount,
     required this.driverCheckCount,
     required List<FleetComplianceAttentionItem> attentionItems,
-  }) : attentionItems = UnmodifiableListView(attentionItems) {
+    List<FleetComplianceAttentionItem>? allItems,
+  }) : attentionItems = UnmodifiableListView(attentionItems),
+       allItems = UnmodifiableListView(allItems ?? attentionItems) {
     assert(
       validCount + dueSoonCount + expiredCount + notRecordedCount ==
           totalChecks,
@@ -77,4 +72,7 @@ class FleetComplianceSummary {
   final int vehicleCheckCount;
   final int driverCheckCount;
   final UnmodifiableListView<FleetComplianceAttentionItem> attentionItems;
+
+  /// Full fleet compliance register, including valid records.
+  final UnmodifiableListView<FleetComplianceAttentionItem> allItems;
 }

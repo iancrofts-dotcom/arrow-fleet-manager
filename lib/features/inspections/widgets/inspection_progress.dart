@@ -19,16 +19,12 @@ class InspectionProgress extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
                   "Inspection Progress",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
 
                 Text("$completed / $total"),

@@ -24,12 +24,8 @@ class DriverStatusSection extends StatelessWidget {
           Row(
             children: [
               Icon(
-                isActive
-                    ? Icons.check_circle
-                    : Icons.cancel,
-                color: isActive
-                    ? Colors.green
-                    : Colors.red,
+                isActive ? Icons.check_circle : Icons.cancel,
+                color: isActive ? Colors.green : Colors.red,
               ),
               const SizedBox(width: 12),
               Expanded(

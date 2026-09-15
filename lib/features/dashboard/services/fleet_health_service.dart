@@ -29,17 +29,14 @@ class FleetHealthService {
       status = FleetHealthStatus.critical;
     }
 
-    final critical =
-        summary.maintenanceOverdue +
-        summary.complianceExpired;
+    final critical = summary.maintenanceOverdue + summary.complianceExpired;
 
-    final warning =
-        summary.maintenanceDue +
-        summary.complianceDue;
+    final warning = summary.maintenanceDue + summary.complianceDue;
 
-    final healthy =
-        (summary.vehicleCount - critical - warning)
-            .clamp(0, summary.vehicleCount);
+    final healthy = (summary.vehicleCount - critical - warning).clamp(
+      0,
+      summary.vehicleCount,
+    );
 
     return FleetHealth(
       score: score,

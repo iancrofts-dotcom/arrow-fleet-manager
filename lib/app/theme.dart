@@ -3,15 +3,16 @@ import 'constants.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: AppConstants.primaryColor,
-      brightness: Brightness.light,
-    ).copyWith(
-      primary: AppConstants.arrowBlue,
-      secondary: AppConstants.brandNavy,
-      surface: AppConstants.surfaceColor,
-      error: AppConstants.dangerColor,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: AppConstants.primaryColor,
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: AppConstants.arrowBlue,
+          secondary: AppConstants.brandNavy,
+          surface: AppConstants.surfaceColor,
+          error: AppConstants.dangerColor,
+        );
     final typography = Typography.material2021().black;
 
     return ThemeData(

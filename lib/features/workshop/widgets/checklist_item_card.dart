@@ -6,11 +6,7 @@ class ChecklistItemCard extends StatefulWidget {
   final InspectionChecklistItem item;
   final ValueChanged<InspectionChecklistItem>? onChanged;
 
-  const ChecklistItemCard({
-    super.key,
-    required this.item,
-    this.onChanged,
-  });
+  const ChecklistItemCard({super.key, required this.item, this.onChanged});
 
   @override
   State<ChecklistItemCard> createState() => _ChecklistItemCardState();
@@ -89,8 +85,8 @@ class _ChecklistItemCardState extends State<ChecklistItemCard> {
                     Text(
                       widget.item.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     if (widget.item.description?.isNotEmpty ?? false)
                       Padding(

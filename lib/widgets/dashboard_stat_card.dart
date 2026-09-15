@@ -25,10 +25,7 @@ class DashboardStatCard extends StatelessWidget {
             CircleAvatar(
               radius: 24,
               backgroundColor: color.withValues(alpha: 0.15),
-              child: Icon(
-                icon,
-                color: color,
-              ),
+              child: Icon(icon, color: color),
             ),
 
             const SizedBox(width: 16),
@@ -37,10 +34,7 @@ class DashboardStatCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                  Text(title, style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(height: 4),
                   Text(
                     value,

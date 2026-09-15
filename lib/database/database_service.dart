@@ -1,7 +1,8 @@
 import 'app_database.dart';
 
 class DatabaseService {
-  DatabaseService({AppDatabase? database}) : _database = database ?? AppDatabase();
+  DatabaseService({AppDatabase? database})
+    : _database = database ?? AppDatabase();
 
   final AppDatabase _database;
 

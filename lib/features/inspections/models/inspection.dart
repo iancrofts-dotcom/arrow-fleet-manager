@@ -89,19 +89,15 @@ class Inspection {
   }) {
     return Inspection(
       id: id ?? this.id,
-      inspectionNumber:
-          inspectionNumber ?? this.inspectionNumber,
-      inspectionDate:
-          inspectionDate ?? this.inspectionDate,
+      inspectionNumber: inspectionNumber ?? this.inspectionNumber,
+      inspectionDate: inspectionDate ?? this.inspectionDate,
       vehicleId: vehicleId ?? this.vehicleId,
-      registration:
-          registration ?? this.registration,
+      registration: registration ?? this.registration,
       driver: driver ?? this.driver,
       mileage: mileage ?? this.mileage,
       fuelLevel: fuelLevel ?? this.fuelLevel,
       comments: comments ?? this.comments,
-      overallResult:
-          overallResult ?? this.overallResult,
+      overallResult: overallResult ?? this.overallResult,
       status: status ?? this.status,
     );
   }

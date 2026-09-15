@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
 class DeleteUserDialog extends StatelessWidget {
-  const DeleteUserDialog({
-    super.key,
-    required this.username,
-  });
+  const DeleteUserDialog({super.key, required this.username});
 
   final String username;
 
@@ -27,9 +24,7 @@ class DeleteUserDialog extends StatelessWidget {
           child: const Text('Cancel'),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: Colors.red,
-          ),
+          style: FilledButton.styleFrom(backgroundColor: Colors.red),
           onPressed: () => Navigator.pop(context, true),
           child: const Text('Delete'),
         ),

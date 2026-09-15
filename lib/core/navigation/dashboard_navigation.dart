@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import '../../features/drivers/screens/driver_list_screen.dart';
 import '../../features/auth/services/permission_service.dart';
 import '../../features/auth/widgets/protected_screen.dart';
-import '../../features/compliance/screens/compliance_centre_screen.dart';
 import '../../features/documents/screens/document_list_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
 import '../../features/vehicles/models/vehicle_filter.dart';
 import '../../features/vehicles/screens/vehicle_list_screen.dart';
-import '../../features/workshop/screens/workshop_dashboard_screen.dart';
 
 /// Central navigation service for the Dashboard.
 ///
@@ -71,14 +69,7 @@ class DashboardNavigation {
   }
 
   static Future<void> openWorkshop(BuildContext context) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProtectedScreen(
-          allow: (permissions) => permissions.canAccessWorkshop,
-          child: const WorkshopDashboardScreen(),
-        ),
-      ),
-    );
+    await Navigator.pushNamed(context, '/workshop');
   }
 
   static Future<void> openDocuments(BuildContext context) async {
@@ -103,7 +94,11 @@ class DashboardNavigation {
       case '/reports':
         return permissions.canViewReports;
       case '/compliance':
+      case '/driver-compliance':
         return permissions.canViewCompliance;
+      case '/maintenance':
+      case '/workshop':
+        return permissions.canAccessWorkshop;
       case '/documents':
         return permissions.canViewVehicles;
       default:
@@ -119,21 +114,20 @@ class DashboardNavigation {
     switch (route) {
       case '/vehicles':
         return openFleet(context);
-
       case '/drivers':
         return openDrivers(context);
-
+      case '/maintenance':
+      case '/workshop':
+        return openWorkshop(context);
+      case '/compliance':
+      case '/driver-compliance':
+        return openCompliance(context);
       case '/reports':
         return openReports(context);
-
-      case '/compliance':
-        return openCompliance(context);
-
       case '/documents':
         return openDocuments(context);
-
       default:
-        debugPrint('DashboardNavigation: Unknown route: $route');
+        return;
     }
   }
 
@@ -168,13 +162,6 @@ class DashboardNavigation {
   }
 
   static Future<void> openCompliance(BuildContext context) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProtectedScreen(
-          allow: (permissions) => permissions.canViewCompliance,
-          child: const ComplianceCentreScreen(),
-        ),
-      ),
-    );
+    await Navigator.pushNamed(context, '/compliance');
   }
 }

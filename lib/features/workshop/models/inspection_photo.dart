@@ -26,8 +26,7 @@ class InspectionPhoto {
     return InspectionPhoto(
       id: id ?? this.id,
       inspectionId: inspectionId ?? this.inspectionId,
-      inspectionItemId:
-          inspectionItemId ?? this.inspectionItemId,
+      inspectionItemId: inspectionItemId ?? this.inspectionItemId,
       filePath: filePath ?? this.filePath,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -43,25 +42,18 @@ class InspectionPhoto {
     };
   }
 
-  factory InspectionPhoto.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory InspectionPhoto.fromMap(Map<String, dynamic> map) {
     return InspectionPhoto(
       id: map['id'] as int?,
       inspectionId: map['inspectionId'] as int,
-      inspectionItemId:
-          map['inspectionItemId'] as int,
+      inspectionItemId: map['inspectionItemId'] as int,
       filePath: map['filePath'] as String,
-      createdAt: DateTime.parse(
-        map['createdAt'] as String,
-      ),
+      createdAt: DateTime.parse(map['createdAt'] as String),
     );
   }
 
   String toJson() => jsonEncode(toMap());
 
   factory InspectionPhoto.fromJson(String source) =>
-      InspectionPhoto.fromMap(
-        jsonDecode(source) as Map<String, dynamic>,
-      );
+      InspectionPhoto.fromMap(jsonDecode(source) as Map<String, dynamic>);
 }

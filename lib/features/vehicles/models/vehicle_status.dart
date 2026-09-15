@@ -1,10 +1,4 @@
-enum VehicleStatus {
-  active,
-  workshop,
- offRoad,
-  sold,
-  disposed,
-}
+enum VehicleStatus { active, workshop, offRoad, sold, disposed }
 
 extension VehicleStatusExtension on VehicleStatus {
   String get label {

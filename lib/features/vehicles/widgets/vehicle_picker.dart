@@ -25,9 +25,7 @@ class VehiclePicker extends StatelessWidget {
       items: vehicles.map((vehicle) {
         return DropdownMenuItem<Vehicle>(
           value: vehicle,
-          child: Text(
-            '${vehicle.fleetNumber} • ${vehicle.registration}',
-          ),
+          child: Text('${vehicle.fleetNumber} • ${vehicle.registration}'),
         );
       }).toList(),
       onChanged: onChanged,

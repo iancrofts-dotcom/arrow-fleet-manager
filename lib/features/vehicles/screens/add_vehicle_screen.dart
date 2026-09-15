@@ -6,6 +6,7 @@ import '../../../shared/widgets/form_section.dart';
 
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
+import '../widgets/vehicle_safety_schedule_fields.dart';
 
 class AddVehicleScreen extends StatefulWidget {
   const AddVehicleScreen({super.key, this.vehicleService});
@@ -43,6 +44,15 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   DateTime? serviceDue;
   DateTime? taxiPlateIssueDate;
   DateTime? taxiPlateExpiry;
+  String motType = 'standard';
+  bool psvGarageCheckEnabled = false;
+  int psvGarageCheckIntervalWeeks = 6;
+  DateTime? psvGarageCheckLastDate;
+  DateTime? psvGarageCheckDue;
+  bool taxiSafetyCheckEnabled = false;
+  int taxiSafetyCheckIntervalWeeks = 6;
+  DateTime? taxiSafetyCheckLastDate;
+  DateTime? taxiSafetyCheckDue;
 
   @override
   void initState() {
@@ -111,6 +121,15 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             : taxiAuthorityController.text.trim(),
         taxiPlateIssueDate: taxiPlateIssueDate,
         taxiPlateExpiry: taxiPlateExpiry,
+        motType: motType,
+        psvGarageCheckEnabled: psvGarageCheckEnabled,
+        psvGarageCheckIntervalWeeks: psvGarageCheckIntervalWeeks,
+        psvGarageCheckLastDate: psvGarageCheckLastDate,
+        psvGarageCheckDue: psvGarageCheckDue,
+        taxiSafetyCheckEnabled: taxiSafetyCheckEnabled,
+        taxiSafetyCheckIntervalWeeks: taxiSafetyCheckIntervalWeeks,
+        taxiSafetyCheckLastDate: taxiSafetyCheckLastDate,
+        taxiSafetyCheckDue: taxiSafetyCheckDue,
       );
 
       final savedVehicle = await _vehicleService.addVehicle(vehicle);
@@ -262,6 +281,79 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                       label: Text(
                         'Taxi Plate Expiry: ${formatDate(taxiPlateExpiry)}',
                       ),
+                    ),
+                  ],
+                ),
+              ),
+
+              FormSection(
+                title: 'MOT classification',
+                subtitle:
+                    'Choose the statutory MOT type used for this vehicle.',
+                child: DropdownButtonFormField<String>(
+                  initialValue: motType,
+                  decoration: decoration('MOT Type'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'standard',
+                      child: Text('Standard MOT'),
+                    ),
+                    DropdownMenuItem(value: 'psv', child: Text('PSV MOT')),
+                  ],
+                  onChanged: _saving
+                      ? null
+                      : (value) => setState(() {
+                          motType = value ?? 'standard';
+                        }),
+                ),
+              ),
+
+              FormSection(
+                title: 'Safety & inspection schedule',
+                subtitle:
+                    'Optional 5/6-week recurring PSV and Taxi safety checks.',
+                child: Column(
+                  children: [
+                    VehicleSafetyScheduleFields(
+                      title: 'PSV Garage Check',
+                      enabled: psvGarageCheckEnabled,
+                      intervalWeeks: psvGarageCheckIntervalWeeks,
+                      lastCompleted: psvGarageCheckLastDate,
+                      nextDue: psvGarageCheckDue,
+                      disabled: _saving,
+                      onEnabledChanged: (value) => setState(() {
+                        psvGarageCheckEnabled = value;
+                      }),
+                      onIntervalChanged: (value) => setState(() {
+                        psvGarageCheckIntervalWeeks = value;
+                      }),
+                      onLastCompletedChanged: (value) => setState(() {
+                        psvGarageCheckLastDate = value;
+                      }),
+                      onNextDueChanged: (value) => setState(() {
+                        psvGarageCheckDue = value;
+                      }),
+                    ),
+                    const Divider(height: 32),
+                    VehicleSafetyScheduleFields(
+                      title: 'Taxi Safety Check',
+                      enabled: taxiSafetyCheckEnabled,
+                      intervalWeeks: taxiSafetyCheckIntervalWeeks,
+                      lastCompleted: taxiSafetyCheckLastDate,
+                      nextDue: taxiSafetyCheckDue,
+                      disabled: _saving,
+                      onEnabledChanged: (value) => setState(() {
+                        taxiSafetyCheckEnabled = value;
+                      }),
+                      onIntervalChanged: (value) => setState(() {
+                        taxiSafetyCheckIntervalWeeks = value;
+                      }),
+                      onLastCompletedChanged: (value) => setState(() {
+                        taxiSafetyCheckLastDate = value;
+                      }),
+                      onNextDueChanged: (value) => setState(() {
+                        taxiSafetyCheckDue = value;
+                      }),
                     ),
                   ],
                 ),

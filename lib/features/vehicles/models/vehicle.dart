@@ -19,6 +19,15 @@ class Vehicle {
   String? taxiLicensingAuthority;
   DateTime? taxiPlateIssueDate;
   DateTime? taxiPlateExpiry;
+  String motType;
+  bool psvGarageCheckEnabled;
+  int psvGarageCheckIntervalWeeks;
+  DateTime? psvGarageCheckLastDate;
+  DateTime? psvGarageCheckDue;
+  bool taxiSafetyCheckEnabled;
+  int taxiSafetyCheckIntervalWeeks;
+  DateTime? taxiSafetyCheckLastDate;
+  DateTime? taxiSafetyCheckDue;
 
   bool active;
 
@@ -37,6 +46,15 @@ class Vehicle {
     this.taxiLicensingAuthority,
     this.taxiPlateIssueDate,
     this.taxiPlateExpiry,
+    this.motType = 'standard',
+    this.psvGarageCheckEnabled = false,
+    this.psvGarageCheckIntervalWeeks = 6,
+    this.psvGarageCheckLastDate,
+    this.psvGarageCheckDue,
+    this.taxiSafetyCheckEnabled = false,
+    this.taxiSafetyCheckIntervalWeeks = 6,
+    this.taxiSafetyCheckLastDate,
+    this.taxiSafetyCheckDue,
     this.active = true,
   }) : id = id,
        identity = _resolveIdentity(id, identity);
@@ -103,6 +121,25 @@ class Vehicle {
       taxiPlateExpiry: map['taxiPlateExpiry'] == null
           ? null
           : DateTime.parse(map['taxiPlateExpiry']),
+      motType: map['motType'] as String? ?? 'standard',
+      psvGarageCheckEnabled: (map['psvGarageCheckEnabled'] ?? 0) == 1,
+      psvGarageCheckIntervalWeeks:
+          (map['psvGarageCheckIntervalWeeks'] as num?)?.toInt() ?? 6,
+      psvGarageCheckLastDate: map['psvGarageCheckLastDate'] == null
+          ? null
+          : DateTime.parse(map['psvGarageCheckLastDate']),
+      psvGarageCheckDue: map['psvGarageCheckDue'] == null
+          ? null
+          : DateTime.parse(map['psvGarageCheckDue']),
+      taxiSafetyCheckEnabled: (map['taxiSafetyCheckEnabled'] ?? 0) == 1,
+      taxiSafetyCheckIntervalWeeks:
+          (map['taxiSafetyCheckIntervalWeeks'] as num?)?.toInt() ?? 6,
+      taxiSafetyCheckLastDate: map['taxiSafetyCheckLastDate'] == null
+          ? null
+          : DateTime.parse(map['taxiSafetyCheckLastDate']),
+      taxiSafetyCheckDue: map['taxiSafetyCheckDue'] == null
+          ? null
+          : DateTime.parse(map['taxiSafetyCheckDue']),
       active: (map['active'] ?? 1) == 1,
     );
   }

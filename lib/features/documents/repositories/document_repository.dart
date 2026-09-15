@@ -17,14 +17,10 @@ class DocumentRepository {
       orderBy: 'expiryDate ASC',
     );
 
-    return result
-        .map(FleetDocument.fromMap)
-        .toList();
+    return result.map(FleetDocument.fromMap).toList();
   }
 
-  Future<List<FleetDocument>> getByVehicle(
-    int vehicleId,
-  ) async {
+  Future<List<FleetDocument>> getByVehicle(int vehicleId) async {
     final db = await _database.database();
 
     final result = await db.query(
@@ -34,14 +30,10 @@ class DocumentRepository {
       orderBy: 'expiryDate ASC',
     );
 
-    return result
-        .map(FleetDocument.fromMap)
-        .toList();
+    return result.map(FleetDocument.fromMap).toList();
   }
 
-  Future<List<FleetDocument>> getByDriver(
-    int driverId,
-  ) async {
+  Future<List<FleetDocument>> getByDriver(int driverId) async {
     final db = await _database.database();
 
     final result = await db.query(
@@ -51,20 +43,13 @@ class DocumentRepository {
       orderBy: 'expiryDate ASC',
     );
 
-    return result
-        .map(FleetDocument.fromMap)
-        .toList();
+    return result.map(FleetDocument.fromMap).toList();
   }
 
-  Future<int> insert(
-    FleetDocument document,
-  ) async {
+  Future<int> insert(FleetDocument document) async {
     final db = await _database.database();
 
-    return db.insert(
-      tableName,
-      document.toMap(),
-    );
+    return db.insert(tableName, document.toMap());
   }
 
   Future<FleetDocument?> getCurrentComplianceDocument(
@@ -124,12 +109,14 @@ class DocumentRepository {
 
   /// Inserts replacement evidence before archiving the former current row.
   /// Callers must copy the file successfully before invoking this method.
-  Future<int> replaceCurrentComplianceDocument(
-    FleetDocument document,
-  ) async {
+  Future<int> replaceCurrentComplianceDocument(FleetDocument document) async {
     final driverId = document.driverId;
     if (driverId == null) {
-      throw ArgumentError.value(document, 'document', 'Compliance evidence requires a driver ID.');
+      throw ArgumentError.value(
+        document,
+        'document',
+        'Compliance evidence requires a driver ID.',
+      );
     }
     final db = await _database.database();
     return db.transaction((txn) async {
@@ -148,9 +135,7 @@ class DocumentRepository {
     });
   }
 
-  Future<void> update(
-    FleetDocument document,
-  ) async {
+  Future<void> update(FleetDocument document) async {
     final db = await _database.database();
 
     await db.update(
@@ -161,21 +146,13 @@ class DocumentRepository {
     );
   }
 
-  Future<void> delete(
-    int id,
-  ) async {
+  Future<void> delete(int id) async {
     final db = await _database.database();
 
-    await db.delete(
-      tableName,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<void> save(
-    FleetDocument document,
-  ) async {
+  Future<void> save(FleetDocument document) async {
     if (document.id == null) {
       await insert(document);
     } else {

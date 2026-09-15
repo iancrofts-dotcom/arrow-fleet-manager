@@ -13,10 +13,13 @@ import '../../drivers/screens/assign_driver_screen.dart';
 import '../../drivers/screens/assignment_history_screen.dart';
 import '../../documents/models/fleet_document.dart';
 import '../../documents/screens/edit_document_screen.dart';
+import '../../documents/screens/central_document_list_screen.dart';
 import '../../documents/services/document_service.dart';
 
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
+import '../widgets/central_vehicle_assignments_section.dart';
+import 'central_vehicle_history_screen.dart';
 import 'edit_vehicle_screen.dart';
 
 class VehicleDetailsScreen extends StatefulWidget {
@@ -319,7 +322,7 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                     leading: const Icon(Icons.description_outlined),
                     title: Text(document.title),
                     subtitle: Text(
-                      '${document.category.name} • ${_documentService.status(document.expiryDate)}',
+                      '${document.category.name} â€¢ ${_documentService.status(document.expiryDate)}',
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -378,7 +381,9 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
 
     return AppPageScaffold(
       title: 'Vehicle Details',
-      subtitle: '${_vehicle.registration} • ${_vehicle.fleetNumber}',
+      subtitle: _vehicle.fleetNumber.trim().isEmpty
+          ? _vehicle.registration
+          : '${_vehicle.registration} • ${_vehicle.fleetNumber}',
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -405,7 +410,9 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   Text(
-                    _vehicle.fleetNumber,
+                    _vehicle.fleetNumber.trim().isEmpty
+                        ? 'Fleet number not recorded'
+                        : _vehicle.fleetNumber,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 12),
@@ -568,14 +575,57 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
 
           if (_isLocalVehicle) _documentsSection(context),
 
-          if (!_isLocalVehicle)
-            const SectionCard(
+          if (!_isLocalVehicle && _vehicle.identity != null) ...[
+            CentralVehicleAssignmentsSection(
+              vehicleIdentity: _vehicle.identity!,
+            ),
+            const SizedBox(height: 12),
+            SectionCard(
               title: 'Related records',
-              child: Text(
-                'Assignments, documents, maintenance and workshop history '
-                'will be available after their central migration.',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.folder_shared_outlined),
+                    title: const Text('Vehicle Documents'),
+                    subtitle: const Text(
+                      'Upload and view central documents linked to fleet vehicles.',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => CentralDocumentListScreen(
+                          initialFilter: 'Vehicle',
+                          entityType: 'vehicle',
+                          entityId: _vehicle.identity!.centralIdOrNull,
+                          ownerLabel: _vehicle.registration,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Divider(),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.history_outlined),
+                    title: const Text('Maintenance & Workshop History'),
+                    subtitle: const Text(
+                      'View central inspections, scheduled-service activity and repair jobs.',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).push<void>(
+                      MaterialPageRoute(
+                        builder: (_) => CentralVehicleHistoryScreen(
+                          vehicleId: _vehicle.identity!.centralIdOrNull!,
+                          registration: _vehicle.registration,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ],
 
           const SizedBox(height: 20),
 

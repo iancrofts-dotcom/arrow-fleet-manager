@@ -93,16 +93,10 @@ class DriverDailyWorkshopSaveService {
 
     final db = await _database.database();
     return db.transaction((txn) async {
-      final existingLegacyInspection =
-          await _legacyInspectionService.getInspectionByNumber(
-        inspection.inspectionNumber,
-        executor: txn,
-      );
-      final existingWorkshopInspection =
-          await _workshopRepository.getInspectionByNumber(
-        inspection.inspectionNumber,
-        executor: txn,
-      );
+      final existingLegacyInspection = await _legacyInspectionService
+          .getInspectionByNumber(inspection.inspectionNumber, executor: txn);
+      final existingWorkshopInspection = await _workshopRepository
+          .getInspectionByNumber(inspection.inspectionNumber, executor: txn);
 
       if (existingLegacyInspection != null &&
           existingWorkshopInspection != null) {
@@ -134,10 +128,7 @@ class DriverDailyWorkshopSaveService {
         inspectionId: workshopInspectionId,
         items: workshopChecklistItems,
       );
-      await _workshopRepository.addInspectionItems(
-        savedItems,
-        executor: txn,
-      );
+      await _workshopRepository.addInspectionItems(savedItems, executor: txn);
 
       final generatedJobs = _repairJobGenerator.generate(
         inspectionId: workshopInspectionId,
@@ -150,14 +141,18 @@ class DriverDailyWorkshopSaveService {
         executor: txn,
       );
       if (persistedItems.length != workshopChecklistItems.length) {
-        throw StateError('Workshop inspection items were not saved completely.');
+        throw StateError(
+          'Workshop inspection items were not saved completely.',
+        );
       }
 
       final photos = <InspectionPhoto>[];
       for (var index = 0; index < workshopChecklistItems.length; index++) {
         final inspectionItemId = persistedItems[index].id;
         if (inspectionItemId == null) {
-          throw StateError('Saved workshop inspection item has no database ID.');
+          throw StateError(
+            'Saved workshop inspection item has no database ID.',
+          );
         }
 
         for (final filePath in workshopChecklistItems[index].photos) {
@@ -177,7 +172,9 @@ class DriverDailyWorkshopSaveService {
       for (var index = 0; index < generatedJobs.length; index++) {
         final inspectionItemId = persistedItems[repairSourceIndexes[index]].id;
         if (inspectionItemId == null) {
-          throw StateError('Saved workshop inspection item has no database ID.');
+          throw StateError(
+            'Saved workshop inspection item has no database ID.',
+          );
         }
         await _workshopRepository.createRepairJob(
           generatedJobs[index].copyWith(inspectionItemId: inspectionItemId),

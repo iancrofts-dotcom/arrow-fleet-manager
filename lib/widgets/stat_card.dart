@@ -21,9 +21,7 @@ class StatCard extends StatelessWidget {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(
-          AppConstants.borderRadius,
-        ),
+        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.padding),
@@ -33,21 +31,14 @@ class StatCard extends StatelessWidget {
             CircleAvatar(
               radius: 28,
               backgroundColor: color.withValues(alpha: 0.12),
-              child: Icon(
-                icon,
-                color: color,
-                size: 30,
-              ),
+              child: Icon(icon, color: color, size: 30),
             ),
 
             const SizedBox(height: 16),
 
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 8),
@@ -55,9 +46,7 @@ class StatCard extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 15,
-              ),
+              style: const TextStyle(fontSize: 15),
             ),
           ],
         ),

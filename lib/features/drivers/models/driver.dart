@@ -1,6 +1,9 @@
+import 'driver_identity.dart';
+
 class Driver {
   const Driver({
     this.id,
+    this.identity,
     required this.firstName,
     required this.lastName,
     required this.licenceNumber,
@@ -12,6 +15,7 @@ class Driver {
   });
 
   final int? id;
+  final DriverIdentity? identity;
 
   final String firstName;
   final String lastName;
@@ -32,6 +36,7 @@ class Driver {
 
   Driver copyWith({
     int? id,
+    DriverIdentity? identity,
     String? firstName,
     String? lastName,
     String? licenceNumber,
@@ -43,6 +48,7 @@ class Driver {
   }) {
     return Driver(
       id: id ?? this.id,
+      identity: identity ?? this.identity,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       licenceNumber: licenceNumber ?? this.licenceNumber,
@@ -55,6 +61,11 @@ class Driver {
   }
 
   Map<String, dynamic> toMap() {
+    if (identity?.centralIdOrNull != null) {
+      throw UnsupportedError(
+        'A central driver cannot be serialized for SQLite persistence.',
+      );
+    }
     return {
       'id': id,
       'first_name': firstName,
@@ -75,9 +86,7 @@ class Driver {
       lastName: map['last_name'] as String,
       licenceNumber: map['licence_number'] as String,
       licenceExpiry: map['licence_expiry'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(
-              map['licence_expiry'] as int,
-            )
+          ? DateTime.fromMillisecondsSinceEpoch(map['licence_expiry'] as int)
           : null,
       phone: map['phone'] as String?,
       email: map['email'] as String?,
@@ -90,6 +99,7 @@ class Driver {
   String toString() {
     return 'Driver('
         'id: $id, '
+        'identity: $identity, '
         'firstName: $firstName, '
         'lastName: $lastName, '
         'licenceNumber: $licenceNumber, '
@@ -109,6 +119,7 @@ class Driver {
 
     return other is Driver &&
         other.id == id &&
+        other.identity == identity &&
         other.firstName == firstName &&
         other.lastName == lastName &&
         other.licenceNumber == licenceNumber &&
@@ -123,6 +134,7 @@ class Driver {
   int get hashCode {
     return Object.hash(
       id,
+      identity,
       firstName,
       lastName,
       licenceNumber,

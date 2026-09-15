@@ -40,9 +40,7 @@ class _KpiCardState extends State<KpiCard> {
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: _hovering
-                ? widget.color
-                : Colors.grey.shade300,
+            color: _hovering ? widget.color : Colors.grey.shade300,
           ),
           boxShadow: [
             BoxShadow(
@@ -63,11 +61,7 @@ class _KpiCardState extends State<KpiCard> {
                 CircleAvatar(
                   radius: 24,
                   backgroundColor: widget.color.withValues(alpha: 0.15),
-                  child: Icon(
-                    widget.icon,
-                    color: widget.color,
-                    size: 28,
-                  ),
+                  child: Icon(widget.icon, color: widget.color, size: 28),
                 ),
 
                 const SizedBox(height: 20),
@@ -75,8 +69,8 @@ class _KpiCardState extends State<KpiCard> {
                 Text(
                   widget.title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
 
                 const SizedBox(height: 12),
@@ -84,8 +78,8 @@ class _KpiCardState extends State<KpiCard> {
                 Text(
                   widget.value,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
 
                 const SizedBox(height: 8),

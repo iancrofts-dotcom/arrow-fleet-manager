@@ -9,10 +9,8 @@ class MaintenanceService {
   MaintenanceService({
     MaintenanceRepository? repository,
     VehicleService? vehicleService,
-  })  : _repository =
-            repository ?? MaintenanceRepository(),
-        _vehicleService =
-            vehicleService ?? VehicleService();
+  }) : _repository = repository ?? MaintenanceRepository(),
+       _vehicleService = vehicleService ?? VehicleService();
 
   final MaintenanceRepository _repository;
   final VehicleService _vehicleService;
@@ -24,62 +22,44 @@ class MaintenanceService {
     return _repository.getAll();
   }
 
-  Future<List<MaintenanceRecord>> getForVehicle(
-    int vehicleId,
-  ) async {
+  Future<List<MaintenanceRecord>> getForVehicle(int vehicleId) async {
     return _repository.getForVehicle(vehicleId);
   }
 
-  Future<void> save(
-    MaintenanceRecord record,
-  ) async {
+  Future<void> save(MaintenanceRecord record) async {
     await _repository.save(record);
   }
 
-  Future<void> delete(
-    int id,
-  ) async {
+  Future<void> delete(int id) async {
     await _repository.delete(id);
   }
 
-  Future<List<DashboardActivity>>
-      getRecentActivities({
-    int limit = 5,
-  }) async {
+  Future<List<DashboardActivity>> getRecentActivities({int limit = 5}) async {
     final records = await getAll();
 
-    final vehicles =
-        await _vehicleService.getVehicleMap();
+    final vehicles = await _vehicleService.getVehicleMap();
 
     final activities = <DashboardActivity>[];
 
     for (final record in records) {
-      final vehicle =
-          vehicles[record.vehicleId];
+      final vehicle = vehicles[record.vehicleId];
 
       if (vehicle == null) {
         continue;
       }
 
       activities.add(
-        _activityMapper.toActivity(
-          record: record,
-          vehicle: vehicle,
-        ),
+        _activityMapper.toActivity(record: record, vehicle: vehicle),
       );
     }
 
-    activities.sort(
-      (a, b) => b.date.compareTo(a.date),
-    );
+    activities.sort((a, b) => b.date.compareTo(a.date));
 
     return activities.take(limit).toList();
-  }  List<MaintenanceRecord> overdue(
-    List<MaintenanceRecord> records,
-  ) {
-    return records
-        .where((record) => record.isOverdue)
-        .toList();
+  }
+
+  List<MaintenanceRecord> overdue(List<MaintenanceRecord> records) {
+    return records.where((record) => record.isOverdue).toList();
   }
 
   List<MaintenanceRecord> dueSoon(
@@ -93,31 +73,15 @@ class MaintenanceService {
     }).toList();
   }
 
-  List<MaintenanceRecord> completed(
-    List<MaintenanceRecord> records,
-  ) {
-    return records
-        .where((record) => record.completed)
-        .toList();
+  List<MaintenanceRecord> completed(List<MaintenanceRecord> records) {
+    return records.where((record) => record.completed).toList();
   }
 
-  double totalEstimatedCost(
-    List<MaintenanceRecord> records,
-  ) {
-    return records.fold(
-      0,
-      (sum, record) =>
-          sum + record.estimatedCost,
-    );
+  double totalEstimatedCost(List<MaintenanceRecord> records) {
+    return records.fold(0, (sum, record) => sum + record.estimatedCost);
   }
 
-  double totalActualCost(
-    List<MaintenanceRecord> records,
-  ) {
-    return records.fold(
-      0,
-      (sum, record) =>
-          sum + (record.actualCost ?? 0),
-    );
+  double totalActualCost(List<MaintenanceRecord> records) {
+    return records.fold(0, (sum, record) => sum + (record.actualCost ?? 0));
   }
 }

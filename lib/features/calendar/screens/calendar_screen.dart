@@ -9,16 +9,23 @@ import '../services/calendar_service.dart';
 import '../widgets/calendar_event_list.dart';
 import '../widgets/calendar_filter_chips.dart';
 
+typedef CalendarEventsLoader = Future<List<CalendarEvent>> Function();
+typedef CalendarEventOpener =
+    Future<void> Function(BuildContext context, CalendarEvent event);
+
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({super.key});
+  const CalendarScreen({super.key, this.loadEvents, this.onOpenEvent});
+
+  final CalendarEventsLoader? loadEvents;
+  final CalendarEventOpener? onOpenEvent;
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  final CalendarService _calendarService = CalendarService();
-  final CalendarEventNavigator _eventNavigator = CalendarEventNavigator();
+  CalendarService? _calendarService;
+  CalendarEventNavigator? _eventNavigator;
 
   late Future<List<CalendarEvent>> _eventsFuture;
 
@@ -27,11 +34,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.loadEvents == null) {
+      _calendarService = CalendarService();
+      _eventNavigator = CalendarEventNavigator();
+    }
     _eventsFuture = _loadEvents();
   }
 
   Future<List<CalendarEvent>> _loadEvents() {
-    return _calendarService.buildEvents();
+    return widget.loadEvents?.call() ?? _calendarService!.buildEvents();
   }
 
   Future<void> _refresh() async {
@@ -43,9 +54,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Future<void> _openEvent(CalendarEvent event) async {
-    final opened = await _eventNavigator.openDetails(context, event);
+    if (widget.onOpenEvent != null) {
+      await widget.onOpenEvent!(context, event);
+      if (mounted) await _refresh();
+      return;
+    }
+    final opened = await _eventNavigator!.openDetails(context, event);
     if (!opened || !mounted) return;
-
     await _refresh();
   }
 

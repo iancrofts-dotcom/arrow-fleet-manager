@@ -12,20 +12,31 @@ import 'sections/role_sections/driver_dashboard.dart';
 import 'sections/role_sections/technician_dashboard.dart';
 
 import 'models/dashboard_summary.dart';
+import 'models/fleet_health.dart';
+import 'services/fleet_health_service.dart';
 import 'models/dashboard_context.dart';
 import 'services/dashboard_service.dart';
 import 'services/dashboard_refresh_controller.dart';
 import '../../shared/widgets/app_page_scaffold.dart';
 import 'widgets/dashboard_hero_header.dart';
+import 'widgets/dashboard_polish_scope.dart';
+
+typedef DashboardSummaryLoader = Future<DashboardSummary> Function();
+typedef DashboardFleetHealthBuilder =
+    FleetHealth Function(DashboardSummary summary);
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({
     super.key,
     this.dashboardService,
+    this.loadSummary,
+    this.getFleetHealth,
     this.refreshInterval = const Duration(seconds: 60),
   });
 
   final DashboardService? dashboardService;
+  final DashboardSummaryLoader? loadSummary;
+  final DashboardFleetHealthBuilder? getFleetHealth;
   final Duration refreshInterval;
 
   @override
@@ -34,6 +45,8 @@ class DashboardScreen extends StatelessWidget {
       allow: (_) => true,
       child: _DashboardContent(
         dashboardService: dashboardService,
+        loadSummary: loadSummary,
+        getFleetHealth: getFleetHealth,
         refreshInterval: refreshInterval,
       ),
     );
@@ -43,10 +56,14 @@ class DashboardScreen extends StatelessWidget {
 class _DashboardContent extends StatefulWidget {
   const _DashboardContent({
     this.dashboardService,
+    this.loadSummary,
+    this.getFleetHealth,
     required this.refreshInterval,
   });
 
   final DashboardService? dashboardService;
+  final DashboardSummaryLoader? loadSummary;
+  final DashboardFleetHealthBuilder? getFleetHealth;
   final Duration refreshInterval;
 
   @override
@@ -55,7 +72,9 @@ class _DashboardContent extends StatefulWidget {
 
 class _DashboardContentState extends State<_DashboardContent>
     with WidgetsBindingObserver {
-  late final DashboardService _dashboardService;
+  DashboardService? _dashboardService;
+  late final DashboardSummaryLoader _loadSummary;
+  late final DashboardFleetHealthBuilder _getFleetHealth;
   DashboardRefreshController? _refreshController;
   DashboardSummary? _summary;
   Object? _initialLoadError;
@@ -64,12 +83,20 @@ class _DashboardContentState extends State<_DashboardContent>
   void initState() {
     super.initState();
 
-    _dashboardService = widget.dashboardService ?? DashboardService();
+    _dashboardService = widget.dashboardService;
+    if (_dashboardService == null && widget.loadSummary == null) {
+      _dashboardService = DashboardService();
+    }
+    _loadSummary = widget.loadSummary ?? _dashboardService!.loadSummary;
+    _getFleetHealth =
+        widget.getFleetHealth ??
+        _dashboardService?.getFleetHealth ??
+        const FleetHealthService().calculate;
     WidgetsBinding.instance.addObserver(this);
 
     if (PermissionService.instance.canViewKpis) {
       _refreshController = DashboardRefreshController(
-        loadSummary: _dashboardService.loadSummary,
+        loadSummary: _loadSummary,
         onData: _setSummary,
         onInitialError: _setInitialLoadError,
         interval: widget.refreshInterval,
@@ -188,16 +215,18 @@ class _DashboardContentState extends State<_DashboardContent>
       return const AppLoadingState(label: 'Loading dashboard...');
     }
 
-    final fleetHealth = _dashboardService.getFleetHealth(summary);
+    final fleetHealth = _getFleetHealth(summary);
     final dashboardContext = DashboardContext(
       summary: summary,
       fleetHealth: fleetHealth,
       onRefresh: _refreshDashboard,
     );
 
-    return DashboardRouter.build(
-      role: dashboardRole,
-      context: dashboardContext,
+    return DashboardPolishScope(
+      child: DashboardRouter.build(
+        role: dashboardRole,
+        context: dashboardContext,
+      ),
     );
   }
 }

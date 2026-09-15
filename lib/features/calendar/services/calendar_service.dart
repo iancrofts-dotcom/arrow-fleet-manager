@@ -17,14 +17,11 @@ class CalendarService {
     DocumentService? documentService,
     DriverService? driverService,
     DriverComplianceService? complianceService,
-  })  : _vehicleService = vehicleService ?? VehicleService(),
-        _maintenanceService =
-            maintenanceService ?? MaintenanceService(),
-        _documentService =
-            documentService ?? DocumentService(),
-        _driverService = driverService ?? DriverService(),
-        _complianceService =
-            complianceService ?? DriverComplianceService();
+  }) : _vehicleService = vehicleService ?? VehicleService(),
+       _maintenanceService = maintenanceService ?? MaintenanceService(),
+       _documentService = documentService ?? DocumentService(),
+       _driverService = driverService ?? DriverService(),
+       _complianceService = complianceService ?? DriverComplianceService();
 
   final VehicleService _vehicleService;
   final MaintenanceService _maintenanceService;
@@ -32,49 +29,34 @@ class CalendarService {
   final DriverService _driverService;
   final DriverComplianceService _complianceService;
 
-  final VehicleCalendarMapper _vehicleMapper =
-      const VehicleCalendarMapper();
+  final VehicleCalendarMapper _vehicleMapper = const VehicleCalendarMapper();
 
   final MaintenanceCalendarMapper _maintenanceMapper =
       const MaintenanceCalendarMapper();
 
-  final DocumentCalendarMapper _documentMapper =
-      const DocumentCalendarMapper();
+  final DocumentCalendarMapper _documentMapper = const DocumentCalendarMapper();
 
   final ComplianceCalendarMapper _complianceMapper =
       const ComplianceCalendarMapper();
 
   Future<List<CalendarEvent>> buildEvents() async {
-    final vehicles =
-        await _vehicleService.getVehicles();
+    final vehicles = await _vehicleService.getVehicles();
 
-    final vehicleMap =
-        await _vehicleService.getVehicleMap();
+    final vehicleMap = await _vehicleService.getVehicleMap();
 
-    final maintenance =
-        await _maintenanceService.getAll();
+    final maintenance = await _maintenanceService.getAll();
 
-    final documents =
-        await _documentService.getAll();
+    final documents = await _documentService.getAll();
 
-    final drivers =
-        await _driverService.getDriverMap();
+    final drivers = await _driverService.getDriverMap();
 
-    final compliance =
-        await _complianceService.getAll();
+    final compliance = await _complianceService.getAll();
 
     final events = <CalendarEvent>[];
 
-    events.addAll(
-      _vehicleMapper.map(vehicles),
-    );
+    events.addAll(_vehicleMapper.map(vehicles));
 
-    events.addAll(
-      _maintenanceMapper.map(
-        maintenance,
-        vehicleMap,
-      ),
-    );
+    events.addAll(_maintenanceMapper.map(maintenance, vehicleMap));
 
     events.addAll(
       _documentMapper.map(
@@ -84,16 +66,9 @@ class CalendarService {
       ),
     );
 
-    events.addAll(
-      _complianceMapper.map(
-        records: compliance,
-        drivers: drivers,
-      ),
-    );
+    events.addAll(_complianceMapper.map(records: compliance, drivers: drivers));
 
-    events.sort(
-      (a, b) => a.date.compareTo(b.date),
-    );
+    events.sort((a, b) => a.date.compareTo(b.date));
 
     return events;
   }

@@ -3,11 +3,7 @@ import 'dart:convert';
 import 'inspection_item.dart';
 import 'repair_job.dart';
 
-enum TemplateRoadworthyImpact {
-  none,
-  advisory,
-  notRoadworthy,
-}
+enum TemplateRoadworthyImpact { none, advisory, notRoadworthy }
 
 /// ============================================================================
 /// INSPECTION TEMPLATE ITEM
@@ -109,14 +105,11 @@ class InspectionTemplateItem {
       description: description ?? this.description,
       displayOrder: displayOrder ?? this.displayOrder,
       mandatory: mandatory ?? this.mandatory,
-      criticalSafetyItem:
-          criticalSafetyItem ?? this.criticalSafetyItem,
-      autoCreateRepair:
-          autoCreateRepair ?? this.autoCreateRepair,
+      criticalSafetyItem: criticalSafetyItem ?? this.criticalSafetyItem,
+      autoCreateRepair: autoCreateRepair ?? this.autoCreateRepair,
       repairPriority: repairPriority ?? this.repairPriority,
       roadworthyImpact: roadworthyImpact ?? this.roadworthyImpact,
-      photoRequiredOnFail:
-          photoRequiredOnFail ?? this.photoRequiredOnFail,
+      photoRequiredOnFail: photoRequiredOnFail ?? this.photoRequiredOnFail,
       allowNotes: allowNotes ?? this.allowNotes,
       defaultStatus: defaultStatus ?? this.defaultStatus,
       isActive: isActive ?? this.isActive,
@@ -145,8 +138,7 @@ class InspectionTemplateItem {
     };
   }
 
-  factory InspectionTemplateItem.fromMap(
-      Map<String, dynamic> map) {
+  factory InspectionTemplateItem.fromMap(Map<String, dynamic> map) {
     return InspectionTemplateItem(
       id: map['id'],
       templateId: map['templateId'],
@@ -162,10 +154,8 @@ class InspectionTemplateItem {
       description: map['description'] ?? '',
       displayOrder: map['displayOrder'],
       mandatory: map['mandatory'] == 1,
-      criticalSafetyItem:
-          map['criticalSafetyItem'] == 1,
-      autoCreateRepair:
-          map['autoCreateRepair'] == 1,
+      criticalSafetyItem: map['criticalSafetyItem'] == 1,
+      autoCreateRepair: map['autoCreateRepair'] == 1,
       repairPriority: RepairPriority.values.firstWhere(
         (e) => e.name == map['repairPriority'],
         orElse: () => RepairPriority.medium,
@@ -174,11 +164,9 @@ class InspectionTemplateItem {
         (e) => e.name == map['roadworthyImpact'],
         orElse: () => TemplateRoadworthyImpact.none,
       ),
-      photoRequiredOnFail:
-          map['photoRequiredOnFail'] == 1,
+      photoRequiredOnFail: map['photoRequiredOnFail'] == 1,
       allowNotes: map['allowNotes'] == 1,
-      defaultStatus:
-          InspectionItemStatus.values.firstWhere(
+      defaultStatus: InspectionItemStatus.values.firstWhere(
         (e) => e.name == map['defaultStatus'],
       ),
       isActive: map['isActive'] == 1,
@@ -187,10 +175,6 @@ class InspectionTemplateItem {
 
   String toJson() => jsonEncode(toMap());
 
-  factory InspectionTemplateItem.fromJson(
-    String source,
-  ) =>
-      InspectionTemplateItem.fromMap(
-        jsonDecode(source),
-      );
+  factory InspectionTemplateItem.fromJson(String source) =>
+      InspectionTemplateItem.fromMap(jsonDecode(source));
 }

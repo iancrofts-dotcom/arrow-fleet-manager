@@ -1,8 +1,4 @@
-enum DashboardKpiTrend {
-  up,
-  down,
-  stable,
-}
+enum DashboardKpiTrend { up, down, stable }
 
 class DashboardKpi {
   const DashboardKpi({

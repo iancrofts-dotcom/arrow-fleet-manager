@@ -58,9 +58,7 @@ class InspectionVehicleCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primaryContainer,
+                  color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -77,9 +75,7 @@ class InspectionVehicleCard extends StatelessWidget {
                           fontSize: 18,
                         ),
                       ),
-                      subtitle: Text(
-                        selectedVehicle!.registration,
-                      ),
+                      subtitle: Text(selectedVehicle!.registration),
                     ),
 
                     const Divider(),
@@ -99,9 +95,7 @@ class InspectionVehicleCard extends StatelessWidget {
                     _infoRow(
                       Icons.confirmation_number,
                       "VIN",
-                      selectedVehicle!.vin.isEmpty
-                          ? "-"
-                          : selectedVehicle!.vin,
+                      selectedVehicle!.vin.isEmpty ? "-" : selectedVehicle!.vin,
                     ),
                   ],
                 ),
@@ -112,32 +106,21 @@ class InspectionVehicleCard extends StatelessWidget {
     );
   }
 
-  Widget _infoRow(
-    IconData icon,
-    String title,
-    String value,
-  ) {
+  Widget _infoRow(IconData icon, String title, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 18,
-          ),
+          Icon(icon, size: 18),
           const SizedBox(width: 10),
           SizedBox(
             width: 80,
             child: Text(
               title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
-          Expanded(
-            child: Text(value),
-          ),
+          Expanded(child: Text(value)),
         ],
       ),
     );

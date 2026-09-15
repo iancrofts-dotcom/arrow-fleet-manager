@@ -26,11 +26,14 @@ class SupabaseSdkAuthGateway implements SupabaseAuthGateway {
     if (currentUser == null || currentUser.id != userId) {
       throw StateError('No matching authenticated backend user.');
     }
-    final row = await BackendClient.client
-        .from('profiles')
-        .select('id, username, role, is_active, driver_legacy_id')
-        .eq('id', userId)
-        .maybeSingle();
-    return row == null ? null : BackendProfile.fromJson(row);
+    final value = await BackendClient.client.rpc(
+      'fleet_current_access_profile',
+    );
+    if (value == null) return null;
+    final row = value is List ? (value.isEmpty ? null : value.first) : value;
+    if (row is! Map) {
+      throw StateError('FleetIQ access profile response was invalid.');
+    }
+    return BackendProfile.fromJson(Map<String, dynamic>.from(row));
   }
 }

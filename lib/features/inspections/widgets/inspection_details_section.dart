@@ -31,8 +31,7 @@ class InspectionDetailsSection extends StatefulWidget {
       _InspectionDetailsSectionState();
 }
 
-class _InspectionDetailsSectionState
-    extends State<InspectionDetailsSection> {
+class _InspectionDetailsSectionState extends State<InspectionDetailsSection> {
   Vehicle? _selectedVehicle;
 
   String _fuelLevel = 'Full';
@@ -43,9 +42,7 @@ class _InspectionDetailsSectionState
     }
     final vehicle = await Navigator.push<Vehicle>(
       context,
-      MaterialPageRoute(
-        builder: (_) => const AssignVehicleScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const AssignVehicleScreen()),
     );
 
     if (vehicle != null) {
@@ -66,14 +63,11 @@ class _InspectionDetailsSectionState
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Walkaround Details',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
 
             const SizedBox(height: 20),
@@ -90,63 +84,45 @@ class _InspectionDetailsSectionState
 
             const SizedBox(height: 20),
 
-            Text(
-              'Vehicle',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium,
-            ),
+            Text('Vehicle', style: Theme.of(context).textTheme.titleMedium),
 
             const SizedBox(height: 8),
 
             InkWell(
               onTap: widget.lockedVehicle == null ? _selectVehicle : null,
-              borderRadius:
-                  BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12),
               child: Container(
                 width: double.infinity,
-                padding:
-                    const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.grey.shade400,
-                  ),
-                  borderRadius:
-                      BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: selectedVehicle == null
                     ? const Row(
                         children: [
-                          Icon(
-                            Icons.local_shipping,
-                          ),
+                          Icon(Icons.local_shipping),
                           SizedBox(width: 12),
                           Text(
                             'Select Vehicle',
-                            style: TextStyle(
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(fontSize: 16),
                           ),
                         ],
                       )
                     : Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             selectedVehicle.registration,
                             style: const TextStyle(
-                              fontWeight:
-                                  FontWeight.bold,
+                              fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
                           ),
 
                           const SizedBox(height: 6),
 
-                          Text(
-                            'Fleet: ${selectedVehicle.fleetNumber}',
-                          ),
+                          Text('Fleet: ${selectedVehicle.fleetNumber}'),
 
                           Text(
                             '${selectedVehicle.make} ${selectedVehicle.model}',
@@ -159,35 +135,26 @@ class _InspectionDetailsSectionState
             const SizedBox(height: 20),
 
             TextField(
-              controller:
-                  widget.mileageController,
-              keyboardType:
-                  TextInputType.number,
-              decoration:
-                  const InputDecoration(
+              controller: widget.mileageController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
                 labelText: 'Odometer',
-                prefixIcon:
-                    Icon(Icons.speed),
-                border:
-                    OutlineInputBorder(),
+                prefixIcon: Icon(Icons.speed),
+                border: OutlineInputBorder(),
               ),
             ),
 
             const SizedBox(height: 20),
 
-            Text(
-              'Fuel Level',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium,
-            ),
+            Text('Fuel Level', style: Theme.of(context).textTheme.titleMedium),
 
             const SizedBox(height: 10),
 
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: [                _fuelChip('Full'),
+              children: [
+                _fuelChip('Full'),
                 _fuelChip('¾'),
                 _fuelChip('½'),
                 _fuelChip('¼'),

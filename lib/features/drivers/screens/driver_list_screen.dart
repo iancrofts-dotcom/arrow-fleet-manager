@@ -1,36 +1,66 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/services/permission_service.dart';
+import '../../../config/backend_mode.dart';
+import '../../../backend/drivers/central_driver_management_repository.dart';
+import '../../../backend/drivers/supabase_driver_management_gateway.dart';
 import '../../../shared/widgets/app_page_scaffold.dart';
 
 import '../models/driver.dart';
+import '../services/driver_read_service.dart';
 import '../services/driver_service.dart';
 import '../widgets/driver_card.dart';
 import 'add_driver_screen.dart';
 import 'driver_details_screen.dart';
+import 'central_driver_details_screen.dart';
 
 class DriverListScreen extends StatefulWidget {
-  const DriverListScreen({super.key});
+  const DriverListScreen({
+    super.key,
+    this.driverReadService,
+    this.localDriverService,
+    this.permissions,
+    this.backendMode,
+  });
+
+  final DriverReadService? driverReadService;
+  final DriverService? localDriverService;
+  final PermissionService? permissions;
+  final BackendMode? backendMode;
 
   @override
   State<DriverListScreen> createState() => _DriverListScreenState();
 }
 
 class _DriverListScreenState extends State<DriverListScreen> {
-  final DriverService _driverService = DriverService();
+  late final DriverReadService _driverReadService;
+  late final DriverService? _localDriverService;
+  late final PermissionService _permissions;
+  late final BackendMode _backendMode;
+  final CentralDriverManagementRepository _centralManagement =
+      const CentralDriverManagementRepository(
+        SupabaseDriverManagementGateway(),
+      );
 
-  final PermissionService _permissions = PermissionService.instance;
+  bool get _isCentral => _backendMode == BackendMode.supabase;
 
   late Future<List<Driver>> _driversFuture;
 
   @override
   void initState() {
     super.initState();
+    _backendMode = widget.backendMode ?? BackendModeConfig.current;
+    _driverReadService =
+        widget.driverReadService ?? DriverReadService.forMode(_backendMode);
+    _localDriverService = _isCentral
+        ? widget.localDriverService
+        : widget.localDriverService ?? DriverService();
+    _permissions = widget.permissions ?? PermissionService.instance;
     _loadDrivers();
   }
 
   void _loadDrivers() {
-    _driversFuture = _driverService.getDrivers();
+    _driversFuture = _driverReadService.getDrivers();
   }
 
   Future<void> _refresh() async {
@@ -61,7 +91,11 @@ class _DriverListScreenState extends State<DriverListScreen> {
   Future<void> _openDriver(Driver driver) async {
     final refresh = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => DriverDetailsScreen(driver: driver)),
+      MaterialPageRoute(
+        builder: (_) => _isCentral
+            ? CentralDriverDetailsScreen(driver: driver)
+            : DriverDetailsScreen(driver: driver),
+      ),
     );
 
     if (refresh == true && mounted) {
@@ -70,7 +104,8 @@ class _DriverListScreenState extends State<DriverListScreen> {
   }
 
   Future<void> _deactivateDriver(Driver driver) async {
-    if (driver.id == null) return;
+    if (!_isCentral && driver.id == null) return;
+    if (_isCentral && driver.identity?.centralIdOrNull == null) return;
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -97,7 +132,15 @@ class _DriverListScreenState extends State<DriverListScreen> {
     if (confirm != true) return;
 
     try {
-      await _driverService.deactivateDriver(driver.id!);
+      if (_isCentral) {
+        final identity = driver.identity;
+        if (identity == null) {
+          throw StateError('Central Driver identity is missing.');
+        }
+        await _centralManagement.deactivateDriver(identity);
+      } else {
+        await _localDriverService!.deactivateDriver(driver.id!);
+      }
     } catch (error) {
       if (!mounted) return;
 
@@ -133,7 +176,9 @@ class _DriverListScreenState extends State<DriverListScreen> {
 
     return AppPageScaffold(
       title: 'Drivers',
-      subtitle: 'Manage driver records and fleet access.',
+      subtitle: _isCentral
+          ? 'Manage shared central Driver records and portal accounts.'
+          : 'Manage driver records and fleet access.',
       floatingActionButton: _permissions.canManageDrivers
           ? FloatingActionButton.extended(
               onPressed: _addDriver,
@@ -163,13 +208,14 @@ class _DriverListScreenState extends State<DriverListScreen> {
               onRefresh: _refresh,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  SizedBox(height: 96),
+                children: [
+                  const SizedBox(height: 96),
                   AppEmptyState(
                     icon: Icons.people_outline,
-                    title: 'No drivers have been added',
-                    message:
-                        'Use Add Driver to begin building the driver team.',
+                    title: 'No drivers found',
+                    message: _isCentral
+                        ? 'No central Driver records are available.'
+                        : 'Use Add Driver to begin building the driver team.',
                   ),
                 ],
               ),
@@ -185,7 +231,7 @@ class _DriverListScreenState extends State<DriverListScreen> {
 
                 if (_permissions.canManageDrivers) {
                   return Dismissible(
-                    key: ValueKey(driver.id),
+                    key: ValueKey(driver.identity ?? driver.id),
                     direction: DismissDirection.endToStart,
                     background: Container(
                       color: Theme.of(context).colorScheme.errorContainer,

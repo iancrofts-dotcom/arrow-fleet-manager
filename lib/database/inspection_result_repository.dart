@@ -4,32 +4,21 @@ import 'database_service.dart';
 class InspectionResultRepository {
   final DatabaseService databaseService;
 
-  InspectionResultRepository({
-    required this.databaseService,
-  });
+  InspectionResultRepository({required this.databaseService});
 
-  Future<void> saveResults(
-    List<InspectionResult> results,
-  ) async {
+  Future<void> saveResults(List<InspectionResult> results) async {
     final db = await databaseService.database.database();
 
     final batch = db.batch();
 
     for (final result in results) {
-      batch.insert(
-        'inspection_results',
-        result.toMap(),
-      );
+      batch.insert('inspection_results', result.toMap());
     }
 
-    await batch.commit(
-      noResult: true,
-    );
+    await batch.commit(noResult: true);
   }
 
-  Future<List<InspectionResult>> getResults(
-    String inspectionNumber,
-  ) async {
+  Future<List<InspectionResult>> getResults(String inspectionNumber) async {
     final db = await databaseService.database.database();
 
     final maps = await db.query(
@@ -39,14 +28,10 @@ class InspectionResultRepository {
       orderBy: 'category, title',
     );
 
-    return maps
-        .map(InspectionResult.fromMap)
-        .toList();
+    return maps.map(InspectionResult.fromMap).toList();
   }
 
-  Future<void> deleteResults(
-    String inspectionNumber,
-  ) async {
+  Future<void> deleteResults(String inspectionNumber) async {
     final db = await databaseService.database.database();
 
     await db.delete(

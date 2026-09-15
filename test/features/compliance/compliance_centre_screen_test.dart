@@ -105,13 +105,16 @@ void main() {
         },
       );
 
-      await _scrollTo(tester, find.text('AB12 CDE'));
-      final vehicleRow = find.ancestor(
-        of: find.text('AB12 CDE'),
+      final vehicleAttentionRow = find.byKey(
+        const Key('compliance-attention-vehicle-10-mot'),
+      );
+      await _scrollTo(tester, vehicleAttentionRow);
+      final vehicleInkWell = find.descendant(
+        of: vehicleAttentionRow,
         matching: find.byType(InkWell),
       );
-      expect(tester.widget<InkWell>(vehicleRow).onTap, isNotNull);
-      await tester.tap(find.text('AB12 CDE'));
+      expect(tester.widget<InkWell>(vehicleInkWell).onTap, isNotNull);
+      await tester.tap(vehicleAttentionRow);
       await tester.pump();
       await tester.pump();
 
@@ -122,8 +125,11 @@ void main() {
       expect(openedItems.single.subjectId, 10);
       expect(loads, 2);
 
-      await _scrollTo(tester, find.text('Jane Smith'));
-      await tester.tap(find.text('Jane Smith'));
+      final driverAttentionRow = find.byKey(
+        const Key('compliance-attention-driver-20-cpc'),
+      );
+      await _scrollTo(tester, driverAttentionRow);
+      await tester.tap(driverAttentionRow);
       await tester.pump();
       await tester.pump();
 
@@ -150,8 +156,14 @@ void main() {
       await tester.pump();
 
       expect(find.text('Showing 1 of 3 attention items'), findsOneWidget);
-      expect(find.text('AB12 CDE'), findsOneWidget);
-      expect(find.text('Jane Smith'), findsNothing);
+      expect(
+        find.byKey(const Key('compliance-attention-vehicle-10-mot')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('compliance-attention-driver-20-cpc')),
+        findsNothing,
+      );
       await _scrollToTop(tester);
       expect(
         find.byKey(const Key('compliance-status-Expired')),
@@ -168,8 +180,11 @@ void main() {
       await tester.pump();
 
       expect(find.text('Showing 3 of 3 attention items'), findsOneWidget);
-      await _scrollTo(tester, find.text('Jane Smith'));
-      expect(find.text('Jane Smith'), findsOneWidget);
+      final restoredDriverAttentionRow = find.byKey(
+        const Key('compliance-attention-driver-20-cpc'),
+      );
+      await _scrollTo(tester, restoredDriverAttentionRow);
+      expect(restoredDriverAttentionRow, findsOneWidget);
       await _scrollTo(tester, find.text('Fleet Compliance'), delta: -300);
       expect(find.text('67%'), findsOneWidget);
     },

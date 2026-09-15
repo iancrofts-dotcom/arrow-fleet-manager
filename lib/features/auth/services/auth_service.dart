@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../backend/auth/fleet_auth_adapter.dart';
+import '../../../backend/auth/supabase_auth_adapter.dart';
+import '../../../backend/backend_profile.dart';
 import '../../../config/backend_mode.dart';
 import '../models/user.dart';
 import '../models/user_role.dart';
@@ -36,6 +38,7 @@ class AuthService extends ChangeNotifier {
   FleetAuthAdapter? _remoteAuthAdapter;
 
   User? _currentUser;
+  String? _currentBackendDriverId;
   bool _requiresPasswordChange = false;
   DateTime? _authenticatedAt;
   DateTime? _lastActivityAt;
@@ -67,16 +70,12 @@ class AuthService extends ChangeNotifier {
         identifier: username,
         password: password,
       );
-      user = profile == null
-          ? null
-          : User(
-              id: profile.id,
-              username: profile.username,
-              passwordHash: '',
-              role: profile.role,
-              driverId: profile.driverLegacyId,
-              isActive: profile.isActive,
-            );
+      if (profile == null) {
+        user = null;
+      } else {
+        _applyBackendProfile(profile);
+        user = _currentUser;
+      }
     }
 
     if (user == null) {
@@ -231,6 +230,36 @@ class AuthService extends ChangeNotifier {
     await revalidateCurrentSession();
   }
 
+  Future<void> refreshCentralProfile() async {
+    if (_backendMode != BackendMode.supabase) return;
+    final adapter = _remoteAuthAdapter;
+    if (adapter is! SupabaseAuthAdapter) {
+      throw StateError('Central FleetIQ authentication is not available.');
+    }
+    final profile = await adapter.refreshProfile();
+    if (profile == null) {
+      await _invalidateSession();
+      throw StateError('FleetIQ account is no longer available.');
+    }
+    _applyBackendProfile(profile);
+    notifyListeners();
+  }
+
+  void _applyBackendProfile(BackendProfile profile) {
+    _currentBackendDriverId = profile.driverId;
+    _currentUser = User(
+      id: profile.id,
+      username: profile.username,
+      passwordHash: '',
+      role: profile.role,
+      driverId: profile.driverLegacyId,
+      isActive: profile.isActive,
+      customRoleId: profile.customRoleId,
+      customRoleName: profile.customRoleName,
+      customPermissions: profile.customPermissions,
+    );
+  }
+
   bool hasRole(UserRole role) {
     return _currentUser?.role == role;
   }
@@ -244,6 +273,9 @@ class AuthService extends ChangeNotifier {
   String? get currentUserId => _currentUser?.id;
 
   int? get currentDriverId => _currentUser?.driverId;
+
+  /// UUID of the linked central Driver record when using Supabase.
+  String? get currentBackendDriverId => _currentBackendDriverId;
 
   User requireLogin() {
     final user = _currentUser;
@@ -275,6 +307,7 @@ class AuthService extends ChangeNotifier {
     _sessionWatchdog?.cancel();
     _sessionWatchdog = null;
     _currentUser = null;
+    _currentBackendDriverId = null;
     _requiresPasswordChange = false;
     _authenticatedAt = null;
     _lastActivityAt = null;

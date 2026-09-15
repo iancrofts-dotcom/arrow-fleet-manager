@@ -1,8 +1,6 @@
-enum InspectionStatus {
-  pass,
-  fail,
-  notApplicable,
-}
+import 'dart:typed_data';
+
+enum InspectionStatus { pass, fail, notApplicable }
 
 class InspectionItem {
   /// Unique identifier for persistence
@@ -23,6 +21,11 @@ class InspectionItem {
   /// Optional photo captured during inspection
   String? photoPath;
 
+  /// Transient cross-platform photo payload used by central inspections.
+  Uint8List? photoBytes;
+  String? photoFileName;
+  String? photoContentType;
+
   InspectionItem({
     required this.id,
     required this.title,
@@ -30,14 +33,16 @@ class InspectionItem {
     this.status = InspectionStatus.pass,
     this.notes = '',
     this.photoPath,
+    this.photoBytes,
+    this.photoFileName,
+    this.photoContentType,
   });
 
   bool get hasFailed => status == InspectionStatus.fail;
 
   bool get hasPassed => status == InspectionStatus.pass;
 
-  bool get isNotApplicable =>
-      status == InspectionStatus.notApplicable;
+  bool get isNotApplicable => status == InspectionStatus.notApplicable;
 
   Map<String, dynamic> toMap() {
     return {
@@ -50,9 +55,7 @@ class InspectionItem {
     };
   }
 
-  factory InspectionItem.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory InspectionItem.fromMap(Map<String, dynamic> map) {
     return InspectionItem(
       id: map['id'] as String,
       title: map['title'] as String,
@@ -64,13 +67,17 @@ class InspectionItem {
       notes: map['notes'] as String? ?? '',
       photoPath: map['photoPath'] as String?,
     );
-  }  InspectionItem copyWith({
+  }
+  InspectionItem copyWith({
     String? id,
     String? title,
     String? category,
     InspectionStatus? status,
     String? notes,
     String? photoPath,
+    Uint8List? photoBytes,
+    String? photoFileName,
+    String? photoContentType,
   }) {
     return InspectionItem(
       id: id ?? this.id,
@@ -79,6 +86,9 @@ class InspectionItem {
       status: status ?? this.status,
       notes: notes ?? this.notes,
       photoPath: photoPath ?? this.photoPath,
+      photoBytes: photoBytes ?? this.photoBytes,
+      photoFileName: photoFileName ?? this.photoFileName,
+      photoContentType: photoContentType ?? this.photoContentType,
     );
   }
 }

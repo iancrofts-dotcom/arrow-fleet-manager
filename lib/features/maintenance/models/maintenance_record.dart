@@ -45,11 +45,9 @@ class MaintenanceRecord {
     );
   }
 
-  bool get isOverdue =>
-      !completed && dueDate.isBefore(DateTime.now());
+  bool get isOverdue => !completed && dueDate.isBefore(DateTime.now());
 
-  int get daysRemaining =>
-      dueDate.difference(DateTime.now()).inDays;
+  int get daysRemaining => dueDate.difference(DateTime.now()).inDays;
 
   Map<String, dynamic> toMap() {
     return {
@@ -58,32 +56,24 @@ class MaintenanceRecord {
       'title': title,
       'description': description,
       'due_date': dueDate.millisecondsSinceEpoch,
-      'completed_date':
-          completedDate?.millisecondsSinceEpoch,
+      'completed_date': completedDate?.millisecondsSinceEpoch,
       'estimated_cost': estimatedCost,
       'actual_cost': actualCost,
       'completed': completed ? 1 : 0,
     };
   }
 
-  factory MaintenanceRecord.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory MaintenanceRecord.fromMap(Map<String, dynamic> map) {
     return MaintenanceRecord(
       id: map['id'] as int?,
       vehicleId: map['vehicle_id'] as int,
       title: map['title'] as String,
       description: map['description'] as String,
-      dueDate: DateTime.fromMillisecondsSinceEpoch(
-        map['due_date'] as int,
-      ),
+      dueDate: DateTime.fromMillisecondsSinceEpoch(map['due_date'] as int),
       completedDate: map['completed_date'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(
-              map['completed_date'] as int,
-            )
+          ? DateTime.fromMillisecondsSinceEpoch(map['completed_date'] as int)
           : null,
-      estimatedCost:
-          (map['estimated_cost'] as num).toDouble(),
+      estimatedCost: (map['estimated_cost'] as num).toDouble(),
       actualCost: map['actual_cost'] != null
           ? (map['actual_cost'] as num).toDouble()
           : null,
@@ -114,14 +104,14 @@ class MaintenanceRecord {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        vehicleId,
-        title,
-        description,
-        dueDate,
-        completedDate,
-        estimatedCost,
-        actualCost,
-        completed,
-      );
+    id,
+    vehicleId,
+    title,
+    description,
+    dueDate,
+    completedDate,
+    estimatedCost,
+    actualCost,
+    completed,
+  );
 }

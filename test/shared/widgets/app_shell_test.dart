@@ -5,64 +5,76 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('mobile AppShell provides compact navigation and More', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(390, 800));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final route = ValueNotifier<String>(AppRouter.dashboard);
-    final navigatorKey = GlobalKey<NavigatorState>();
+  testWidgets(
+    'mobile AppShell shows permitted destinations directly without redundant More',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final route = ValueNotifier<String>(AppRouter.dashboard);
+      final navigatorKey = GlobalKey<NavigatorState>();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        navigatorKey: navigatorKey,
-        home: AppShell(
+      await tester.pumpWidget(
+        MaterialApp(
           navigatorKey: navigatorKey,
-          currentRoute: route,
-          isAuthenticated: true,
-          child: const Scaffold(body: Text('Feature content')),
+          home: AppShell(
+            navigatorKey: navigatorKey,
+            currentRoute: route,
+            isAuthenticated: true,
+            child: const Scaffold(body: Text('Feature content')),
+          ),
         ),
-      ),
-    );
-    await tester.pump();
+      );
+      await tester.pump();
 
-    expect(find.byKey(const Key('compact-bottom-navigation')), findsOneWidget);
-    expect(find.byType(FleetIqBrand), findsOneWidget);
-    expect(find.text('Dashboard'), findsWidgets);
-    expect(find.text('More'), findsOneWidget);
-    expect(find.text('Feature content'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      expect(
+        find.byKey(const Key('compact-bottom-navigation')),
+        findsOneWidget,
+      );
+      expect(find.byType(FleetIqBrand), findsOneWidget);
+      expect(find.text('Dashboard'), findsWidgets);
+      // Build 17.4.3 intentionally removes More when every permitted module fits
+      // directly in the compact navigation. With no role installed in this
+      // isolated shell test, Dashboard is the only permitted destination.
+      expect(find.text('More'), findsNothing);
+      expect(find.text('Feature content'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('mobile More opens the permission-filtered secondary menu', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(430, 932));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final route = ValueNotifier<String>(AppRouter.dashboard);
-    final navigatorKey = GlobalKey<NavigatorState>();
+  testWidgets(
+    'mobile AppShell does not create a More menu when there is no overflow',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(430, 932));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final route = ValueNotifier<String>(AppRouter.dashboard);
+      final navigatorKey = GlobalKey<NavigatorState>();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        navigatorKey: navigatorKey,
-        home: AppShell(
+      await tester.pumpWidget(
+        MaterialApp(
           navigatorKey: navigatorKey,
-          currentRoute: route,
-          isAuthenticated: true,
-          child: const Scaffold(body: Text('Feature content')),
+          home: AppShell(
+            navigatorKey: navigatorKey,
+            currentRoute: route,
+            isAuthenticated: true,
+            child: const Scaffold(body: Text('Feature content')),
+          ),
         ),
-      ),
-    );
+      );
+      await tester.pump();
 
-    await tester.tap(find.text('More'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Logout'), findsOneWidget);
-    expect(find.text('Fleet'), findsNothing);
-    expect(find.text('Drivers'), findsNothing);
-    expect(find.text('Workshop'), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
+      expect(
+        find.byKey(const Key('compact-bottom-navigation')),
+        findsOneWidget,
+      );
+      expect(find.text('Dashboard'), findsWidgets);
+      expect(find.text('More'), findsNothing);
+      expect(find.text('Fleet'), findsNothing);
+      expect(find.text('Drivers'), findsNothing);
+      expect(find.text('Workshop'), findsNothing);
+      expect(find.text('Feature content'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('AppShell has no framework exception at responsive widths', (
     tester,

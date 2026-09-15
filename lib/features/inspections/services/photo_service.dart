@@ -1,20 +1,54 @@
-import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
+class InspectionPhotoSelection {
+  const InspectionPhotoSelection({
+    required this.fileName,
+    required this.bytes,
+    required this.contentType,
+  });
+
+  final String fileName;
+  final Uint8List bytes;
+  final String contentType;
+}
+
 class PhotoService {
   final ImagePicker _picker = ImagePicker();
 
-  /// Returns the selected image path or null if cancelled.
-  Future<String?> pickPhoto() async {
+  Future<InspectionPhotoSelection?> pickPhoto() async {
     try {
-      if (_isDesktop) {
-        return _pickDesktopPhoto();
+      if (kIsWeb || _isDesktop) {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          allowMultiple: false,
+          withData: true,
+        );
+        if (result == null) return null;
+        final file = result.files.single;
+        final bytes = file.bytes;
+        if (bytes == null || bytes.isEmpty) return null;
+        return InspectionPhotoSelection(
+          fileName: file.name,
+          bytes: bytes,
+          contentType: _contentType(file.name),
+        );
       }
 
-      return _pickMobilePhoto();
+      final image = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 2000,
+      );
+      if (image == null) return null;
+      final bytes = await image.readAsBytes();
+      if (bytes.isEmpty) return null;
+      return InspectionPhotoSelection(
+        fileName: image.name.isEmpty ? 'inspection-photo.jpg' : image.name,
+        bytes: bytes,
+        contentType: _contentType(image.name),
+      );
     } catch (e) {
       debugPrint('PhotoService error: $e');
       return null;
@@ -22,66 +56,14 @@ class PhotoService {
   }
 
   bool get _isDesktop =>
-      Platform.isWindows ||
-      Platform.isLinux ||
-      Platform.isMacOS;
+      defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux ||
+      defaultTargetPlatform == TargetPlatform.macOS;
 
-  Future<String?> _pickDesktopPhoto() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
-    );
-
-    if (result == null) {
-      return null;
-    }
-
-    return result.files.single.path;
-  }
-
-  Future<String?> _pickMobilePhoto() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 85,
-      maxWidth: 2000,
-    );
-
-    if (image == null) {
-      return null;
-    }
-
-    return image.path;
-  }  /// Returns true if the supplied photo path exists.
-  Future<bool> photoExists(
-    String? path,
-  ) async {
-    if (path == null || path.isEmpty) {
-      return false;
-    }
-
-    return File(path).exists();
-  }
-
-  /// Deletes a photo from disk.
-  /// Returns true if successful.
-  Future<bool> deletePhoto(
-    String? path,
-  ) async {
-    if (path == null || path.isEmpty) {
-      return false;
-    }
-
-    try {
-      final file = File(path);
-
-      if (await file.exists()) {
-        await file.delete();
-      }
-
-      return true;
-    } catch (e) {
-      debugPrint('Delete photo error: $e');
-      return false;
-    }
+  String _contentType(String name) {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
   }
 }

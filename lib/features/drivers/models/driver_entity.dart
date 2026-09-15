@@ -24,6 +24,11 @@ class DriverEntity {
   });
 
   factory DriverEntity.fromDriver(Driver driver) {
+    if (driver.identity?.centralIdOrNull != null) {
+      throw UnsupportedError(
+        'A central driver cannot enter SQLite persistence.',
+      );
+    }
     return DriverEntity(
       id: driver.id,
       firstName: driver.firstName,
@@ -73,9 +78,7 @@ class DriverEntity {
       licenceNumber: map['licence_number'] as String,
       licenceExpiry: map['licence_expiry'] == null
           ? null
-          : DateTime.fromMillisecondsSinceEpoch(
-              map['licence_expiry'] as int,
-            ),
+          : DateTime.fromMillisecondsSinceEpoch(map['licence_expiry'] as int),
       phone: map['phone'] as String?,
       email: map['email'] as String?,
       username: map['username'] as String?,

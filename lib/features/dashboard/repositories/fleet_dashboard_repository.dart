@@ -3,17 +3,14 @@ import '../../../database/app_database.dart';
 class FleetDashboardRepository {
   FleetDashboardRepository._();
 
-  static final FleetDashboardRepository instance =
-      FleetDashboardRepository._();
+  static final FleetDashboardRepository instance = FleetDashboardRepository._();
 
   final AppDatabase _database = AppDatabase();
 
   Future<int> getVehicleCount() async {
     final db = await _database.database();
 
-    final result = await db.rawQuery(
-      'SELECT COUNT(*) AS total FROM vehicles',
-    );
+    final result = await db.rawQuery('SELECT COUNT(*) AS total FROM vehicles');
 
     return (result.first['total'] as int?) ?? 0;
   }
@@ -31,9 +28,7 @@ class FleetDashboardRepository {
   Future<int> getDriverCount() async {
     final db = await _database.database();
 
-    final result = await db.rawQuery(
-      'SELECT COUNT(*) AS total FROM drivers',
-    );
+    final result = await db.rawQuery('SELECT COUNT(*) AS total FROM drivers');
 
     return (result.first['total'] as int?) ?? 0;
   }
@@ -85,8 +80,6 @@ class FleetDashboardRepository {
 
     return total - assigned;
   }
-
-
 
   Future<double> getFleetHealth() async {
     final total = await getVehicleCount();

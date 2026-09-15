@@ -21,14 +21,11 @@ class MaintenanceSummaryCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Maintenance Summary',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
 
             const SizedBox(height: 20),
@@ -68,36 +65,18 @@ class MaintenanceSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _summaryRow(
-    IconData icon,
-    Color color,
-    String title,
-    String value,
-  ) {
+  Widget _summaryRow(IconData icon, Color color, String title, String value) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: color,
-          ),
+          Icon(icon, color: color),
 
           const SizedBox(width: 12),
 
-          Expanded(
-            child: Text(title),
-          ),
+          Expanded(child: Text(title)),
 
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );

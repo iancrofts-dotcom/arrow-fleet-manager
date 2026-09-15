@@ -19,10 +19,7 @@ class VehicleListView extends StatelessWidget {
   Widget build(BuildContext context) {
     if (vehicles.isEmpty) {
       return const Center(
-        child: Text(
-          'No vehicles found.',
-          style: TextStyle(fontSize: 18),
-        ),
+        child: Text('No vehicles found.', style: TextStyle(fontSize: 18)),
       );
     }
 
@@ -33,10 +30,7 @@ class VehicleListView extends StatelessWidget {
         itemBuilder: (context, index) {
           final vehicle = vehicles[index];
 
-          return VehicleCard(
-            vehicle: vehicle,
-            onTap: () => onTap(vehicle),
-          );
+          return VehicleCard(vehicle: vehicle, onTap: () => onTap(vehicle));
         },
       ),
     );

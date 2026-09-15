@@ -10,11 +10,7 @@ class RepairTrend {
   });
 
   factory RepairTrend.empty(String period) {
-    return RepairTrend(
-      period: period,
-      completed: 0,
-      opened: 0,
-    );
+    return RepairTrend(period: period, completed: 0, opened: 0);
   }
 
   int get difference => completed - opened;

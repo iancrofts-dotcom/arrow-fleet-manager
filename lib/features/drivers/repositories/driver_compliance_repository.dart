@@ -11,19 +11,12 @@ class DriverComplianceRepository {
   Future<List<DriverCompliance>> getAll() async {
     final db = await _database.database();
 
-    final result = await db.query(
-      tableName,
-      orderBy: 'driverId ASC',
-    );
+    final result = await db.query(tableName, orderBy: 'driverId ASC');
 
-    return result
-        .map(DriverCompliance.fromMap)
-        .toList();
+    return result.map(DriverCompliance.fromMap).toList();
   }
 
-  Future<DriverCompliance?> getByDriverId(
-    int driverId,
-  ) async {
+  Future<DriverCompliance?> getByDriverId(int driverId) async {
     final db = await _database.database();
 
     final result = await db.query(
@@ -37,25 +30,16 @@ class DriverComplianceRepository {
       return null;
     }
 
-    return DriverCompliance.fromMap(
-      result.first,
-    );
+    return DriverCompliance.fromMap(result.first);
   }
 
-  Future<void> insert(
-    DriverCompliance compliance,
-  ) async {
+  Future<void> insert(DriverCompliance compliance) async {
     final db = await _database.database();
 
-    await db.insert(
-      tableName,
-      compliance.toMap(),
-    );
+    await db.insert(tableName, compliance.toMap());
   }
 
-  Future<void> update(
-    DriverCompliance compliance,
-  ) async {
+  Future<void> update(DriverCompliance compliance) async {
     final db = await _database.database();
 
     await db.update(
@@ -66,13 +50,8 @@ class DriverComplianceRepository {
     );
   }
 
-  Future<void> save(
-    DriverCompliance compliance,
-  ) async {
-    final existing =
-        await getByDriverId(
-      compliance.driverId,
-    );
+  Future<void> save(DriverCompliance compliance) async {
+    final existing = await getByDriverId(compliance.driverId);
 
     if (existing == null) {
       await insert(compliance);
@@ -81,16 +60,10 @@ class DriverComplianceRepository {
     }
   }
 
-  Future<void> delete(
-    int driverId,
-  ) async {
+  Future<void> delete(int driverId) async {
     final db = await _database.database();
 
-    await db.delete(
-      tableName,
-      where: 'driverId = ?',
-      whereArgs: [driverId],
-    );
+    await db.delete(tableName, where: 'driverId = ?', whereArgs: [driverId]);
   }
 
   /// Returns the percentage of drivers whose compliance

@@ -1,18 +1,9 @@
 import 'package:flutter/material.dart';
 
-enum StatusChipState {
-  healthy,
-  warning,
-  error,
-  inactive,
-}
+enum StatusChipState { healthy, warning, error, inactive }
 
 class StatusChip extends StatelessWidget {
-  const StatusChip({
-    super.key,
-    required this.label,
-    required this.state,
-  });
+  const StatusChip({super.key, required this.label, required this.state});
 
   final String label;
   final StatusChipState state;
@@ -54,32 +45,20 @@ class StatusChip extends StatelessWidget {
     final color = _color(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            _icon(),
-            size: 16,
-            color: color,
-          ),
+          Icon(_icon(), size: 16, color: color),
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: color, fontWeight: FontWeight.w600),
           ),
         ],
       ),

@@ -7,6 +7,7 @@ class DriverDetailsSection extends StatelessWidget {
   final TextEditingController lastNameController;
   final TextEditingController phoneController;
   final TextEditingController emailController;
+  final bool requireEmail;
 
   const DriverDetailsSection({
     super.key,
@@ -14,6 +15,7 @@ class DriverDetailsSection extends StatelessWidget {
     required this.lastNameController,
     required this.phoneController,
     required this.emailController,
+    this.requireEmail = false,
   });
 
   @override
@@ -25,9 +27,7 @@ class DriverDetailsSection extends StatelessWidget {
         children: [
           TextFormField(
             controller: firstNameController,
-            decoration: const InputDecoration(
-              labelText: 'First Name',
-            ),
+            decoration: const InputDecoration(labelText: 'First Name'),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Enter a first name';
@@ -40,9 +40,7 @@ class DriverDetailsSection extends StatelessWidget {
 
           TextFormField(
             controller: lastNameController,
-            decoration: const InputDecoration(
-              labelText: 'Last Name',
-            ),
+            decoration: const InputDecoration(labelText: 'Last Name'),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Enter a last name';
@@ -56,9 +54,7 @@ class DriverDetailsSection extends StatelessWidget {
           TextFormField(
             controller: phoneController,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'Phone',
-            ),
+            decoration: const InputDecoration(labelText: 'Phone'),
           ),
 
           const SizedBox(height: 16),
@@ -66,9 +62,23 @@ class DriverDetailsSection extends StatelessWidget {
           TextFormField(
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(
-              labelText: 'Email',
+            decoration: InputDecoration(
+              labelText: requireEmail ? 'Login Email' : 'Email',
+              helperText: requireEmail
+                  ? 'Used by the Driver to sign in to FleetIQ.'
+                  : null,
             ),
+            validator: (value) {
+              final email = value?.trim() ?? '';
+              if (requireEmail && email.isEmpty) {
+                return 'Enter a Driver login email';
+              }
+              if (email.isNotEmpty &&
+                  !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+                return 'Enter a valid email address';
+              }
+              return null;
+            },
           ),
         ],
       ),

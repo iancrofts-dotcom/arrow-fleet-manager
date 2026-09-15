@@ -13,9 +13,7 @@ class VehicleFilterService {
         return vehicles;
 
       case VehicleFilter.active:
-        return vehicles
-            .where((vehicle) => vehicle.active)
-            .toList();
+        return vehicles.where((vehicle) => vehicle.active).toList();
 
       // Placeholder until the full Vehicle Status
       // feature is implemented.
@@ -31,8 +29,7 @@ class VehicleFilterService {
             return false;
           }
 
-          final days =
-              vehicle.motExpiry!.difference(now).inDays;
+          final days = vehicle.motExpiry!.difference(now).inDays;
 
           return days >= 0 && days <= 30;
         }).toList();
@@ -45,8 +42,7 @@ class VehicleFilterService {
             return false;
           }
 
-          final days =
-              vehicle.serviceDue!.difference(now).inDays;
+          final days = vehicle.serviceDue!.difference(now).inDays;
 
           return days >= 0 && days <= 30;
         }).toList();
@@ -56,12 +52,10 @@ class VehicleFilterService {
 
         return vehicles.where((vehicle) {
           final motExpired =
-              vehicle.motExpiry != null &&
-              vehicle.motExpiry!.isBefore(now);
+              vehicle.motExpiry != null && vehicle.motExpiry!.isBefore(now);
 
           final serviceExpired =
-              vehicle.serviceDue != null &&
-              vehicle.serviceDue!.isBefore(now);
+              vehicle.serviceDue != null && vehicle.serviceDue!.isBefore(now);
 
           return motExpired || serviceExpired;
         }).toList();

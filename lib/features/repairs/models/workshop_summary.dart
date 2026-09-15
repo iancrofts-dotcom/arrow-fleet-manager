@@ -27,16 +27,10 @@ class WorkshopSummary {
     int? completedThisWeek,
   }) {
     return WorkshopSummary(
-      openRepairs:
-          openRepairs ?? this.openRepairs,
-      highPriority:
-          highPriority ?? this.highPriority,
-      overdueRepairs:
-          overdueRepairs ??
-              this.overdueRepairs,
-      completedThisWeek:
-          completedThisWeek ??
-              this.completedThisWeek,
+      openRepairs: openRepairs ?? this.openRepairs,
+      highPriority: highPriority ?? this.highPriority,
+      overdueRepairs: overdueRepairs ?? this.overdueRepairs,
+      completedThisWeek: completedThisWeek ?? this.completedThisWeek,
     );
   }
 

@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/dashboard_context.dart';
-
-import '../sections/analytics_section.dart';
-import '../sections/priority_section.dart';
-import '../sections/dashboard_kpi_section.dart';
-import '../sections/workshop_kpi_section.dart';
-import 'dashboard_header.dart';
+import 'executive_dashboard_content.dart';
 
 class DashboardContent extends StatelessWidget {
   const DashboardContent({
@@ -20,52 +15,9 @@ class DashboardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: this.context.onRefresh,
-      child: LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1240),
-              child: Padding(
-                padding: EdgeInsets.all(constraints.maxWidth < 700 ? 20 : 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    DashboardHeader(fleetHealth: this.context.fleetHealth),
-
-                    const SizedBox(height: 24),
-
-                    DashboardKpiSection(summary: this.context.summary),
-
-                    const SizedBox(height: 24),
-
-                    PrioritySection(summary: this.context.summary),
-
-                    if (this.context.summary.workshopDashboard != null) ...[
-                      const SizedBox(height: 24),
-                      WorkshopKpiSection(
-                        data: this.context.summary.workshopDashboard!,
-                      ),
-                    ],
-
-                    const SizedBox(height: 24),
-
-                    AnalyticsSection(
-                      summary: this.context.summary,
-                      children: children,
-                    ),
-
-                    const SizedBox(height: 30),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return ExecutiveDashboardContent(
+      dashboardContext: this.context,
+      children: children,
     );
   }
 }

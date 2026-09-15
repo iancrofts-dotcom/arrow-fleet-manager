@@ -12,8 +12,8 @@ class WorkshopReportingService {
   WorkshopReportingService({
     WorkshopRepository? repository,
     InspectionPhotoRepository? photoRepository,
-  })  : _repository = repository ?? WorkshopRepository(),
-        _photoRepository = photoRepository ?? InspectionPhotoRepository();
+  }) : _repository = repository ?? WorkshopRepository(),
+       _photoRepository = photoRepository ?? InspectionPhotoRepository();
 
   final WorkshopRepository _repository;
   final InspectionPhotoRepository _photoRepository;
@@ -47,8 +47,7 @@ class WorkshopReportingService {
         return false;
       }
       return true;
-    }).toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   /// Loads the persisted inspection context for supplied repair jobs.
@@ -85,22 +84,27 @@ class WorkshopReportingService {
         return false;
       }
       return true;
-    }).toList()
-      ..sort((a, b) => b.dateStarted.compareTo(a.dateStarted));
+    }).toList()..sort((a, b) => b.dateStarted.compareTo(a.dateStarted));
   }
 
   TechnicianWorkSummary technicianSummary(
     List<RepairJob> jobs,
     String technicianId,
   ) {
-    final matching = jobs.where((job) => job.technicianId == technicianId).toList();
+    final matching = jobs
+        .where((job) => job.technicianId == technicianId)
+        .toList();
     return TechnicianWorkSummary(
       technicianId: technicianId,
       jobs: matching,
-      activeJobs: matching.where((job) =>
-          job.status == RepairJobStatus.assigned ||
-          job.status == RepairJobStatus.inProgress ||
-          job.status == RepairJobStatus.awaitingParts).length,
+      activeJobs: matching
+          .where(
+            (job) =>
+                job.status == RepairJobStatus.assigned ||
+                job.status == RepairJobStatus.inProgress ||
+                job.status == RepairJobStatus.awaitingParts,
+          )
+          .length,
       awaitingReview: matching
           .where((job) => job.status == RepairJobStatus.awaitingInspection)
           .length,
@@ -118,8 +122,11 @@ class WorkshopReportingService {
         .where((job) => job.status == RepairJobStatus.completed)
         .length;
     final outstanding = jobs
-        .where((job) => job.status != RepairJobStatus.completed &&
-            job.status != RepairJobStatus.cancelled)
+        .where(
+          (job) =>
+              job.status != RepairJobStatus.completed &&
+              job.status != RepairJobStatus.cancelled,
+        )
         .length;
     return WorkshopCostSummary(
       jobs: jobs,
@@ -140,16 +147,22 @@ class WorkshopReportingService {
     required List<RepairJob> jobs,
     required Map<int, List<InspectionItem>> itemsByInspection,
   }) {
-    final vehicleInspections = inspections
-        .where((inspection) => inspection.vehicleId == vehicleId)
-        .toList()
-      ..sort((a, b) => b.dateStarted.compareTo(a.dateStarted));
-    final vehicleJobs = jobs.where((job) => job.vehicleId == vehicleId).toList();
+    final vehicleInspections =
+        inspections
+            .where((inspection) => inspection.vehicleId == vehicleId)
+            .toList()
+          ..sort((a, b) => b.dateStarted.compareTo(a.dateStarted));
+    final vehicleJobs = jobs
+        .where((job) => job.vehicleId == vehicleId)
+        .toList();
     final itemCount = vehicleInspections.fold<int>(0, (total, inspection) {
       return total +
           (itemsByInspection[inspection.id] ?? const <InspectionItem>[])
-              .where((item) =>
-                  item.status == InspectionItemStatus.fail || item.repairRequired)
+              .where(
+                (item) =>
+                    item.status == InspectionItemStatus.fail ||
+                    item.repairRequired,
+              )
               .length;
     });
     return VehicleWorkshopHistory(
@@ -160,8 +173,11 @@ class WorkshopReportingService {
           .where((job) => job.status == RepairJobStatus.completed)
           .length,
       outstandingJobs: vehicleJobs
-          .where((job) => job.status != RepairJobStatus.completed &&
-              job.status != RepairJobStatus.cancelled)
+          .where(
+            (job) =>
+                job.status != RepairJobStatus.completed &&
+                job.status != RepairJobStatus.cancelled,
+          )
           .length,
       actualHours: _sumHours(vehicleJobs),
       actualCost: _sumActualCost(vehicleJobs),
@@ -208,8 +224,11 @@ class WorkshopReportingService {
   ) {
     final totals = <String, double>{};
     for (final job in jobs) {
-      totals.update(keyOf(job), (value) => value + job.actualCost,
-          ifAbsent: () => job.actualCost);
+      totals.update(
+        keyOf(job),
+        (value) => value + job.actualCost,
+        ifAbsent: () => job.actualCost,
+      );
     }
     return totals;
   }
@@ -250,35 +269,35 @@ class WorkshopReportFilter {
   }) {
     return switch (scope) {
       WorkshopReportFilterScope.repairJobs => WorkshopReportFilter(
-          start: start,
-          end: end,
-          vehicleId: vehicleId,
-          technicianId: technicianId,
-          status: status,
-          priority: priority,
-        ),
+        start: start,
+        end: end,
+        vehicleId: vehicleId,
+        technicianId: technicianId,
+        status: status,
+        priority: priority,
+      ),
       WorkshopReportFilterScope.vehicleHistory => WorkshopReportFilter(
-          start: start,
-          end: end,
-          vehicleId: vehicleId,
-        ),
+        start: start,
+        end: end,
+        vehicleId: vehicleId,
+      ),
       WorkshopReportFilterScope.technicianWork => WorkshopReportFilter(
-          start: start,
-          end: end,
-          technicianId: technicianId,
-        ),
+        start: start,
+        end: end,
+        technicianId: technicianId,
+      ),
       WorkshopReportFilterScope.costs => WorkshopReportFilter(
-          start: start,
-          end: end,
-          vehicleId: vehicleId,
-          status: status,
-          priority: priority,
-        ),
+        start: start,
+        end: end,
+        vehicleId: vehicleId,
+        status: status,
+        priority: priority,
+      ),
       WorkshopReportFilterScope.inspection => WorkshopReportFilter(
-          start: start,
-          end: end,
-          vehicleId: vehicleId,
-        ),
+        start: start,
+        end: end,
+        vehicleId: vehicleId,
+      ),
     };
   }
 }
@@ -292,7 +311,16 @@ enum WorkshopReportFilterScope {
 }
 
 class TechnicianWorkSummary {
-  const TechnicianWorkSummary({required this.technicianId, required this.jobs, required this.activeJobs, required this.awaitingReview, required this.completedJobs, required this.vehicleCount, required this.actualHours, required this.actualCost});
+  const TechnicianWorkSummary({
+    required this.technicianId,
+    required this.jobs,
+    required this.activeJobs,
+    required this.awaitingReview,
+    required this.completedJobs,
+    required this.vehicleCount,
+    required this.actualHours,
+    required this.actualCost,
+  });
   final String technicianId;
   final List<RepairJob> jobs;
   final int activeJobs;
@@ -304,7 +332,17 @@ class TechnicianWorkSummary {
 }
 
 class WorkshopCostSummary {
-  const WorkshopCostSummary({required this.jobs, required this.completedJobs, required this.outstandingJobs, required this.estimatedCost, required this.actualCost, required this.estimatedHours, required this.actualHours, required this.actualCostByVehicle, required this.actualCostByPriority});
+  const WorkshopCostSummary({
+    required this.jobs,
+    required this.completedJobs,
+    required this.outstandingJobs,
+    required this.estimatedCost,
+    required this.actualCost,
+    required this.estimatedHours,
+    required this.actualHours,
+    required this.actualCostByVehicle,
+    required this.actualCostByPriority,
+  });
   final List<RepairJob> jobs;
   final int completedJobs;
   final int outstandingJobs;
@@ -318,7 +356,15 @@ class WorkshopCostSummary {
 }
 
 class VehicleWorkshopHistory {
-  const VehicleWorkshopHistory({required this.inspections, required this.jobs, required this.failedOrRepairRequiredItems, required this.completedJobs, required this.outstandingJobs, required this.actualHours, required this.actualCost});
+  const VehicleWorkshopHistory({
+    required this.inspections,
+    required this.jobs,
+    required this.failedOrRepairRequiredItems,
+    required this.completedJobs,
+    required this.outstandingJobs,
+    required this.actualHours,
+    required this.actualCost,
+  });
   final List<WorkshopInspection> inspections;
   final List<RepairJob> jobs;
   final int failedOrRepairRequiredItems;
@@ -329,7 +375,12 @@ class VehicleWorkshopHistory {
 }
 
 class InspectionReportData {
-  const InspectionReportData({required this.inspection, required this.items, required this.jobs, required this.photos});
+  const InspectionReportData({
+    required this.inspection,
+    required this.items,
+    required this.jobs,
+    required this.photos,
+  });
   final WorkshopInspection inspection;
   final List<InspectionItem> items;
   final List<RepairJob> jobs;

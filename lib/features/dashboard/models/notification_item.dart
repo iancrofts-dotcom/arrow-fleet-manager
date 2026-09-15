@@ -1,9 +1,4 @@
-enum NotificationType {
-  info,
-  success,
-  warning,
-  error,
-}
+enum NotificationType { info, success, warning, error }
 
 class NotificationItem {
   const NotificationItem({

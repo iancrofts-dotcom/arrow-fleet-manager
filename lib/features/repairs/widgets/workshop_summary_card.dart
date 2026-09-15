@@ -25,26 +25,18 @@ class WorkshopSummaryCard extends StatelessWidget {
             CircleAvatar(
               radius: 24,
               backgroundColor: color.withValues(alpha: 0.15),
-              child: Icon(
-                icon,
-                color: color,
-                size: 28,
-              ),
+              child: Icon(icon, color: color, size: 28),
             ),
 
             const SizedBox(width: 16),
 
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                   ),
 
                   const SizedBox(height: 4),

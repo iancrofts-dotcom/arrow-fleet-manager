@@ -17,6 +17,15 @@ extension BackendVehicleMapper on BackendVehicle {
     taxiLicensingAuthority: taxiLicensingAuthority,
     taxiPlateIssueDate: taxiPlateIssueDate,
     taxiPlateExpiry: taxiPlateExpiry,
+    motType: motType,
+    psvGarageCheckEnabled: psvGarageCheckEnabled,
+    psvGarageCheckIntervalWeeks: psvGarageCheckIntervalWeeks,
+    psvGarageCheckLastDate: psvGarageCheckLastDate,
+    psvGarageCheckDue: psvGarageCheckDue,
+    taxiSafetyCheckEnabled: taxiSafetyCheckEnabled,
+    taxiSafetyCheckIntervalWeeks: taxiSafetyCheckIntervalWeeks,
+    taxiSafetyCheckLastDate: taxiSafetyCheckLastDate,
+    taxiSafetyCheckDue: taxiSafetyCheckDue,
     active: isActive,
   );
 }

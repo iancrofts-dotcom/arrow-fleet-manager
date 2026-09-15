@@ -6,19 +6,13 @@ import 'edit_repair_screen.dart';
 class RepairDetailsScreen extends StatefulWidget {
   final Repair repair;
 
-  const RepairDetailsScreen({
-    super.key,
-    required this.repair,
-  });
+  const RepairDetailsScreen({super.key, required this.repair});
 
   @override
-  State<RepairDetailsScreen> createState() =>
-      _RepairDetailsScreenState();
+  State<RepairDetailsScreen> createState() => _RepairDetailsScreenState();
 }
 
-class _RepairDetailsScreenState
-    extends State<RepairDetailsScreen> {
-
+class _RepairDetailsScreenState extends State<RepairDetailsScreen> {
   Color _statusColour() {
     switch (widget.repair.status.toLowerCase()) {
       case 'open':
@@ -54,30 +48,20 @@ class _RepairDetailsScreenState
     }
   }
 
-  Widget _detailRow(
-    String title,
-    String value,
-  ) {
+  Widget _detailRow(String title, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 130,
             child: Text(
               title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
-          Expanded(
-            child: Text(value),
-          ),
+          Expanded(child: Text(value)),
         ],
       ),
     );
@@ -88,55 +72,41 @@ class _RepairDetailsScreenState
       return '-';
     }
 
-    return date
-        .toLocal()
-        .toString()
-        .split(' ')[0];
+    return date.toLocal().toString().split(' ')[0];
   }
 
-Future<void> _editRepair() async {
-  final updated = await Navigator.push<bool>(
-    context,
-    MaterialPageRoute(
-      builder: (_) => EditRepairScreen(
-        repair: widget.repair,
+  Future<void> _editRepair() async {
+    final updated = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditRepairScreen(repair: widget.repair),
       ),
-    ),
-  );
+    );
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  if (updated == true) {
-    Navigator.pop(context, true);
+    if (updated == true) {
+      Navigator.pop(context, true);
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.repair.repairNumber,
-        ),
-      ),
+      appBar: AppBar(title: Text(widget.repair.repairNumber)),
       body: SingleChildScrollView(
-        padding:
-            const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Card(
           child: Padding(
-            padding:
-                const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   widget.repair.registration,
-                  style:
-                      const TextStyle(
+                  style: const TextStyle(
                     fontSize: 24,
-                    fontWeight:
-                        FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
 
@@ -145,15 +115,12 @@ Future<void> _editRepair() async {
                 Row(
                   children: [
                     Chip(
-                      backgroundColor:
-                          _priorityColour(),
+                      backgroundColor: _priorityColour(),
                       label: Text(
                         widget.repair.priority,
-                        style:
-                            const TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
-                          fontWeight:
-                              FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -161,15 +128,12 @@ Future<void> _editRepair() async {
                     const SizedBox(width: 10),
 
                     Chip(
-                      backgroundColor:
-                          _statusColour(),
+                      backgroundColor: _statusColour(),
                       label: Text(
                         widget.repair.status,
-                        style:
-                            const TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
-                          fontWeight:
-                              FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -178,15 +142,9 @@ Future<void> _editRepair() async {
 
                 const SizedBox(height: 20),
 
-                _detailRow(
-                  'Driver',
-                  widget.repair.driver,
-                ),
+                _detailRow('Driver', widget.repair.driver),
 
-                _detailRow(
-                  'Defect',
-                  widget.repair.defect,
-                ),
+                _detailRow('Defect', widget.repair.defect),
 
                 _detailRow(
                   'Mechanic',
@@ -195,33 +153,19 @@ Future<void> _editRepair() async {
                       : widget.repair.mechanic,
                 ),
 
-                _detailRow(
-                  'Raised',
-                  _formatDate(
-                    widget.repair.dateRaised,
-                  ),
-                ),
+                _detailRow('Raised', _formatDate(widget.repair.dateRaised)),
 
-                _detailRow(
-                  'Due',
-                  _formatDate(
-                    widget.repair.dueDate,
-                  ),
-                ),
+                _detailRow('Due', _formatDate(widget.repair.dueDate)),
 
                 _detailRow(
                   'Completed',
-                  _formatDate(
-                    widget.repair.completedDate,
-                  ),
+                  _formatDate(widget.repair.completedDate),
                 ),
 
                 const SizedBox(height: 24),
-                                Text(
+                Text(
                   'Defect Notes',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
 
                 const SizedBox(height: 8),
@@ -230,11 +174,8 @@ Future<void> _editRepair() async {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.grey.shade300,
-                    ),
-                    borderRadius:
-                        BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     widget.repair.defectNotes.trim().isEmpty
@@ -247,9 +188,7 @@ Future<void> _editRepair() async {
 
                 Text(
                   'Repair Notes',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
 
                 const SizedBox(height: 8),
@@ -258,11 +197,8 @@ Future<void> _editRepair() async {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.grey.shade300,
-                    ),
-                    borderRadius:
-                        BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     widget.repair.repairNotes.trim().isEmpty
@@ -274,32 +210,28 @@ Future<void> _editRepair() async {
                 const SizedBox(height: 30),
 
                 Row(
-  children: [
-    Expanded(
-      child: OutlinedButton.icon(
-        onPressed: () {
-          Navigator.pop(context);
-        },
-        icon: const Icon(Icons.arrow_back),
-        label: const Text(
-          'Back',
-        ),
-      ),
-    ),
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text('Back'),
+                      ),
+                    ),
 
-    const SizedBox(width: 16),
+                    const SizedBox(width: 16),
 
-    Expanded(
-      child: ElevatedButton.icon(
-        onPressed: _editRepair,
-        icon: const Icon(Icons.edit),
-        label: const Text(
-          'Edit Repair',
-        ),
-      ),
-    ),
-  ],
-),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _editRepair,
+                        icon: const Icon(Icons.edit),
+                        label: const Text('Edit Repair'),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

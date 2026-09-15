@@ -13,11 +13,29 @@ class PlatformCapabilities {
   final bool isWeb;
   final BackendMode backendMode;
 
-  bool get isCentralWeb => isWeb && backendMode == BackendMode.supabase;
+  bool get isCentralMode => backendMode == BackendMode.supabase;
+  bool get isCentralWeb => isWeb && isCentralMode;
   bool get supportsApplicationConfiguration =>
       !isWeb || backendMode == BackendMode.supabase;
-  bool get supportsLocalData => !isWeb;
+  bool get supportsLocalData => !isWeb && !isCentralMode;
 
-  bool routeAvailable(String route) =>
-      !isCentralWeb || route == '/dashboard' || route == '/vehicles';
+  bool routeAvailable(String route) {
+    if (!isCentralMode) return true;
+    final common =
+        route == '/dashboard' ||
+        route == '/vehicles' ||
+        route == '/drivers' ||
+        route == '/users' ||
+        route == '/calendar' ||
+        route == '/compliance' ||
+        route == '/workshop' ||
+        route == '/documents' ||
+        route == '/reports' ||
+        route == '/driver/vehicle' ||
+        route == '/driver/inspection' ||
+        route == '/driver/compliance' ||
+        route == '/driver/documents' ||
+        route == '/driver/profile';
+    return common;
+  }
 }

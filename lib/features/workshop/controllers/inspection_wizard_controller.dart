@@ -9,21 +9,17 @@ class InspectionWizardController {
 
   final DatabaseService _databaseService = DatabaseService();
 
-  late final VehicleRepository _vehicleRepository =
-      VehicleRepository(
+  late final VehicleRepository _vehicleRepository = VehicleRepository(
     databaseService: _databaseService,
   );
 
-  InspectionWizardController({
-    required this.data,
-  });
+  InspectionWizardController({required this.data});
 
   /// Load all active vehicles.
   Future<List<Vehicle>> loadVehicles() async {
     await _databaseService.initialize();
 
-    final vehicles =
-        await _vehicleRepository.getVehicles();
+    final vehicles = await _vehicleRepository.getVehicles();
 
     return vehicles.where((v) => v.active).toList();
   }

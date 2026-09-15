@@ -22,9 +22,7 @@ class DashboardCard extends StatelessWidget {
       margin: margin,
       elevation: elevation,
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         width: double.infinity,
         padding: padding,

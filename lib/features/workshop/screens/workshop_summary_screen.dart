@@ -3,17 +3,12 @@ import 'package:flutter/material.dart';
 class WorkshopSummaryScreen extends StatelessWidget {
   final int inspectionId;
 
-  const WorkshopSummaryScreen({
-    super.key,
-    required this.inspectionId,
-  });
+  const WorkshopSummaryScreen({super.key, required this.inspectionId});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inspection Summary'),
-      ),
+      appBar: AppBar(title: const Text('Inspection Summary')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -23,11 +18,7 @@ class WorkshopSummaryScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    const Icon(
-                      Icons.task_alt,
-                      color: Colors.green,
-                      size: 64,
-                    ),
+                    const Icon(Icons.task_alt, color: Colors.green, size: 64),
                     const SizedBox(height: 16),
                     const Text(
                       'Inspection Completed',
@@ -37,9 +28,7 @@ class WorkshopSummaryScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Inspection ID: $inspectionId',
-                    ),
+                    Text('Inspection ID: $inspectionId'),
                   ],
                 ),
               ),
@@ -65,10 +54,7 @@ class WorkshopSummaryScreen extends StatelessWidget {
                 icon: const Icon(Icons.home),
                 label: const Text('Return to Workshop Dashboard'),
                 onPressed: () {
-                  Navigator.popUntil(
-                    context,
-                    (route) => route.isFirst,
-                  );
+                  Navigator.popUntil(context, (route) => route.isFirst);
                 },
               ),
             ),

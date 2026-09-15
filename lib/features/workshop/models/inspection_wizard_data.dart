@@ -18,6 +18,11 @@ class InspectionWizardData {
   // ==========================================================================
 
   int? vehicleId;
+
+  /// Supabase UUID used when the original wizard is running in central mode.
+  /// Local mode continues to use [vehicleId].
+  String? centralVehicleId;
+
   String? registration;
   String? fleetNumber;
   int? mileage;
@@ -33,6 +38,11 @@ class InspectionWizardData {
   WorkshopInspectionType? inspectionType;
 
   int? templateId;
+
+  /// Supabase template UUID used by the central Workshop adapter.
+  /// Kept separate so the original local wizard model remains compatible.
+  String? centralTemplateId;
+
   String? templateName;
 
   DateTime dateStarted = DateTime.now();
@@ -124,6 +134,7 @@ class InspectionWizardData {
   void reset() {
     // Vehicle
     vehicleId = null;
+    centralVehicleId = null;
     registration = null;
     fleetNumber = null;
     mileage = null;
@@ -132,6 +143,7 @@ class InspectionWizardData {
     inspectionNumber = '';
     inspectionType = null;
     templateId = null;
+    centralTemplateId = null;
     templateName = null;
     dateStarted = DateTime.now();
     createdAt = DateTime.now();

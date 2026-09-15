@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/repair_trend.dart';
 
 class WorkshopAnalyticsCard extends StatelessWidget {
-  const WorkshopAnalyticsCard({
-    super.key,
-    required this.trends,
-  });
+  const WorkshopAnalyticsCard({super.key, required this.trends});
 
   final List<RepairTrend> trends;
 
@@ -17,14 +14,11 @@ class WorkshopAnalyticsCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Weekly Repair Trends',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
 
@@ -32,29 +26,21 @@ class WorkshopAnalyticsCard extends StatelessWidget {
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(24),
-                  child: Text(
-                    'No repair trend data available.',
-                  ),
+                  child: Text('No repair trend data available.'),
                 ),
               )
             else
               Column(
                 children: trends.map((trend) {
                   return Padding(
-                    padding:
-                        const EdgeInsets.symmetric(
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(
                       children: [
                         SizedBox(
                           width: 40,
                           child: Text(
                             trend.period,
-                            style: const TextStyle(
-                              fontWeight:
-                                  FontWeight.bold,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
 
@@ -62,16 +48,13 @@ class WorkshopAnalyticsCard extends StatelessWidget {
                           child: LinearProgressIndicator(
                             value: trend.opened == 0
                                 ? 0
-                                : trend.completed /
-                                    trend.opened,
+                                : trend.completed / trend.opened,
                           ),
                         ),
 
                         const SizedBox(width: 12),
 
-                        Text(
-                          '${trend.completed}/${trend.opened}',
-                        ),
+                        Text('${trend.completed}/${trend.opened}'),
                       ],
                     ),
                   );

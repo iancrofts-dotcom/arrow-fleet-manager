@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../auth/services/permission_service.dart';
+import '../../../backend/drivers/central_driver_management_repository.dart';
+import '../../../backend/drivers/supabase_driver_management_gateway.dart';
+import '../../../config/backend_mode.dart';
 import '../../../shared/widgets/app_page_scaffold.dart';
-
+import '../../auth/services/permission_service.dart';
 import '../models/driver.dart';
 import '../services/driver_service.dart';
 import '../widgets/driver_form.dart';
@@ -18,35 +20,40 @@ class EditDriverScreen extends StatefulWidget {
 
 class _EditDriverScreenState extends State<EditDriverScreen> {
   final PermissionService _permissions = PermissionService.instance;
-  final DriverService _driverService = DriverService();
+  final DriverService _localDriverService = DriverService();
+  final CentralDriverManagementRepository _centralRepository =
+      const CentralDriverManagementRepository(
+        SupabaseDriverManagementGateway(),
+      );
 
   bool _saving = false;
+  bool get _isCentral => BackendModeConfig.current == BackendMode.supabase;
 
   Future<void> _saveDriver(Driver updatedDriver) async {
     if (_saving) return;
-
-    final driverToSave = updatedDriver.copyWith(id: widget.driver.id);
-
-    setState(() {
-      _saving = true;
-    });
+    final driverToSave = _isCentral
+        ? updatedDriver.copyWith(identity: widget.driver.identity)
+        : updatedDriver.copyWith(id: widget.driver.id);
+    setState(() => _saving = true);
 
     try {
-      await _driverService.updateDriver(driverToSave);
-
+      final saved = _isCentral
+          ? await _centralRepository.updateDriver(driverToSave)
+          : await _saveLocal(driverToSave);
       if (!mounted) return;
-
-      Navigator.pop(context, driverToSave);
+      Navigator.pop(context, saved);
     } catch (error) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Unable to update driver.\n$error')),
       );
-      setState(() {
-        _saving = false;
-      });
+      setState(() => _saving = false);
     }
+  }
+
+  Future<Driver> _saveLocal(Driver driver) async {
+    await _localDriverService.updateDriver(driver);
+    return driver;
   }
 
   @override
@@ -66,7 +73,9 @@ class _EditDriverScreenState extends State<EditDriverScreen> {
 
     return AppPageScaffold(
       title: 'Edit Driver',
-      subtitle: 'Update the existing driver profile.',
+      subtitle: _isCentral
+          ? 'Update the central Driver profile and portal login.'
+          : 'Update the existing driver profile.',
       child: Stack(
         children: [
           IgnorePointer(
@@ -75,6 +84,7 @@ class _EditDriverScreenState extends State<EditDriverScreen> {
               driver: widget.driver,
               onSubmit: (driver, _) => _saveDriver(driver),
               submitLabel: 'Update Driver',
+              requireEmail: _isCentral,
             ),
           ),
           if (_saving)

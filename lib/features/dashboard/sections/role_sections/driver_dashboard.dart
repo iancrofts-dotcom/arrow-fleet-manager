@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/router.dart';
+import '../../../../config/backend_mode.dart';
 import '../../../auth/screens/my_account_screen.dart';
+import '../../../drivers/screens/central_driver_account_screen.dart';
 import '../../../auth/services/auth_service.dart';
 import '../../../auth/services/permission_service.dart';
 import '../../../auth/widgets/protected_screen.dart';
 import '../../../drivers/services/driver_assignment_service.dart';
+import '../../../drivers/services/central_driver_workspace_service.dart';
+import '../../../drivers/screens/central_driver_compliance_screen.dart';
+import '../../../documents/screens/central_document_list_screen.dart';
 import '../../../inspections/inspection_screen.dart';
 import '../../../vehicles/models/vehicle.dart';
 import '../../../../shared/widgets/app_page_scaffold.dart';
@@ -21,12 +26,24 @@ class DriverDashboard extends StatelessWidget {
       return const Center(child: Text('Access denied.'));
     }
 
-    final driverId = AuthService.instance.currentDriverId;
+    final auth = AuthService.instance;
+    final isCentral = BackendModeConfig.current == BackendMode.supabase;
+    final driverId = auth.currentDriverId;
+    final centralDriverId = auth.currentBackendDriverId;
+
+    final Future<Vehicle?> assignedVehicleFuture;
+    if (isCentral) {
+      assignedVehicleFuture = centralDriverId == null
+          ? Future<Vehicle?>.value()
+          : CentralDriverWorkspaceService().getAssignedVehicle(centralDriverId);
+    } else {
+      assignedVehicleFuture = driverId == null
+          ? Future<Vehicle?>.value()
+          : DriverAssignmentService().getAssignedVehicle(driverId);
+    }
 
     return FutureBuilder<Vehicle?>(
-      future: driverId == null
-          ? Future<Vehicle?>.value()
-          : DriverAssignmentService().getAssignedVehicle(driverId),
+      future: assignedVehicleFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const AppLoadingState(
@@ -50,6 +67,38 @@ class DriverDashboard extends StatelessWidget {
                     'Contact your fleet manager to be assigned a vehicle before completing a daily inspection.',
               ),
               const SizedBox(height: 20),
+              if (centralDriverId != null) ...[
+                _DriverActionCard(
+                  icon: Icons.verified_user_outlined,
+                  title: 'My Compliance',
+                  subtitle:
+                      'Update licence, CPC, medical, DBS and taxi licence',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CentralDriverComplianceScreen(
+                        driverId: centralDriverId,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _DriverActionCard(
+                  icon: Icons.folder_shared_outlined,
+                  title: 'My Documents',
+                  subtitle: 'Upload and view your Driver documents',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CentralDocumentListScreen(
+                        initialFilter: 'Driver',
+                        entityType: 'driver',
+                        entityId: centralDriverId,
+                        ownerLabel: 'My Driver',
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
               _DriverActionCard(
                 icon: Icons.person_outline,
                 title: 'My Account',
@@ -58,7 +107,9 @@ class DriverDashboard extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (_) => ProtectedScreen(
                       allow: (permissions) => permissions.canViewOwnAccount,
-                      child: const MyAccountScreen(),
+                      child: isCentral
+                          ? const CentralDriverAccountScreen()
+                          : const MyAccountScreen(),
                     ),
                   ),
                 ),
@@ -91,7 +142,7 @@ class DriverDashboard extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (_) => ProtectedScreen(
                     allow: (permissions) => permissions.canViewAssignedVehicle,
-                    child: const _MyAssignedVehicleScreen(),
+                    child: _MyAssignedVehicleScreen(vehicle: vehicle),
                   ),
                 ),
               ),
@@ -117,6 +168,37 @@ class DriverDashboard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+            if (centralDriverId != null) ...[
+              _DriverActionCard(
+                icon: Icons.verified_user_outlined,
+                title: 'My Compliance',
+                subtitle: 'Update licence, CPC, medical, DBS and taxi licence',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => CentralDriverComplianceScreen(
+                      driverId: centralDriverId,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _DriverActionCard(
+                icon: Icons.folder_shared_outlined,
+                title: 'My Documents',
+                subtitle: 'Upload and view your Driver documents',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => CentralDocumentListScreen(
+                      initialFilter: 'Driver',
+                      entityType: 'driver',
+                      entityId: centralDriverId,
+                      ownerLabel: 'My Driver',
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             _DriverActionCard(
               icon: Icons.person_outline,
               title: 'My Account',
@@ -125,7 +207,9 @@ class DriverDashboard extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (_) => ProtectedScreen(
                     allow: (permissions) => permissions.canViewOwnAccount,
-                    child: const MyAccountScreen(),
+                    child: isCentral
+                        ? const CentralDriverAccountScreen()
+                        : const MyAccountScreen(),
                   ),
                 ),
               ),
@@ -138,77 +222,53 @@ class DriverDashboard extends StatelessWidget {
 }
 
 class _MyAssignedVehicleScreen extends StatelessWidget {
-  const _MyAssignedVehicleScreen();
+  const _MyAssignedVehicleScreen({required this.vehicle});
+
+  final Vehicle vehicle;
 
   @override
   Widget build(BuildContext context) {
-    final driverId = AuthService.instance.currentDriverId;
-
-    if (!PermissionService.instance.canViewAssignedVehicle ||
-        driverId == null) {
+    if (!PermissionService.instance.canViewAssignedVehicle) {
       return const _DriverAccessDenied(message: 'No driver account is linked.');
     }
 
     return AppPageScaffold(
       title: 'My Vehicle',
       subtitle: 'Your currently assigned vehicle.',
-      child: FutureBuilder<Vehicle?>(
-        future: DriverAssignmentService().getAssignedVehicle(driverId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const AppLoadingState(label: 'Loading your vehicle...');
-          }
-
-          if (snapshot.hasError) {
-            return AppErrorState(message: '${snapshot.error}');
-          }
-
-          final vehicle = snapshot.data;
-          if (vehicle == null) {
-            return const AppEmptyState(
-              icon: Icons.local_shipping_outlined,
-              title: 'No vehicle assigned',
-              message:
-                  'Contact your fleet manager if you think this is incorrect.',
-            );
-          }
-
-          return ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              SectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Vehicle Overview',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _VehicleDetailCard(
-                      label: 'Registration',
-                      value: vehicle.registration,
-                    ),
-                    _VehicleDetailCard(
-                      label: 'Fleet Number',
-                      value: vehicle.fleetNumber,
-                    ),
-                    _VehicleDetailCard(
-                      label: 'Vehicle',
-                      value: '${vehicle.make} ${vehicle.model}',
-                    ),
-                    _VehicleDetailCard(
-                      label: 'Year',
-                      value: vehicle.year.toString(),
-                    ),
-                  ],
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Vehicle Overview',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
+                const SizedBox(height: 12),
+                _VehicleDetailCard(
+                  label: 'Registration',
+                  value: vehicle.registration,
+                ),
+                _VehicleDetailCard(
+                  label: 'Fleet Number',
+                  value: vehicle.fleetNumber,
+                ),
+                _VehicleDetailCard(
+                  label: 'Vehicle',
+                  value: '${vehicle.make} ${vehicle.model}',
+                ),
+                _VehicleDetailCard(
+                  label: 'Year',
+                  value: vehicle.year.toString(),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

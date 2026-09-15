@@ -5,9 +5,7 @@ import 'package:sqflite/sqflite.dart';
 class InspectionRepository {
   final DatabaseService databaseService;
 
-  InspectionRepository({
-    required this.databaseService,
-  });
+  InspectionRepository({required this.databaseService});
 
   Future<void> saveInspection(
     Inspection inspection, {
@@ -15,23 +13,15 @@ class InspectionRepository {
   }) async {
     final db = executor ?? await databaseService.database.database();
 
-    await db.insert(
-      'inspections',
-      inspection.toMap(),
-    );
+    await db.insert('inspections', inspection.toMap());
   }
 
   Future<List<Inspection>> getInspections() async {
     final db = await databaseService.database.database();
 
-    final maps = await db.query(
-      'inspections',
-      orderBy: 'inspectionDate DESC',
-    );
+    final maps = await db.query('inspections', orderBy: 'inspectionDate DESC');
 
-    return maps
-        .map(Inspection.fromMap)
-        .toList();
+    return maps.map(Inspection.fromMap).toList();
   }
 
   Future<Inspection?> getInspectionById(int id) async {
@@ -71,9 +61,7 @@ class InspectionRepository {
     return Inspection.fromMap(maps.first);
   }
 
-  Future<List<Inspection>> getVehicleInspections(
-    int vehicleId,
-  ) async {
+  Future<List<Inspection>> getVehicleInspections(int vehicleId) async {
     final db = await databaseService.database.database();
 
     final maps = await db.query(
@@ -83,19 +71,13 @@ class InspectionRepository {
       orderBy: 'inspectionDate DESC',
     );
 
-    return maps
-        .map(Inspection.fromMap)
-        .toList();
+    return maps.map(Inspection.fromMap).toList();
   }
 
   Future<int> deleteInspection(int id) async {
     final db = await databaseService.database.database();
 
-    return db.delete(
-      'inspections',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete('inspections', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> getInspectionCount() async {
@@ -111,8 +93,7 @@ class InspectionRepository {
   Future<int> getTodayInspectionCount() async {
     final db = await databaseService.database.database();
 
-    final today =
-        DateTime.now().toIso8601String().split('T').first;
+    final today = DateTime.now().toIso8601String().split('T').first;
 
     final result = await db.rawQuery(
       '''
@@ -143,9 +124,7 @@ class InspectionRepository {
     return ((total - defects) / total) * 100;
   }
 
-  Future<List<Inspection>> getRecentInspections({
-    int limit = 5,
-  }) async {
+  Future<List<Inspection>> getRecentInspections({int limit = 5}) async {
     final db = await databaseService.database.database();
 
     final maps = await db.query(
@@ -154,8 +133,6 @@ class InspectionRepository {
       limit: limit,
     );
 
-    return maps
-        .map(Inspection.fromMap)
-        .toList();
+    return maps.map(Inspection.fromMap).toList();
   }
 }

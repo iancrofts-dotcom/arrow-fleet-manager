@@ -16,10 +16,7 @@ class FleetFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Wrap(
         spacing: 8,
         children: VehicleFilter.values
@@ -29,12 +26,13 @@ class FleetFilterBar extends StatelessWidget {
                   filter != VehicleFilter.retired,
             )
             .map((filter) {
-          return FilterChip(
-            label: Text(_label(filter)),
-            selected: selectedFilter == filter,
-            onSelected: (_) => onChanged(filter),
-          );
-        }).toList(),
+              return FilterChip(
+                label: Text(_label(filter)),
+                selected: selectedFilter == filter,
+                onSelected: (_) => onChanged(filter),
+              );
+            })
+            .toList(),
       ),
     );
   }

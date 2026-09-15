@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class VehicleDetailsCard extends StatelessWidget {
-
   final TextEditingController registration;
   final TextEditingController driver;
   final TextEditingController inspector;
@@ -30,13 +29,11 @@ class VehicleDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-
             field("Vehicle Registration", registration),
 
             field("Driver", driver),
@@ -44,7 +41,6 @@ class VehicleDetailsCard extends StatelessWidget {
             field("Mileage", mileage),
 
             field("Inspector", inspector),
-
           ],
         ),
       ),

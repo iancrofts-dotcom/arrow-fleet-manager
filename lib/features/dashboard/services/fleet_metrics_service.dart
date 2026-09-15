@@ -9,21 +9,19 @@ class FleetMetrics {
   final int totalVehicles;
 
   const FleetMetrics({
-  required this.totalVehicles,
-  required this.active,
-  required this.inactive,
-  required this.motDue,
-  required this.serviceDue,
-  required this.overdue,
-});
+    required this.totalVehicles,
+    required this.active,
+    required this.inactive,
+    required this.motDue,
+    required this.serviceDue,
+    required this.overdue,
+  });
 }
 
 class FleetMetricsService {
   const FleetMetricsService();
 
-  FleetMetrics calculate(
-    List<Vehicle> vehicles,
-  ) {
+  FleetMetrics calculate(List<Vehicle> vehicles) {
     final now = DateTime.now();
 
     int active = 0;
@@ -40,8 +38,7 @@ class FleetMetricsService {
       }
 
       if (vehicle.motExpiry != null) {
-        final days =
-            vehicle.motExpiry!.difference(now).inDays;
+        final days = vehicle.motExpiry!.difference(now).inDays;
 
         if (days < 0) {
           overdue++;
@@ -51,8 +48,7 @@ class FleetMetricsService {
       }
 
       if (vehicle.serviceDue != null) {
-        final days =
-            vehicle.serviceDue!.difference(now).inDays;
+        final days = vehicle.serviceDue!.difference(now).inDays;
 
         if (days < 0) {
           overdue++;

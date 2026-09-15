@@ -1,6 +1,7 @@
 import '../backend/auth/fleet_auth_factory.dart';
 import '../backend/auth/supabase_sdk_auth_gateway.dart';
 import '../backend/backend_client.dart';
+import '../backend/resilience/central_offline_sync_service.dart';
 import '../config/backend_mode.dart';
 import '../features/auth/services/auth_service.dart';
 import '../platform/platform_runtime.dart';
@@ -18,6 +19,7 @@ class AppBootstrap {
     }
     if (mode == BackendMode.supabase) {
       await BackendClient.initialize();
+      CentralOfflineSyncService.instance.start();
       AuthService.instance.configureBackend(
         mode: mode,
         remoteAuthAdapter: createFleetAuthAdapter(

@@ -6,7 +6,6 @@ import '../../vehicles/models/vehicle.dart';
 import '../../vehicles/services/vehicle_service.dart';
 import '../models/fleet_compliance_summary.dart';
 
-/// Builds one authoritative, Dashboard-compatible fleet compliance summary.
 class FleetComplianceService {
   FleetComplianceService({
     VehicleService? vehicleService,
@@ -63,36 +62,57 @@ class FleetComplianceService {
       if (vehicleId == null) {
         throw StateError('Active vehicle is missing a persisted ID.');
       }
+      final secondary = vehicle.fleetNumber.isEmpty
+          ? null
+          : vehicle.fleetNumber;
       builder.add(
         subjectType: FleetComplianceSubjectType.vehicle,
         subjectId: vehicleId,
         subjectDisplay: vehicle.registration,
-        secondaryDisplay: vehicle.fleetNumber.isEmpty
-            ? null
-            : vehicle.fleetNumber,
-        checkType: FleetComplianceCheckType.mot,
+        secondaryDisplay: secondary,
+        checkType: vehicle.motType == 'psv'
+            ? FleetComplianceCheckType.psvMot
+            : FleetComplianceCheckType.mot,
         date: vehicle.motExpiry,
       );
       builder.add(
         subjectType: FleetComplianceSubjectType.vehicle,
         subjectId: vehicleId,
         subjectDisplay: vehicle.registration,
-        secondaryDisplay: vehicle.fleetNumber.isEmpty
-            ? null
-            : vehicle.fleetNumber,
+        secondaryDisplay: secondary,
         checkType: FleetComplianceCheckType.service,
         date: vehicle.serviceDue,
       );
-      if (vehicle.taxiPlateExpiry != null) {
-        builder.addOptionalAttention(
+      if (vehicle.taxiPlateNumber != null || vehicle.taxiPlateExpiry != null) {
+        builder.addOptional(
           subjectType: FleetComplianceSubjectType.vehicle,
           subjectId: vehicleId,
           subjectDisplay: vehicle.registration,
-          secondaryDisplay: vehicle.fleetNumber.isEmpty
-              ? null
-              : vehicle.fleetNumber,
+          secondaryDisplay: vehicle.taxiPlateNumber ?? secondary,
           checkType: FleetComplianceCheckType.taxiPlate,
-          date: vehicle.taxiPlateExpiry!,
+          date: vehicle.taxiPlateExpiry,
+        );
+      }
+      if (vehicle.psvGarageCheckEnabled) {
+        builder.add(
+          subjectType: FleetComplianceSubjectType.vehicle,
+          subjectId: vehicleId,
+          subjectDisplay: vehicle.registration,
+          secondaryDisplay:
+              '${vehicle.psvGarageCheckIntervalWeeks}-week schedule',
+          checkType: FleetComplianceCheckType.psvGarageCheck,
+          date: vehicle.psvGarageCheckDue,
+        );
+      }
+      if (vehicle.taxiSafetyCheckEnabled) {
+        builder.add(
+          subjectType: FleetComplianceSubjectType.vehicle,
+          subjectId: vehicleId,
+          subjectDisplay: vehicle.registration,
+          secondaryDisplay:
+              '${vehicle.taxiSafetyCheckIntervalWeeks}-week schedule',
+          checkType: FleetComplianceCheckType.taxiSafetyCheck,
+          date: vehicle.taxiSafetyCheckDue,
         );
       }
     }
@@ -117,13 +137,13 @@ class FleetComplianceService {
           date: check.$2,
         );
       }
-      if (compliance?.taxiLicenceExpiry case final taxiLicenceExpiry?) {
-        builder.addOptionalAttention(
+      if (compliance?.taxiLicenceExpiry != null) {
+        builder.addOptional(
           subjectType: FleetComplianceSubjectType.driver,
           subjectId: driverId,
           subjectDisplay: driver.fullName,
           checkType: FleetComplianceCheckType.taxiLicence,
-          date: taxiLicenceExpiry,
+          date: compliance?.taxiLicenceExpiry,
         );
       }
     }
@@ -133,9 +153,10 @@ class FleetComplianceService {
 }
 
 class _SummaryBuilder {
-  _SummaryBuilder(this.now);
+  _SummaryBuilder(DateTime now) : now = DateTime(now.year, now.month, now.day);
 
   final DateTime now;
+  final List<FleetComplianceAttentionItem> allItems = [];
   final List<FleetComplianceAttentionItem> attentionItems = [];
   var totalChecks = 0;
   var compliantChecks = 0;
@@ -161,7 +182,6 @@ class _SummaryBuilder {
     } else {
       driverCheckCount++;
     }
-
     switch (status) {
       case FleetComplianceStatus.valid:
         validCount++;
@@ -178,51 +198,47 @@ class _SummaryBuilder {
         notRecordedCount++;
         break;
     }
-
-    if (status != FleetComplianceStatus.valid) {
-      attentionItems.add(
-        FleetComplianceAttentionItem(
-          subjectType: subjectType,
-          subjectId: subjectId,
-          checkType: checkType,
-          status: status,
-          date: date,
-          subjectDisplay: subjectDisplay,
-          secondaryDisplay: secondaryDisplay,
-        ),
-      );
-    }
+    final item = FleetComplianceAttentionItem(
+      subjectType: subjectType,
+      subjectId: subjectId,
+      checkType: checkType,
+      status: status,
+      date: date,
+      subjectDisplay: subjectDisplay,
+      secondaryDisplay: secondaryDisplay,
+    );
+    allItems.add(item);
+    if (status != FleetComplianceStatus.valid) attentionItems.add(item);
   }
 
-  /// Adds specialist attention without changing the universal score.
-  void addOptionalAttention({
+  void addOptional({
     required FleetComplianceSubjectType subjectType,
     required int subjectId,
     required String subjectDisplay,
     String? secondaryDisplay,
     required FleetComplianceCheckType checkType,
-    required DateTime date,
+    required DateTime? date,
   }) {
     final status = _classify(date, now);
-    if (status == FleetComplianceStatus.valid ||
-        status == FleetComplianceStatus.notRecorded) {
-      return;
-    }
-    attentionItems.add(
-      FleetComplianceAttentionItem(
-        subjectType: subjectType,
-        subjectId: subjectId,
-        checkType: checkType,
-        status: status,
-        date: date,
-        subjectDisplay: subjectDisplay,
-        secondaryDisplay: secondaryDisplay,
-      ),
+    final item = FleetComplianceAttentionItem(
+      subjectType: subjectType,
+      subjectId: subjectId,
+      checkType: checkType,
+      status: status,
+      date: date,
+      subjectDisplay: subjectDisplay,
+      secondaryDisplay: secondaryDisplay,
     );
+    allItems.add(item);
+    if (status == FleetComplianceStatus.dueSoon ||
+        status == FleetComplianceStatus.expired) {
+      attentionItems.add(item);
+    }
   }
 
   FleetComplianceSummary build() {
-    attentionItems.sort(_compareAttentionItems);
+    attentionItems.sort(_compareItems);
+    allItems.sort(_compareItems);
     return FleetComplianceSummary(
       compliancePercentage: totalChecks == 0
           ? 100
@@ -236,59 +252,41 @@ class _SummaryBuilder {
       vehicleCheckCount: vehicleCheckCount,
       driverCheckCount: driverCheckCount,
       attentionItems: attentionItems,
+      allItems: allItems,
     );
   }
 }
 
 FleetComplianceStatus _classify(DateTime? date, DateTime now) {
-  if (date == null) {
-    return FleetComplianceStatus.notRecorded;
-  }
-  if (date.isBefore(now)) {
-    return FleetComplianceStatus.expired;
-  }
-  if (date.difference(now).inDays <= FleetComplianceService.dueSoonDays) {
+  if (date == null) return FleetComplianceStatus.notRecorded;
+  final day = DateTime(date.year, date.month, date.day);
+  if (day.isBefore(now)) return FleetComplianceStatus.expired;
+  if (day.difference(now).inDays <= FleetComplianceService.dueSoonDays) {
     return FleetComplianceStatus.dueSoon;
   }
   return FleetComplianceStatus.valid;
 }
 
-int _compareAttentionItems(
+int _compareItems(
   FleetComplianceAttentionItem left,
   FleetComplianceAttentionItem right,
 ) {
-  final severity = _attentionPriority(
-    left.status,
-  ).compareTo(_attentionPriority(right.status));
-  if (severity != 0) {
-    return severity;
-  }
-  if (left.date != null && right.date != null) {
-    final date = left.date!.compareTo(right.date!);
-    if (date != 0) {
-      return date;
-    }
+  final severity = _priority(left.status).compareTo(_priority(right.status));
+  if (severity != 0) return severity;
+  final leftDate = left.date;
+  final rightDate = right.date;
+  if (leftDate != null && rightDate != null) {
+    final date = leftDate.compareTo(rightDate);
+    if (date != 0) return date;
   }
   final subject = left.subjectDisplay.compareTo(right.subjectDisplay);
-  if (subject != 0) {
-    return subject;
-  }
-  final check = left.checkType.index.compareTo(right.checkType.index);
-  if (check != 0) {
-    return check;
-  }
-  return left.subjectId.compareTo(right.subjectId);
+  if (subject != 0) return subject;
+  return left.checkType.index.compareTo(right.checkType.index);
 }
 
-int _attentionPriority(FleetComplianceStatus status) {
-  switch (status) {
-    case FleetComplianceStatus.expired:
-      return 0;
-    case FleetComplianceStatus.notRecorded:
-      return 1;
-    case FleetComplianceStatus.dueSoon:
-      return 2;
-    case FleetComplianceStatus.valid:
-      return 3;
-  }
-}
+int _priority(FleetComplianceStatus status) => switch (status) {
+  FleetComplianceStatus.expired => 0,
+  FleetComplianceStatus.notRecorded => 1,
+  FleetComplianceStatus.dueSoon => 2,
+  FleetComplianceStatus.valid => 3,
+};

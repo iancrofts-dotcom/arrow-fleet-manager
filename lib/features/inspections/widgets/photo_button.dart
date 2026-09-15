@@ -3,21 +3,17 @@ import 'package:flutter/material.dart';
 class PhotoButton extends StatelessWidget {
   final VoidCallback? onPressed;
 
-  const PhotoButton({
-    super.key,
-    this.onPressed,
-  });
+  const PhotoButton({super.key, this.onPressed});
 
   @override
   Widget build(BuildContext context) {
     return OutlinedButton.icon(
-      onPressed: onPressed ??
+      onPressed:
+          onPressed ??
           () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text(
-                  'Photo capture will be available in v0.4.0',
-                ),
+                content: Text('Photo capture will be available in v0.4.0'),
               ),
             );
           },

@@ -7,10 +7,7 @@ import '../sections/system_status_section.dart';
 import '../widgets/dashboard_content.dart';
 
 class AdministratorDashboard extends StatelessWidget {
-  const AdministratorDashboard({
-    super.key,
-    required this.context,
-  });
+  const AdministratorDashboard({super.key, required this.context});
 
   final DashboardContext context;
 

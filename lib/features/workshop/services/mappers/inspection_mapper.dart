@@ -16,68 +16,48 @@ class InspectionMapper {
       templateName: data.templateName,
 
       technicianId: data.technicianId,
-      technicianName: data.technicianName ??
-          data.technician ??
-          '',
+      technicianName: data.technicianName ?? data.technician ?? '',
 
       workshopManager: data.workshopManager,
 
       inspectionType:
-          data.inspectionType ??
-              WorkshopInspectionType.defectInspection,
+          data.inspectionType ?? WorkshopInspectionType.defectInspection,
 
       status: data.repairsRequired > 0
           ? WorkshopInspectionStatus.awaitingRepair
           : WorkshopInspectionStatus.completed,
 
-      vehicleStatus:
-          data.vehicleStatus,
+      vehicleStatus: data.vehicleStatus,
 
-      dateStarted:
-          data.dateStarted,
+      dateStarted: data.dateStarted,
 
-      dateCompleted:
-          DateTime.now(),
+      dateCompleted: DateTime.now(),
 
-      mileage:
-          data.mileage ?? 0,
+      mileage: data.mileage ?? 0,
 
-      overallResult:
-          data.overallResult,
+      overallResult: data.overallResult,
 
-      inspectionScore:
-          data.inspectionScore,
+      inspectionScore: data.inspectionScore,
 
-      criticalFailures:
-          data.criticalFailures,
+      criticalFailures: data.criticalFailures,
 
-      advisories:
-          data.advisories,
+      advisories: data.advisories,
 
-      repairsRequired:
-          data.repairsRequired,
+      repairsRequired: data.repairsRequired,
 
-      labourHours:
-          data.labourHours,
+      labourHours: data.labourHours,
 
-      totalCost:
-          data.totalCost,
+      totalCost: data.totalCost,
 
-      notes:
-          data.finalNotes ??
-              data.notes,
+      notes: data.finalNotes ?? data.notes,
 
-      technicianSignature:
-          data.technicianSignature,
+      technicianSignature: data.technicianSignature,
 
-      managerSignature:
-          data.managerSignature,
+      managerSignature: data.managerSignature,
 
-      createdAt:
-          data.createdAt,
+      createdAt: data.createdAt,
 
-      updatedAt:
-          DateTime.now(),
+      updatedAt: DateTime.now(),
     );
   }
 }

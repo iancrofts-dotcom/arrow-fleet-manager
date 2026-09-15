@@ -1,10 +1,4 @@
-enum UserRole {
-  admin,
-  manager,
-  workshop,
-  technician,
-  driver,
-}
+enum UserRole { admin, manager, workshop, technician, driver }
 
 extension UserRoleExtension on UserRole {
   String get displayName {

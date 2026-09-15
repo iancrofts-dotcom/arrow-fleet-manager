@@ -12,27 +12,19 @@ class VehicleSortService {
 
     switch (sort) {
       case VehicleSort.registration:
-        sorted.sort(
-          (a, b) => a.registration.compareTo(b.registration),
-        );
+        sorted.sort((a, b) => a.registration.compareTo(b.registration));
         break;
 
       case VehicleSort.fleetNumber:
-        sorted.sort(
-          (a, b) => a.fleetNumber.compareTo(b.fleetNumber),
-        );
+        sorted.sort((a, b) => a.fleetNumber.compareTo(b.fleetNumber));
         break;
 
       case VehicleSort.make:
-        sorted.sort(
-          (a, b) => a.make.compareTo(b.make),
-        );
+        sorted.sort((a, b) => a.make.compareTo(b.make));
         break;
 
       case VehicleSort.model:
-        sorted.sort(
-          (a, b) => a.model.compareTo(b.model),
-        );
+        sorted.sort((a, b) => a.model.compareTo(b.model));
         break;
 
       case VehicleSort.motExpiry:

@@ -69,6 +69,15 @@ class SupabaseVehicleDataSource implements VehicleDataSource {
     taxiLicensingAuthority: vehicle.taxiLicensingAuthority,
     taxiPlateIssueDate: vehicle.taxiPlateIssueDate,
     taxiPlateExpiry: vehicle.taxiPlateExpiry,
+    motType: vehicle.motType,
+    psvGarageCheckEnabled: vehicle.psvGarageCheckEnabled,
+    psvGarageCheckIntervalWeeks: vehicle.psvGarageCheckIntervalWeeks,
+    psvGarageCheckLastDate: vehicle.psvGarageCheckLastDate,
+    psvGarageCheckDue: vehicle.psvGarageCheckDue,
+    taxiSafetyCheckEnabled: vehicle.taxiSafetyCheckEnabled,
+    taxiSafetyCheckIntervalWeeks: vehicle.taxiSafetyCheckIntervalWeeks,
+    taxiSafetyCheckLastDate: vehicle.taxiSafetyCheckLastDate,
+    taxiSafetyCheckDue: vehicle.taxiSafetyCheckDue,
     isActive: vehicle.active,
   );
 }

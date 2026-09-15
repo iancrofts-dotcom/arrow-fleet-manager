@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../workshop/screens/workshop_dashboard_screen.dart';
-import '../../../auth/widgets/protected_screen.dart';
 import '../../../../shared/widgets/app_page_scaffold.dart';
+import '../../../auth/screens/central/central_my_profile_screen.dart';
 
 class TechnicianDashboard extends StatelessWidget {
   const TechnicianDashboard({super.key});
@@ -11,21 +10,31 @@ class TechnicianDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
+        constraints: const BoxConstraints(maxWidth: 520),
         child: SectionCard(
-          title: 'Workshop operations',
-          subtitle: 'View and update your assigned repair jobs.',
-          child: FilledButton.icon(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => ProtectedScreen(
-                  allow: (permissions) => permissions.canAccessWorkshop,
-                  child: const WorkshopDashboardScreen(),
-                ),
+          title: 'Technician Workspace',
+          subtitle:
+              'Open assigned Workshop work or manage your FleetIQ profile.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FilledButton.icon(
+                onPressed: () => Navigator.pushNamed(context, '/workshop'),
+                icon: const Icon(Icons.handyman_outlined),
+                label: const Text('Open My Repair Jobs'),
               ),
-            ),
-            icon: const Icon(Icons.handyman_outlined),
-            label: const Text('Open My Repair Jobs'),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    fullscreenDialog: true,
+                    builder: (_) => const CentralMyProfileScreen(),
+                  ),
+                ),
+                icon: const Icon(Icons.account_circle_outlined),
+                label: const Text('My Profile & Password'),
+              ),
+            ],
           ),
         ),
       ),

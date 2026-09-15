@@ -10,10 +10,8 @@ class DriverComplianceService {
   DriverComplianceService({
     DriverComplianceRepository? repository,
     DriverService? driverService,
-  })  : _repository =
-            repository ?? DriverComplianceRepository(),
-        _driverService =
-            driverService ?? DriverService();
+  }) : _repository = repository ?? DriverComplianceRepository(),
+       _driverService = driverService ?? DriverService();
 
   final DriverComplianceRepository _repository;
   final DriverService _driverService;
@@ -25,57 +23,42 @@ class DriverComplianceService {
     return _repository.getAll();
   }
 
-  Future<DriverCompliance?> getByDriverId(
-    int driverId,
-  ) async {
+  Future<DriverCompliance?> getByDriverId(int driverId) async {
     return _repository.getByDriverId(driverId);
   }
 
-  Future<void> save(
-    DriverCompliance compliance,
-  ) async {
+  Future<void> save(DriverCompliance compliance) async {
     await _repository.save(compliance);
   }
 
-  Future<void> delete(
-    int driverId,
-  ) async {
+  Future<void> delete(int driverId) async {
     await _repository.delete(driverId);
   }
 
-  Future<List<DashboardActivity>>
-      getRecentActivities({
-    int limit = 5,
-  }) async {
+  Future<List<DashboardActivity>> getRecentActivities({int limit = 5}) async {
     final records = await getAll();
 
-    final drivers =
-        await _driverService.getDriverMap();
+    final drivers = await _driverService.getDriverMap();
 
     final activities = <DashboardActivity>[];
 
     for (final record in records) {
-      final driver =
-          drivers[record.driverId];
+      final driver = drivers[record.driverId];
 
       if (driver == null) {
         continue;
       }
 
       activities.add(
-        _activityMapper.toActivity(
-          compliance: record,
-          driver: driver,
-        ),
+        _activityMapper.toActivity(compliance: record, driver: driver),
       );
     }
 
-    activities.sort(
-      (a, b) => b.date.compareTo(a.date),
-    );
+    activities.sort((a, b) => b.date.compareTo(a.date));
 
     return activities.take(limit).toList();
   }
+
   DateTime _dateOnly(DateTime value) =>
       DateTime(value.year, value.month, value.day);
 
@@ -96,21 +79,14 @@ class DriverComplianceService {
       return false;
     }
 
-    return expiryDateOnly
-            .difference(today)
-            .inDays <=
-        warningDays;
+    return expiryDateOnly.difference(today).inDays <= warningDays;
   }
 
-  int daysRemaining(
-    DateTime expiryDate,
-  ) {
+  int daysRemaining(DateTime expiryDate) {
     return _dateOnly(expiryDate).difference(_today).inDays;
   }
 
-  String status(
-    DateTime? expiryDate,
-  ) {
+  String status(DateTime? expiryDate) {
     if (expiryDate == null) {
       return 'Not Recorded';
     }
@@ -128,9 +104,7 @@ class DriverComplianceService {
   bool isCompliant(DateTime? expiryDate) =>
       expiryDate != null && !isExpired(expiryDate);
 
-  List<DriverCompliance> expiringSoon(
-    List<DriverCompliance> records,
-  ) {
+  List<DriverCompliance> expiringSoon(List<DriverCompliance> records) {
     return records.where((record) {
       return isDueSoon(record.licenceExpiry) ||
           isDueSoon(record.cpcExpiry) ||
@@ -138,9 +112,7 @@ class DriverComplianceService {
     }).toList();
   }
 
-  List<DriverCompliance> expired(
-    List<DriverCompliance> records,
-  ) {
+  List<DriverCompliance> expired(List<DriverCompliance> records) {
     return records.where((record) {
       return isExpired(record.licenceExpiry) ||
           isExpired(record.cpcExpiry) ||

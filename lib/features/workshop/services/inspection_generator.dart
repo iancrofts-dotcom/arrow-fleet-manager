@@ -15,11 +15,7 @@ class InspectionGenerator {
   final WorkshopRepository _workshopRepository;
   final InspectionTemplateRepository _templateRepository;
 
-  InspectionGenerator(
-    this._workshopRepository,
-    this._templateRepository,
-  );
-
+  InspectionGenerator(this._workshopRepository, this._templateRepository);
 
   /// --------------------------------------------------------------------------
   /// Create a new inspection from a template
@@ -29,12 +25,12 @@ class InspectionGenerator {
     required int templateId,
   }) async {
     // Create inspection header
-    final inspectionId =
-        await _workshopRepository.createInspection(inspection);
+    final inspectionId = await _workshopRepository.createInspection(inspection);
 
     // Load template items
-    final templateItems =
-        await _templateRepository.getTemplateItems(templateId);
+    final templateItems = await _templateRepository.getTemplateItems(
+      templateId,
+    );
 
     // Convert template items into inspection items
     final inspectionItems = templateItems.map((templateItem) {
@@ -52,9 +48,7 @@ class InspectionGenerator {
     }).toList();
 
     // Save all inspection items in a single batch
-    await _workshopRepository.addInspectionItems(
-      inspectionItems,
-    );
+    await _workshopRepository.addInspectionItems(inspectionItems);
 
     return inspectionId;
   }

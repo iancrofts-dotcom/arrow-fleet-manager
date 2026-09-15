@@ -4,17 +4,12 @@ import '../../models/dashboard_context.dart';
 import '../../widgets/dashboard_content.dart';
 
 class AdministratorDashboard extends StatelessWidget {
-  const AdministratorDashboard({
-    super.key,
-    required this.context,
-  });
+  const AdministratorDashboard({super.key, required this.context});
 
   final DashboardContext context;
 
   @override
   Widget build(BuildContext context) {
-    return DashboardContent(
-      context: this.context,
-    );
+    return DashboardContent(context: this.context);
   }
 }

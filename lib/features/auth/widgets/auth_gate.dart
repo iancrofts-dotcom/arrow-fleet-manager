@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../dashboard/dashboard_screen.dart';
+import '../../../app/router_feature_screens_native.dart'
+    if (dart.library.js_interop) '../../../app/router_feature_screens_web.dart'
+    show DashboardScreen;
 import '../screens/first_administrator_setup_screen.dart';
 import '../screens/forced_password_change_screen.dart';
 import '../screens/login_screen.dart';

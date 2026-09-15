@@ -29,15 +29,11 @@ class WorkshopStatCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          constraints: const BoxConstraints(
-            minHeight: 172,
-          ),
+          constraints: const BoxConstraints(minHeight: 172),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: colorScheme.outlineVariant,
-            ),
+            border: Border.all(color: colorScheme.outlineVariant),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
@@ -61,16 +57,10 @@ class WorkshopStatCard extends StatelessWidget {
                       color: color.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(
-                      icon,
-                      color: color,
-                    ),
+                    child: Icon(icon, color: color),
                   ),
                   const Spacer(),
-                  Icon(
-                    Icons.more_horiz,
-                    color: colorScheme.outline,
-                  ),
+                  Icon(Icons.more_horiz, color: colorScheme.outline),
                 ],
               ),
 
@@ -81,13 +71,10 @@ class WorkshopStatCard extends StatelessWidget {
               // ---------------------------------------------------------------
               Text(
                 value,
-                style: Theme.of(context)
-                    .textTheme
-                    .displaySmall
-                    ?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1,
-                    ),
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1,
+                ),
               ),
 
               const SizedBox(height: 4),
@@ -99,12 +86,9 @@ class WorkshopStatCard extends StatelessWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
 
               // ---------------------------------------------------------------
@@ -116,12 +100,9 @@ class WorkshopStatCard extends StatelessWidget {
                   subtitle!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ],

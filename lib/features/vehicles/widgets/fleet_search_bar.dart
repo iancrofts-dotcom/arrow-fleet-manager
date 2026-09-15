@@ -20,9 +20,7 @@ class FleetSearchBar extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Search vehicles...',
           prefixIcon: const Icon(Icons.search),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
     );

@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 
 import '../../app/constants.dart';
 import '../../app/router.dart';
+import '../../config/backend_mode.dart';
+import '../../features/auth/screens/central/central_my_profile_screen.dart';
 import 'fleetiq_brand.dart';
+import 'central_organisation_switcher.dart';
 import '../../features/auth/services/auth_service.dart';
 import '../../features/auth/services/permission_service.dart';
 import '../../features/auth/models/user_role.dart';
@@ -81,6 +84,36 @@ class AppShellDestinations {
       icon: Icons.folder_outlined,
       isVisible: _canViewVehicles,
     ),
+    AppShellDestination(
+      label: 'Vehicle',
+      route: AppRouter.driverVehicle,
+      icon: Icons.local_shipping_outlined,
+      isVisible: _isDriver,
+    ),
+    AppShellDestination(
+      label: 'Inspection',
+      route: AppRouter.driverInspection,
+      icon: Icons.fact_check_outlined,
+      isVisible: _isDriver,
+    ),
+    AppShellDestination(
+      label: 'Compliance',
+      route: AppRouter.driverCompliance,
+      icon: Icons.verified_user_outlined,
+      isVisible: _isDriver,
+    ),
+    AppShellDestination(
+      label: 'Documents',
+      route: AppRouter.driverDocuments,
+      icon: Icons.folder_shared_outlined,
+      isVisible: _isDriver,
+    ),
+    AppShellDestination(
+      label: 'Profile',
+      route: AppRouter.driverProfile,
+      icon: Icons.person_outline,
+      isVisible: _isDriver,
+    ),
   ];
 
   static Iterable<AppShellDestination> visible(PermissionService permissions) {
@@ -100,6 +133,7 @@ class AppShellDestinations {
   static bool _canAccessWorkshop(PermissionService p) => p.canAccessWorkshop;
   static bool _canViewCompliance(PermissionService p) => p.canViewCompliance;
   static bool _canViewReports(PermissionService p) => p.canViewReports;
+  static bool _isDriver(PermissionService p) => p.isDriver;
 }
 
 class AppShell extends StatelessWidget {
@@ -156,9 +190,10 @@ class _MobileShell extends StatelessWidget {
   final Widget child;
 
   void _navigate(String route) {
-    if (currentRoute.value != route) {
-      navigatorKey.currentState?.pushNamedAndRemoveUntil(route, (_) => false);
-    }
+    // Always reset to the selected module root. A feature screen may have been
+    // pushed locally while currentRoute still points at the module, so treating
+    // a same-route tap as a no-op traps users behind repeated Back presses.
+    navigatorKey.currentState?.pushNamedAndRemoveUntil(route, (_) => false);
   }
 
   void _showMore(List<AppShellDestination> destinations) {
@@ -172,29 +207,52 @@ class _MobileShell extends StatelessWidget {
     );
   }
 
+  void _openProfile() {
+    navigatorKey.currentState?.push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => const CentralMyProfileScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<String>(
       valueListenable: currentRoute,
       builder: (context, route, _) {
         final permissions = PermissionService.instance;
-        final primary = AppShellDestinations.visible(permissions)
-            .where(
-              (destination) =>
-                  destination.route == AppRouter.dashboard ||
-                  destination.route == AppRouter.vehicles ||
-                  destination.route == AppRouter.drivers ||
-                  destination.route == AppRouter.calendar,
-            )
-            .toList();
-        final secondary = AppShellDestinations.visible(permissions)
-            .where(
-              (destination) =>
-                  destination.route != AppRouter.dashboard &&
-                  destination.route != AppRouter.vehicles &&
-                  destination.route != AppRouter.drivers &&
-                  destination.route != AppRouter.calendar,
-            )
+        final visible = AppShellDestinations.visible(permissions).toList();
+        // When a role only has a small number of modules, show every one of
+        // them directly. Requiring Drivers/Technicians to open More for one or
+        // two permitted destinations adds needless navigation.
+        final primary = permissions.isDriver
+            ? visible
+                  .where(
+                    (destination) =>
+                        destination.route == AppRouter.dashboard ||
+                        destination.route == AppRouter.driverVehicle ||
+                        destination.route == AppRouter.driverInspection ||
+                        destination.route == AppRouter.driverCompliance,
+                  )
+                  .toList()
+            : visible.length <= 5
+            ? visible
+            : visible
+                  .where(
+                    (destination) =>
+                        destination.route == AppRouter.dashboard ||
+                        destination.route == AppRouter.vehicles ||
+                        destination.route == AppRouter.drivers ||
+                        destination.route == AppRouter.workshop,
+                  )
+                  .take(4)
+                  .toList();
+        final primaryRoutes = primary
+            .map((destination) => destination.route)
+            .toSet();
+        final secondary = visible
+            .where((destination) => !primaryRoutes.contains(destination.route))
             .toList();
         final selectedPrimaryIndex = primary.indexWhere(
           (destination) => destination.route == route,
@@ -211,13 +269,23 @@ class _MobileShell extends StatelessWidget {
               child: const FleetIqBrand.compact(height: 32),
             ),
             title: Text(_titleFor(route)),
+            actions: [
+              if (AuthService.instance.backendMode == BackendMode.supabase &&
+                  !PermissionService.instance.isDriver)
+                IconButton(
+                  key: const Key('mobile-my-profile'),
+                  tooltip: 'My Profile',
+                  onPressed: _openProfile,
+                  icon: const Icon(Icons.account_circle_outlined),
+                ),
+            ],
           ),
           body: child,
           bottomNavigationBar: _CompactBottomNavigation(
             destinations: primary,
             selectedIndex: selectedPrimaryIndex < 0 ? 0 : selectedPrimaryIndex,
             onNavigate: _navigate,
-            onMore: () => _showMore(secondary),
+            onMore: secondary.isEmpty ? null : () => _showMore(secondary),
           ),
         );
       },
@@ -237,13 +305,13 @@ class _CompactBottomNavigation extends StatelessWidget {
     required this.destinations,
     required this.selectedIndex,
     required this.onNavigate,
-    required this.onMore,
+    this.onMore,
   });
 
   final List<AppShellDestination> destinations;
   final int selectedIndex;
   final ValueChanged<String> onNavigate;
-  final VoidCallback onMore;
+  final VoidCallback? onMore;
 
   @override
   Widget build(BuildContext context) {
@@ -268,14 +336,15 @@ class _CompactBottomNavigation extends StatelessWidget {
                       onTap: () => onNavigate(destinations[index].route),
                     ),
                   ),
-                Expanded(
-                  child: _CompactNavigationDestination(
-                    label: 'More',
-                    icon: Icons.more_horiz,
-                    selected: false,
-                    onTap: onMore,
+                if (onMore != null)
+                  Expanded(
+                    child: _CompactNavigationDestination(
+                      label: 'More',
+                      icon: Icons.more_horiz,
+                      selected: false,
+                      onTap: onMore!,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -388,8 +457,18 @@ class _DesktopSidebar extends StatelessWidget {
   }
 
   void _navigate(String route) {
-    if (currentRoute.value == route) return;
+    // Reset to the module root even when currentRoute already matches. Deep
+    // feature screens are commonly pushed without changing the route notifier.
     navigatorKey.currentState?.pushNamedAndRemoveUntil(route, (route) => false);
+  }
+
+  void _openProfile() {
+    navigatorKey.currentState?.push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => const CentralMyProfileScreen(),
+      ),
+    );
   }
 
   @override
@@ -448,10 +527,21 @@ class _DesktopSidebar extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (AuthService.instance.backendMode == BackendMode.supabase &&
+                    !PermissionService.instance.isDriver) ...[
+                  const CentralOrganisationSwitcher(),
+                  const SizedBox(height: AppConstants.spaceXs),
+                ],
                 const Divider(color: Color(0x55FFFFFF)),
                 ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
+                  onTap:
+                      AuthService.instance.backendMode ==
+                              BackendMode.supabase &&
+                          !PermissionService.instance.isDriver
+                      ? _openProfile
+                      : null,
                   leading: const CircleAvatar(
                     child: Icon(Icons.person_outline),
                   ),

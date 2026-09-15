@@ -5,21 +5,16 @@ import '../models/inspection_photo.dart';
 
 /// Handles persistence of photographs attached to workshop inspections.
 class InspectionPhotoRepository {
-  InspectionPhotoRepository({
-    AppDatabase? database,
-  }) : _database = database ?? AppDatabase();
+  InspectionPhotoRepository({AppDatabase? database})
+    : _database = database ?? AppDatabase();
 
   final AppDatabase _database;
 
-  static const String _table =
-      'workshop_inspection_photos';
+  static const String _table = 'workshop_inspection_photos';
 
-  Future<Database> get _db async =>
-      await _database.database();
+  Future<Database> get _db async => await _database.database();
 
-  Future<int> createPhoto(
-    InspectionPhoto photo,
-  ) async {
+  Future<int> createPhoto(InspectionPhoto photo) async {
     final db = await _db;
 
     return db.insert(
@@ -49,9 +44,7 @@ class InspectionPhotoRepository {
     await batch.commit(noResult: true);
   }
 
-  Future<List<InspectionPhoto>> getForInspection(
-    int inspectionId,
-  ) async {
+  Future<List<InspectionPhoto>> getForInspection(int inspectionId) async {
     final db = await _db;
 
     final result = await db.query(
@@ -61,9 +54,7 @@ class InspectionPhotoRepository {
       orderBy: 'createdAt ASC',
     );
 
-    return result
-        .map(InspectionPhoto.fromMap)
-        .toList();
+    return result.map(InspectionPhoto.fromMap).toList();
   }
 
   Future<List<InspectionPhoto>> getForInspectionItem(
@@ -78,24 +69,16 @@ class InspectionPhotoRepository {
       orderBy: 'createdAt ASC',
     );
 
-    return result
-        .map(InspectionPhoto.fromMap)
-        .toList();
+    return result.map(InspectionPhoto.fromMap).toList();
   }
 
   Future<int> deletePhoto(int id) async {
     final db = await _db;
 
-    return db.delete(
-      _table,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete(_table, where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<int> deleteForInspection(
-    int inspectionId,
-  ) async {
+  Future<int> deleteForInspection(int inspectionId) async {
     final db = await _db;
 
     return db.delete(
@@ -105,9 +88,7 @@ class InspectionPhotoRepository {
     );
   }
 
-  Future<int> deleteForInspectionItem(
-    int inspectionItemId,
-  ) async {
+  Future<int> deleteForInspectionItem(int inspectionItemId) async {
     final db = await _db;
 
     return db.delete(

@@ -76,17 +76,11 @@ class AppUser {
       firstName: map['first_name'] as String,
       lastName: map['last_name'] as String,
       email: map['email'] as String,
-      role: UserRoleExtension.fromDatabase(
-        map['role'] as String,
-      ),
+      role: UserRoleExtension.fromDatabase(map['role'] as String),
       isActive: (map['is_active'] as int) == 1,
-      createdAt: DateTime.parse(
-        map['created_at'] as String,
-      ),
+      createdAt: DateTime.parse(map['created_at'] as String),
       lastLogin: map['last_login'] != null
-          ? DateTime.parse(
-              map['last_login'] as String,
-            )
+          ? DateTime.parse(map['last_login'] as String)
           : null,
     );
   }

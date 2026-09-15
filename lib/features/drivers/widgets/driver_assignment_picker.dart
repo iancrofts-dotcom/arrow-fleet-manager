@@ -14,14 +14,11 @@ class DriverAssignmentPicker extends StatefulWidget {
   final ValueChanged<Driver?> onChanged;
 
   @override
-  State<DriverAssignmentPicker> createState() =>
-      _DriverAssignmentPickerState();
+  State<DriverAssignmentPicker> createState() => _DriverAssignmentPickerState();
 }
 
-class _DriverAssignmentPickerState
-    extends State<DriverAssignmentPicker> {
-  final DriverService _driverService =
-      DriverService();
+class _DriverAssignmentPickerState extends State<DriverAssignmentPicker> {
+  final DriverService _driverService = DriverService();
 
   late Future<List<Driver>> _driversFuture;
 
@@ -40,48 +37,42 @@ class _DriverAssignmentPickerState
     return FutureBuilder<List<Driver>>(
       future: _driversFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState ==
-            ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
-          return Text(
-            snapshot.error.toString(),
-          );
+          return Text(snapshot.error.toString());
         }
 
-        final drivers =
-            snapshot.data ?? const <Driver>[];
+        final drivers = snapshot.data ?? const <Driver>[];
 
-       return DropdownButtonFormField<Driver>(
-  initialValue: _selectedDriver,
-  decoration: const InputDecoration(
-    labelText: 'Assigned Driver',
-    border: OutlineInputBorder(),
-  ),
-  items: [
-    const DropdownMenuItem<Driver>(
-      value: null,
-      child: Text('No Driver Assigned'),
-    ),
-    ...drivers.map(
-      (driver) => DropdownMenuItem<Driver>(
-        value: driver,
-        child: Text(driver.fullName),
-      ),
-    ),
-  ],
-  onChanged: (driver) {
-    setState(() {
-      _selectedDriver = driver;
-    });
+        return DropdownButtonFormField<Driver>(
+          initialValue: _selectedDriver,
+          decoration: const InputDecoration(
+            labelText: 'Assigned Driver',
+            border: OutlineInputBorder(),
+          ),
+          items: [
+            const DropdownMenuItem<Driver>(
+              value: null,
+              child: Text('No Driver Assigned'),
+            ),
+            ...drivers.map(
+              (driver) => DropdownMenuItem<Driver>(
+                value: driver,
+                child: Text(driver.fullName),
+              ),
+            ),
+          ],
+          onChanged: (driver) {
+            setState(() {
+              _selectedDriver = driver;
+            });
 
-    widget.onChanged(driver);
-  },
-);
+            widget.onChanged(driver);
+          },
+        );
       },
     );
   }

@@ -24,48 +24,44 @@ class InspectionHeader extends StatelessWidget {
             if (showProductBranding)
               Row(
                 children: [
-                Icon(
-                  Icons.local_shipping,
-                  color: AppConstants.primaryColor,
-                  size: 32,
-                ),
-
-                const SizedBox(width: 12),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppConstants.appName,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-
-                      const SizedBox(height: 2),
-
-                      Text(
-                        AppConstants.companyName,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
+                  Icon(
+                    Icons.local_shipping,
+                    color: AppConstants.primaryColor,
+                    size: 32,
                   ),
-                ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppConstants.appName,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+
+                        const SizedBox(height: 2),
+
+                        Text(
+                          AppConstants.companyName,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
 
             if (showProductBranding) const SizedBox(height: 8),
 
-Text(
-  'Daily Walkaround Inspection',
-  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-    fontWeight: FontWeight.bold,
-  ),
-),
+            Text(
+              'Daily Walkaround Inspection',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
 
             const Divider(height: 32),
             LayoutBuilder(
@@ -129,10 +125,8 @@ Text(
                 );
               },
             ),
-
           ],
         ),
-        
       ),
     );
   }
@@ -160,8 +154,9 @@ class _InspectionMetadata extends StatelessWidget {
       style: Theme.of(context).textTheme.titleMedium,
     );
     return Row(
-      crossAxisAlignment:
-          compact ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: compact
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       children: [
         Icon(icon, color: iconColor),
         const SizedBox(width: 8),

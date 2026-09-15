@@ -4,12 +4,7 @@ import 'dart:convert';
 /// INSPECTION ITEM STATUS
 /// ============================================================================
 
-enum InspectionItemStatus {
-  notApplicable,
-  pass,
-  fail,
-  advisory,
-}
+enum InspectionItemStatus { notApplicable, pass, fail, advisory }
 
 enum InspectionResponseType {
   passFailNotApplicable,

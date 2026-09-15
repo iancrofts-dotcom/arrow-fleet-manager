@@ -39,18 +39,14 @@ class InspectionViewModel extends ChangeNotifier {
   /// Currently selected vehicle
   Vehicle? get selectedVehicle => draft.vehicle;
 
-  bool get hasSelectedVehicle =>
-      draft.vehicle != null;
+  bool get hasSelectedVehicle => draft.vehicle != null;
 
-  void selectVehicle(
-    Vehicle? vehicle,
-  ) {
+  void selectVehicle(Vehicle? vehicle) {
     draft.vehicle = vehicle;
 
     inspection = inspection.copyWith(
       vehicleId: vehicle?.id,
-      registration:
-          vehicle?.registration ?? '',
+      registration: vehicle?.registration ?? '',
     );
 
     notifyListeners();
@@ -65,35 +61,26 @@ class InspectionViewModel extends ChangeNotifier {
       driver: driver,
       mileage: mileage,
       comments: comments,
-      registration:
-          draft.vehicle?.registration ??
-          inspection.registration,
+      registration: draft.vehicle?.registration ?? inspection.registration,
     );
 
-    await inspectionService.saveInspection(
-      inspection,
-    );
-  }  bool validate({
-    required String driver,
-  }) {
+    await inspectionService.saveInspection(inspection);
+  }
+
+  bool validate({required String driver}) {
     inspection = inspection.copyWith(
       driver: driver,
-      registration:
-          draft.vehicle?.registration ??
-          inspection.registration,
+      registration: draft.vehicle?.registration ?? inspection.registration,
       vehicleId: draft.vehicle?.id,
     );
 
-    return inspectionService.validateInspection(
-      inspection,
-    );
+    return inspectionService.validateInspection(inspection);
   }
 
   void clearDraft() {
     draft.clear();
 
-    inspection =
-        inspectionService.createInspection();
+    inspection = inspectionService.createInspection();
 
     notifyListeners();
   }

@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum FleetHealthStatus {
-  excellent,
-  good,
-  fair,
-  poor,
-  critical,
-}
+enum FleetHealthStatus { excellent, good, fair, poor, critical }
 
 class FleetHealth {
   final double score;

@@ -34,7 +34,8 @@ class WorkshopActivityService {
     WorkshopInspection inspection,
   ) sync* {
     final details = _inspectionDetails(inspection);
-    final isDriverDaily = inspection.inspectionType ==
+    final isDriverDaily =
+        inspection.inspectionType ==
         WorkshopInspectionType.driverDailyInspection;
 
     yield WorkshopActivity(
@@ -102,14 +103,13 @@ class WorkshopActivityService {
   }
 
   String _inspectionDetails(WorkshopInspection inspection) {
-    final person = inspection.inspectionType ==
-                WorkshopInspectionType.driverDailyInspection
-            ? inspection.driverName
-            : inspection.technicianName;
+    final person =
+        inspection.inspectionType ==
+            WorkshopInspectionType.driverDailyInspection
+        ? inspection.driverName
+        : inspection.technicianName;
     final base = '${inspection.inspectionNumber} • ${inspection.registration}';
 
-    return person == null || person.trim().isEmpty
-        ? base
-        : '$base • $person';
+    return person == null || person.trim().isEmpty ? base : '$base • $person';
   }
 }

@@ -26,11 +26,11 @@ class InspectionTemplateSection {
   }
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'templateId': templateId,
-        'title': title,
-        'displayOrder': displayOrder,
-      };
+    'id': id,
+    'templateId': templateId,
+    'title': title,
+    'displayOrder': displayOrder,
+  };
 
   factory InspectionTemplateSection.fromMap(Map<String, dynamic> map) {
     return InspectionTemplateSection(

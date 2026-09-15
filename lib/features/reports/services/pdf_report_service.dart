@@ -10,9 +10,7 @@ import 'report_format_service.dart';
 class PdfReportService {
   const PdfReportService();
 
-  Future<Uint8List> generatePdf(
-    FleetReport report,
-  ) async {
+  Future<Uint8List> generatePdf(FleetReport report) async {
     const formatter = ReportFormatService();
     const branding = ReportBrandingService();
 
@@ -27,9 +25,7 @@ class PdfReportService {
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
             '${branding.footer} | ${branding.version}',
-            style: const pw.TextStyle(
-              fontSize: 10,
-            ),
+            style: const pw.TextStyle(fontSize: 10),
           ),
         ),
 
@@ -38,26 +34,18 @@ class PdfReportService {
             level: 0,
             child: pw.Text(
               branding.companyName,
-              style: pw.TextStyle(
-                fontSize: 24,
-                fontWeight: pw.FontWeight.bold,
-              ),
+              style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
             ),
           ),
 
           pw.Text(
             branding.reportTitle,
-            style: pw.TextStyle(
-              fontSize: 18,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
           ),
 
           pw.SizedBox(height: 8),
 
-          pw.Text(
-            'Generated: ${formatter.formatDate(report.generatedAt)}',
-          ),
+          pw.Text('Generated: ${formatter.formatDate(report.generatedAt)}'),
 
           pw.SizedBox(height: 16),
 
@@ -74,36 +62,20 @@ class PdfReportService {
 
           pw.Divider(),
 
-          _row(
-            'Fleet Health',
-            formatter.formatFleetHealth(
-              report.fleetHealth,
-            ),
-          ),
+          _row('Fleet Health', formatter.formatFleetHealth(report.fleetHealth)),
         ],
       ),
     );
 
-    return Uint8List.fromList(
-      await pdf.save(),
-    );
+    return Uint8List.fromList(await pdf.save());
   }
 
-  pw.Widget _row(
-    String title,
-    Object value,
-  ) {
+  pw.Widget _row(String title, Object value) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(
-        vertical: 4,
-      ),
+      padding: const pw.EdgeInsets.symmetric(vertical: 4),
       child: pw.Row(
-        mainAxisAlignment:
-            pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text(title),
-          pw.Text(value.toString()),
-        ],
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [pw.Text(title), pw.Text(value.toString())],
       ),
     );
   }

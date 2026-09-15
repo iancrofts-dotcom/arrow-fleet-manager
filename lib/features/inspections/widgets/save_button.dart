@@ -4,11 +4,7 @@ class SaveButton extends StatelessWidget {
   final VoidCallback? onSave;
   final bool isSaving;
 
-  const SaveButton({
-    super.key,
-    required this.onSave,
-    this.isSaving = false,
-  });
+  const SaveButton({super.key, required this.onSave, this.isSaving = false});
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +16,7 @@ class SaveButton extends StatelessWidget {
         icon: const Icon(Icons.save),
         label: Text(
           isSaving ? 'Submitting...' : 'Save Inspection',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
     );

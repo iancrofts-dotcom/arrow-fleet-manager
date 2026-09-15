@@ -27,9 +27,7 @@ class StatCard extends StatelessWidget {
     Widget card = Card(
       elevation: 4,
       shadowColor: cardColor.withValues(alpha: 0.15),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -44,11 +42,7 @@ class StatCard extends StatelessWidget {
                     color: cardColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(
-                    icon,
-                    color: cardColor,
-                    size: 30,
-                  ),
+                  child: Icon(icon, color: cardColor, size: 30),
                 ),
                 const Spacer(),
                 if (trailing != null) trailing!,
@@ -58,22 +52,19 @@ class StatCard extends StatelessWidget {
             Text(
               value,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: cardColor,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: cardColor,
+              ),
             ),
             const SizedBox(height: 6),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
             if (subtitle != null) ...[
               const SizedBox(height: 4),
               Text(
                 subtitle!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
               ),
             ],
           ],

@@ -6,9 +6,7 @@ import 'fleet_metrics_service.dart';
 class DashboardInsightService {
   const DashboardInsightService();
 
-  List<DashboardInsight> generateInsights(
-    FleetMetrics metrics,
-  ) {
+  List<DashboardInsight> generateInsights(FleetMetrics metrics) {
     final insights = <DashboardInsight>[];
 
     if (metrics.overdue > 0) {
@@ -16,8 +14,7 @@ class DashboardInsightService {
         DashboardInsight(
           icon: Icons.warning_amber_rounded,
           title: 'Overdue Items',
-          message:
-              '${metrics.overdue} vehicle(s) require immediate attention.',
+          message: '${metrics.overdue} vehicle(s) require immediate attention.',
         ),
       );
     }
@@ -27,8 +24,7 @@ class DashboardInsightService {
         DashboardInsight(
           icon: Icons.directions_car,
           title: 'MOT Due',
-          message:
-              '${metrics.motDue} MOT inspection(s) due within 30 days.',
+          message: '${metrics.motDue} MOT inspection(s) due within 30 days.',
         ),
       );
     }
@@ -49,8 +45,7 @@ class DashboardInsightService {
         DashboardInsight(
           icon: Icons.pause_circle,
           title: 'Inactive Vehicles',
-          message:
-              '${metrics.inactive} vehicle(s) are currently inactive.',
+          message: '${metrics.inactive} vehicle(s) are currently inactive.',
         ),
       );
     }

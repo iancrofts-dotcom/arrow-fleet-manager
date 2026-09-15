@@ -144,9 +144,7 @@ class AppDatabase {
         }
 
         if (oldVersion < 11) {
-          await db.execute(
-            'ALTER TABLE drivers ADD COLUMN username TEXT',
-          );
+          await db.execute('ALTER TABLE drivers ADD COLUMN username TEXT');
         }
 
         if (oldVersion < 12) {

@@ -25,19 +25,13 @@ class DashboardRouter {
   }) {
     switch (role) {
       case DashboardRole.administrator:
-        return AdministratorDashboard(
-          context: context,
-        );
+        return AdministratorDashboard(context: context);
 
       case DashboardRole.fleetManager:
-        return FleetManagerDashboard(
-          context: context,
-        );
+        return FleetManagerDashboard(context: context);
 
       case DashboardRole.workshopManager:
-        return WorkshopManagerDashboard(
-          context: context,
-        );
+        return WorkshopManagerDashboard(context: context);
 
       case DashboardRole.technician:
         return const TechnicianDashboard();

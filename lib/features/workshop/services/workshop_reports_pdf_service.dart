@@ -295,7 +295,7 @@ class WorkshopReportsPdfService {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-            'FleetIQ',
+                    'FleetIQ',
                     style: pw.TextStyle(
                       fontSize: 16,
                       fontWeight: pw.FontWeight.bold,
@@ -737,7 +737,7 @@ class WorkshopReportsPdfService {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
-                    'FleetIQ',
+                      'FleetIQ',
                       style: pw.TextStyle(
                         fontSize: 17,
                         fontWeight: pw.FontWeight.bold,

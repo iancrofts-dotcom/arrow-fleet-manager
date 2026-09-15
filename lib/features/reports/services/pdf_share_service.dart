@@ -7,9 +7,7 @@ class PdfShareService {
 
   Future<void> sharePdf(File file) async {
     await Share.shareXFiles(
-      [
-        XFile(file.path),
-      ],
+      [XFile(file.path)],
       text: 'Fleet Report',
       subject: 'FleetIQ Report',
     );

@@ -15,12 +15,10 @@ class VehiclePickerDialog extends StatefulWidget {
   }
 
   @override
-  State<VehiclePickerDialog> createState() =>
-      _VehiclePickerDialogState();
+  State<VehiclePickerDialog> createState() => _VehiclePickerDialogState();
 }
 
-class _VehiclePickerDialogState
-    extends State<VehiclePickerDialog> {
+class _VehiclePickerDialogState extends State<VehiclePickerDialog> {
   late final VehicleRepository _repository;
 
   List<Vehicle> _vehicles = [];
@@ -32,9 +30,7 @@ class _VehiclePickerDialogState
   void initState() {
     super.initState();
 
-    _repository = VehicleRepository(
-      databaseService: DatabaseService(),
-    );
+    _repository = VehicleRepository(databaseService: DatabaseService());
 
     _loadVehicles();
   }
@@ -56,18 +52,10 @@ class _VehiclePickerDialogState
 
     setState(() {
       _filtered = _vehicles.where((vehicle) {
-        return vehicle.registration
-                .toLowerCase()
-                .contains(query) ||
-            vehicle.fleetNumber
-                .toLowerCase()
-                .contains(query) ||
-            vehicle.make
-                .toLowerCase()
-                .contains(query) ||
-            vehicle.model
-                .toLowerCase()
-                .contains(query);
+        return vehicle.registration.toLowerCase().contains(query) ||
+            vehicle.fleetNumber.toLowerCase().contains(query) ||
+            vehicle.make.toLowerCase().contains(query) ||
+            vehicle.model.toLowerCase().contains(query);
       }).toList();
     });
   }
@@ -91,29 +79,20 @@ class _VehiclePickerDialogState
             const SizedBox(height: 12),
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(),
-                    )
+                  ? const Center(child: CircularProgressIndicator())
                   : ListView.builder(
                       itemCount: _filtered.length,
                       itemBuilder: (context, index) {
                         final vehicle = _filtered[index];
 
                         return ListTile(
-                          leading: const Icon(
-                            Icons.directions_bus,
-                          ),
+                          leading: const Icon(Icons.directions_bus),
                           title: Text(
                             "${vehicle.fleetNumber} • ${vehicle.registration}",
                           ),
-                          subtitle: Text(
-                            "${vehicle.make} ${vehicle.model}",
-                          ),
+                          subtitle: Text("${vehicle.make} ${vehicle.model}"),
                           onTap: () {
-                            Navigator.pop(
-                              context,
-                              vehicle,
-                            );
+                            Navigator.pop(context, vehicle);
                           },
                         );
                       },
@@ -124,8 +103,7 @@ class _VehiclePickerDialogState
       ),
       actions: [
         TextButton(
-          onPressed: () =>
-              Navigator.pop(context),
+          onPressed: () => Navigator.pop(context),
           child: const Text("Cancel"),
         ),
       ],

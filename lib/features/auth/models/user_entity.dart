@@ -18,16 +18,12 @@ class UserEntity {
     required this.isActive,
   });
 
-  factory UserEntity.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory UserEntity.fromMap(Map<String, dynamic> map) {
     return UserEntity(
       id: map['id'] as String,
       username: map['username'] as String,
       passwordHash: map['password_hash'] as String,
-      role: UserRole.values.firstWhere(
-        (role) => role.name == map['role'],
-      ),
+      role: UserRole.values.firstWhere((role) => role.name == map['role']),
       driverId: map['driver_id'] as int?,
       isActive: (map['is_active'] ?? 1) == 1,
     );

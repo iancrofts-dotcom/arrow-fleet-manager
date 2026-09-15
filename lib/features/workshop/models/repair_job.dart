@@ -18,12 +18,7 @@ enum RepairJobStatus {
 /// REPAIR PRIORITY
 /// ============================================================================
 
-enum RepairPriority {
-  low,
-  medium,
-  high,
-  critical,
-}
+enum RepairPriority { low, medium, high, critical }
 
 /// ============================================================================
 /// REPAIR JOB
@@ -125,8 +120,7 @@ class RepairJob {
       inspectionId: inspectionId ?? this.inspectionId,
       inspectionItemId: inspectionItemId ?? this.inspectionItemId,
       vehicleId: vehicleId ?? this.vehicleId,
-      vehicleRegistration:
-          vehicleRegistration ?? this.vehicleRegistration,
+      vehicleRegistration: vehicleRegistration ?? this.vehicleRegistration,
       title: title ?? this.title,
       description: description ?? this.description,
       priority: priority ?? this.priority,
@@ -184,9 +178,7 @@ class RepairJob {
       priority: RepairPriority.values.firstWhere(
         (e) => e.name == map['priority'],
       ),
-      status: RepairJobStatus.values.firstWhere(
-        (e) => e.name == map['status'],
-      ),
+      status: RepairJobStatus.values.firstWhere((e) => e.name == map['status']),
       technicianId: map['technicianId']?.toString(),
       technicianName: map['technicianName'] ?? '',
       partsRequired: map['partsRequired'] == 1,

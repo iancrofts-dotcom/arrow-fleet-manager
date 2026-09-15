@@ -81,9 +81,7 @@ class _SystemStatusSectionState extends State<SystemStatusSection> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Unable to load system status.',
-                ),
+                const Text('Unable to load system status.'),
               ],
             );
           }
@@ -115,9 +113,7 @@ class _SystemStatusSectionState extends State<SystemStatusSection> {
                           Expanded(
                             child: Text(
                               service.name,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge,
+                              style: Theme.of(context).textTheme.bodyLarge,
                             ),
                           ),
                           StatusChip(

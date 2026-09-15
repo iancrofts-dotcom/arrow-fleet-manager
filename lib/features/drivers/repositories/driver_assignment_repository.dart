@@ -8,11 +8,9 @@ class DriverAssignmentRepository {
 
   final AppDatabase _database = AppDatabase();
 
-  Future<Database> get _db async =>
-      _database.database();
+  Future<Database> get _db async => _database.database();
 
-  Future<List<DriverVehicleAssignment>>
-      getAllAssignments() async {
+  Future<List<DriverVehicleAssignment>> getAllAssignments() async {
     final db = await _db;
 
     final maps = await db.query(
@@ -20,15 +18,10 @@ class DriverAssignmentRepository {
       orderBy: 'assigned_from DESC',
     );
 
-    return maps
-        .map(
-          DriverVehicleAssignment.fromMap,
-        )
-        .toList();
+    return maps.map(DriverVehicleAssignment.fromMap).toList();
   }
 
-  Future<List<DriverVehicleAssignment>>
-      getActiveAssignments() async {
+  Future<List<DriverVehicleAssignment>> getActiveAssignments() async {
     final db = await _db;
 
     final maps = await db.query(
@@ -38,23 +31,17 @@ class DriverAssignmentRepository {
       orderBy: 'assigned_from DESC',
     );
 
-    return maps
-        .map(
-          DriverVehicleAssignment.fromMap,
-        )
-        .toList();
+    return maps.map(DriverVehicleAssignment.fromMap).toList();
   }
 
-  Future<DriverVehicleAssignment?>
-      getCurrentAssignmentForDriver(
+  Future<DriverVehicleAssignment?> getCurrentAssignmentForDriver(
     int driverId,
   ) async {
     final db = await _db;
 
     final maps = await db.query(
       'driver_assignments',
-      where:
-          'driver_id = ? AND active = ?',
+      where: 'driver_id = ? AND active = ?',
       whereArgs: [driverId, 1],
       limit: 1,
     );
@@ -63,21 +50,17 @@ class DriverAssignmentRepository {
       return null;
     }
 
-    return DriverVehicleAssignment.fromMap(
-      maps.first,
-    );
+    return DriverVehicleAssignment.fromMap(maps.first);
   }
 
-  Future<DriverVehicleAssignment?>
-      getCurrentAssignmentForVehicle(
+  Future<DriverVehicleAssignment?> getCurrentAssignmentForVehicle(
     int vehicleId,
   ) async {
     final db = await _db;
 
     final maps = await db.query(
       'driver_assignments',
-      where:
-          'vehicle_id = ? AND active = ?',
+      where: 'vehicle_id = ? AND active = ?',
       whereArgs: [vehicleId, 1],
       limit: 1,
     );
@@ -86,27 +69,20 @@ class DriverAssignmentRepository {
       return null;
     }
 
-    return DriverVehicleAssignment.fromMap(
-      maps.first,
-    );
+    return DriverVehicleAssignment.fromMap(maps.first);
   }
 
-  Future<int> insertAssignment(
-    DriverVehicleAssignment assignment,
-  ) async {
+  Future<int> insertAssignment(DriverVehicleAssignment assignment) async {
     final db = await _db;
 
     return db.insert(
       'driver_assignments',
       assignment.toMap(),
-      conflictAlgorithm:
-          ConflictAlgorithm.replace,
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  Future<int> updateAssignment(
-    DriverVehicleAssignment assignment,
-  ) async {
+  Future<int> updateAssignment(DriverVehicleAssignment assignment) async {
     final db = await _db;
 
     return db.update(
@@ -117,15 +93,9 @@ class DriverAssignmentRepository {
     );
   }
 
-  Future<int> deleteAssignment(
-    int id,
-  ) async {
+  Future<int> deleteAssignment(int id) async {
     final db = await _db;
 
-    return db.delete(
-      'driver_assignments',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete('driver_assignments', where: 'id = ?', whereArgs: [id]);
   }
 }

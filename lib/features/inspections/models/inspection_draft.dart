@@ -20,27 +20,19 @@ class InspectionDraft {
 
   bool get hasVehicle => vehicle != null;
 
-  bool get hasChecklist =>
-      checklistItems.isNotEmpty;
+  bool get hasChecklist => checklistItems.isNotEmpty;
 
-  bool get hasFailures =>
-      checklistItems.any((item) => item.hasFailed);
+  bool get hasFailures => checklistItems.any((item) => item.hasFailed);
 
   bool get isValid {
-    return vehicle != null &&
-        driver.trim().isNotEmpty &&
-        mileage > 0;
-  }  
+    return vehicle != null && driver.trim().isNotEmpty && mileage > 0;
+  }
 
   List<InspectionItem> get failedItems =>
-      checklistItems
-          .where((item) => item.hasFailed)
-          .toList();
+      checklistItems.where((item) => item.hasFailed).toList();
 
   List<InspectionItem> get passedItems =>
-      checklistItems
-          .where((item) => item.hasPassed)
-          .toList();
+      checklistItems.where((item) => item.hasPassed).toList();
 
   void clear() {
     vehicle = null;

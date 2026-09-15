@@ -11,11 +11,9 @@ class VehicleListController extends ChangeNotifier {
     VehicleService? vehicleService,
     VehicleSearchService? searchService,
     VehicleFilterService? filterService,
-  })  : _vehicleService = vehicleService ?? VehicleService(),
-        _searchService =
-            searchService ?? const VehicleSearchService(),
-        _filterService =
-            filterService ?? const VehicleFilterService();
+  }) : _vehicleService = vehicleService ?? VehicleService(),
+       _searchService = searchService ?? const VehicleSearchService(),
+       _filterService = filterService ?? const VehicleFilterService();
 
   final VehicleService _vehicleService;
   final VehicleSearchService _searchService;

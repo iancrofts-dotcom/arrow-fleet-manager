@@ -24,11 +24,7 @@ class DashboardCardHeader extends StatelessWidget {
         if (icon != null)
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: Icon(
-              icon,
-              size: 28,
-              color: theme.colorScheme.primary,
-            ),
+            child: Icon(icon, size: 28, color: theme.colorScheme.primary),
           ),
 
         Expanded(

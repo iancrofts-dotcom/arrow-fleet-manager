@@ -72,8 +72,7 @@ class DashboardSummary {
 
   int get drivers => driverCount;
 
-  int get inactiveVehicles =>
-      vehicleCount - activeVehicles;
+  int get inactiveVehicles => vehicleCount - activeVehicles;
 
   int get inspections => workshopDashboard?.inspectionTotal ?? 0;
 
@@ -91,8 +90,7 @@ class DashboardSummary {
         DashboardInsight(
           icon: Icons.build,
           title: 'Maintenance',
-          message:
-              '$maintenanceOverdue vehicle(s) have overdue maintenance.',
+          message: '$maintenanceOverdue vehicle(s) have overdue maintenance.',
         ),
       );
     }
@@ -102,8 +100,7 @@ class DashboardSummary {
         DashboardInsight(
           icon: Icons.warning,
           title: 'Compliance',
-          message:
-              '$complianceExpired driver(s) have expired compliance.',
+          message: '$complianceExpired driver(s) have expired compliance.',
         ),
       );
     }
@@ -113,8 +110,7 @@ class DashboardSummary {
         DashboardInsight(
           icon: Icons.person_off,
           title: 'Drivers',
-          message:
-              '$unassignedDrivers driver(s) are currently unassigned.',
+          message: '$unassignedDrivers driver(s) are currently unassigned.',
         ),
       );
     }
@@ -160,20 +156,16 @@ class DashboardSummary {
       assignedDrivers: assignedDrivers ?? this.assignedDrivers,
       unassignedDrivers: unassignedDrivers ?? this.unassignedDrivers,
       assignedVehicles: assignedVehicles ?? this.assignedVehicles,
-      unassignedVehicles:
-          unassignedVehicles ?? this.unassignedVehicles,
+      unassignedVehicles: unassignedVehicles ?? this.unassignedVehicles,
       maintenanceDue: maintenanceDue ?? this.maintenanceDue,
-      maintenanceOverdue:
-          maintenanceOverdue ?? this.maintenanceOverdue,
+      maintenanceOverdue: maintenanceOverdue ?? this.maintenanceOverdue,
       complianceDue: complianceDue ?? this.complianceDue,
-      complianceExpired:
-          complianceExpired ?? this.complianceExpired,
+      complianceExpired: complianceExpired ?? this.complianceExpired,
       vehicleMotDue: vehicleMotDue ?? this.vehicleMotDue,
       maintenanceRecordCount:
           maintenanceRecordCount ?? this.maintenanceRecordCount,
       compliancePercentage: compliancePercentage ?? this.compliancePercentage,
-      recentActivity:
-          recentActivity ?? this.recentActivity,
+      recentActivity: recentActivity ?? this.recentActivity,
       alerts: alerts ?? this.alerts,
       workshopDashboard: workshopDashboard ?? this.workshopDashboard,
     );

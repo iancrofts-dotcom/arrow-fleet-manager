@@ -4,12 +4,7 @@ final List<InspectionItem> defaultInspectionTemplate = [
   // =========================
   // Exterior
   // =========================
-
-  InspectionItem(
-    id: 'ext_lights',
-    title: 'Lights',
-    category: 'Exterior',
-  ),
+  InspectionItem(id: 'ext_lights', title: 'Lights', category: 'Exterior'),
 
   InspectionItem(
     id: 'ext_indicators',
@@ -17,17 +12,9 @@ final List<InspectionItem> defaultInspectionTemplate = [
     category: 'Exterior',
   ),
 
-  InspectionItem(
-    id: 'ext_tyres',
-    title: 'Tyres',
-    category: 'Exterior',
-  ),
+  InspectionItem(id: 'ext_tyres', title: 'Tyres', category: 'Exterior'),
 
-  InspectionItem(
-    id: 'ext_mirrors',
-    title: 'Mirrors',
-    category: 'Exterior',
-  ),
+  InspectionItem(id: 'ext_mirrors', title: 'Mirrors', category: 'Exterior'),
 
   InspectionItem(
     id: 'ext_windscreen',
@@ -35,33 +22,16 @@ final List<InspectionItem> defaultInspectionTemplate = [
     category: 'Exterior',
   ),
 
-  InspectionItem(
-    id: 'ext_wipers',
-    title: 'Wipers',
-    category: 'Exterior',
-  ),
+  InspectionItem(id: 'ext_wipers', title: 'Wipers', category: 'Exterior'),
 
   // =========================
   // Safety
   // =========================
+  InspectionItem(id: 'safe_brakes', title: 'Brakes', category: 'Safety'),
 
-  InspectionItem(
-    id: 'safe_brakes',
-    title: 'Brakes',
-    category: 'Safety',
-  ),
+  InspectionItem(id: 'safe_steering', title: 'Steering', category: 'Safety'),
 
-  InspectionItem(
-    id: 'safe_steering',
-    title: 'Steering',
-    category: 'Safety',
-  ),
-
-  InspectionItem(
-    id: 'safe_horn',
-    title: 'Horn',
-    category: 'Safety',
-  ),
+  InspectionItem(id: 'safe_horn', title: 'Horn', category: 'Safety'),
 
   InspectionItem(
     id: 'safe_fire_extinguisher',
@@ -78,7 +48,6 @@ final List<InspectionItem> defaultInspectionTemplate = [
   // =========================
   // Accessibility
   // =========================
-
   InspectionItem(
     id: 'access_lift',
     title: 'Wheelchair Lift',

@@ -1,9 +1,4 @@
-enum ComplianceStatus {
-  valid,
-  dueSoon,
-  overdue,
-  missing,
-}
+enum ComplianceStatus { valid, dueSoon, overdue, missing }
 
 class VehicleCompliance {
   final DateTime? motExpiry;
@@ -18,21 +13,15 @@ class VehicleCompliance {
     this.serviceDueDate,
   });
 
-  ComplianceStatus motStatus() =>
-      _calculateStatus(motExpiry);
+  ComplianceStatus motStatus() => _calculateStatus(motExpiry);
 
-  ComplianceStatus insuranceStatus() =>
-      _calculateStatus(insuranceExpiry);
+  ComplianceStatus insuranceStatus() => _calculateStatus(insuranceExpiry);
 
-  ComplianceStatus roadTaxStatus() =>
-      _calculateStatus(roadTaxExpiry);
+  ComplianceStatus roadTaxStatus() => _calculateStatus(roadTaxExpiry);
 
-  ComplianceStatus serviceStatus() =>
-      _calculateStatus(serviceDueDate);
+  ComplianceStatus serviceStatus() => _calculateStatus(serviceDueDate);
 
-  ComplianceStatus _calculateStatus(
-    DateTime? date,
-  ) {
+  ComplianceStatus _calculateStatus(DateTime? date) {
     if (date == null) {
       return ComplianceStatus.missing;
     }

@@ -4,30 +4,20 @@ import 'database_service.dart';
 class DefectRepository {
   final DatabaseService databaseService;
 
-  DefectRepository({
-    required this.databaseService,
-  });
+  DefectRepository({required this.databaseService});
 
   Future<void> saveDefect(Defect defect) async {
     final db = await databaseService.database.database();
 
-    await db.insert(
-      'defects',
-      defect.toMap(),
-    );
+    await db.insert('defects', defect.toMap());
   }
 
   Future<List<Defect>> getDefects() async {
     final db = await databaseService.database.database();
 
-    final maps = await db.query(
-      'defects',
-      orderBy: 'reportedDate DESC',
-    );
+    final maps = await db.query('defects', orderBy: 'reportedDate DESC');
 
-    return maps
-        .map((map) => Defect.fromMap(map))
-        .toList();
+    return maps.map((map) => Defect.fromMap(map)).toList();
   }
 
   Future<List<Defect>> getVehicleDefects(int vehicleId) async {
@@ -40,9 +30,7 @@ class DefectRepository {
       orderBy: 'reportedDate DESC',
     );
 
-    return maps
-        .map((map) => Defect.fromMap(map))
-        .toList();
+    return maps.map((map) => Defect.fromMap(map)).toList();
   }
 
   Future<List<Defect>> getOpenDefects() async {
@@ -55,9 +43,7 @@ class DefectRepository {
       orderBy: 'reportedDate DESC',
     );
 
-    return maps
-        .map((map) => Defect.fromMap(map))
-        .toList();
+    return maps.map((map) => Defect.fromMap(map)).toList();
   }
 
   Future<void> markRepaired(int defectId) async {
@@ -65,9 +51,7 @@ class DefectRepository {
 
     await db.update(
       'defects',
-      {
-        'repaired': 1,
-      },
+      {'repaired': 1},
       where: 'id = ?',
       whereArgs: [defectId],
     );
@@ -76,13 +60,11 @@ class DefectRepository {
   Future<int> getOpenDefectCount() async {
     final db = await databaseService.database.database();
 
-    final result = await db.rawQuery(
-      '''
+    final result = await db.rawQuery('''
       SELECT COUNT(*) AS total
       FROM defects
       WHERE repaired = 0
-      ''',
-    );
+      ''');
 
     return (result.first['total'] as int?) ?? 0;
   }

@@ -29,9 +29,7 @@ class WorkshopActionButton extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: color.withValues(alpha: 0.16),
-            ),
+            border: Border.all(color: color.withValues(alpha: 0.16)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.06),
@@ -61,14 +59,11 @@ class WorkshopActionButton extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    color: color,
-                  ),
+                  Icon(Icons.arrow_forward_rounded, color: color),
                 ],
               ),
             ],

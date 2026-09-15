@@ -36,19 +36,11 @@ class ResponsiveDashboardLayout extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                children: _buildVertical(leftColumn),
-              ),
-            ),
+            Expanded(child: Column(children: _buildVertical(leftColumn))),
 
             SizedBox(width: spacing),
 
-            Expanded(
-              child: Column(
-                children: _buildVertical(rightColumn),
-              ),
-            ),
+            Expanded(child: Column(children: _buildVertical(rightColumn))),
           ],
         );
       },
